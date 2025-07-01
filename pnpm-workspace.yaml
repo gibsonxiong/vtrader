@@ -130,7 +130,7 @@ catalog:
   ora: ^8.2.0
   pinia: ^3.0.3
   pinia-plugin-persistedstate: ^4.3.0
-  pkg-types: ^2.1.0
+  pkg-types: ^2.2.0
   playwright: ^1.52.0
   postcss: ^8.5.4
   postcss-antd-fixes: ^0.2.0
