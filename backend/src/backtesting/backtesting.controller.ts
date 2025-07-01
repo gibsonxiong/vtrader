@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
 
 import { BacktestingService } from './backtesting.service';
 import { CreateBacktestingDto } from './dto/create-backtesting.dto';
@@ -9,27 +9,45 @@ export class BacktestingController {
   constructor(private readonly backtestingService: BacktestingService) {}
 
   @Post()
-  create(@Body() createBacktestingDto: CreateBacktestingDto) {
-    return this.backtestingService.create(createBacktestingDto);
+  create(
+    @Body() createBacktestingDto: CreateBacktestingDto
+  ) {
+    return this.backtestingService.create({
+      data: createBacktestingDto
+    });
   }
 
   @Get()
-  findAll() {
-    return this.backtestingService.findAll();
+  findMany() {
+    return this.backtestingService.findMany();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.backtestingService.findOne(+id);
+  find(
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.backtestingService.find({
+      where: { id }
+    });
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.backtestingService.remove(+id);
+  remove(
+    @Param('id', ParseIntPipe) id: number
+  ) {
+    return this.backtestingService.remove({
+      where: {id}
+    });
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateBacktestingDto: UpdateBacktestingDto) {
-    return this.backtestingService.update(+id, updateBacktestingDto);
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateBacktestingDto: UpdateBacktestingDto
+  ) {
+    return this.backtestingService.update({
+      where: {id},
+      data: updateBacktestingDto,
+    });
   }
 }
