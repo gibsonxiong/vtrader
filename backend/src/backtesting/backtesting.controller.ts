@@ -9,11 +9,16 @@ export class BacktestingController {
   constructor(private readonly backtestingService: BacktestingService) {}
 
   @Post()
-  create(
-    @Body() createBacktestingDto: CreateBacktestingDto
-  ) {
+  create(@Body() createBacktestingDto: CreateBacktestingDto) {
     return this.backtestingService.create({
-      data: createBacktestingDto
+      data: createBacktestingDto,
+    });
+  }
+
+  @Get(':id')
+  find(@Param('id', ParseIntPipe) id: number) {
+    return this.backtestingService.find({
+      where: { id },
     });
   }
 
@@ -22,31 +27,20 @@ export class BacktestingController {
     return this.backtestingService.findMany();
   }
 
-  @Get(':id')
-  find(
-    @Param('id', ParseIntPipe) id: number
-  ) {
-    return this.backtestingService.find({
-      where: { id }
-    });
-  }
-
   @Delete(':id')
-  remove(
-    @Param('id', ParseIntPipe) id: number
-  ) {
+  remove(@Param('id', ParseIntPipe) id: number) {
     return this.backtestingService.remove({
-      where: {id}
+      where: { id },
     });
   }
 
   @Patch(':id')
   update(
     @Param('id', ParseIntPipe) id: number,
-    @Body() updateBacktestingDto: UpdateBacktestingDto
+    @Body() updateBacktestingDto: UpdateBacktestingDto,
   ) {
     return this.backtestingService.update({
-      where: {id},
+      where: { id },
       data: updateBacktestingDto,
     });
   }

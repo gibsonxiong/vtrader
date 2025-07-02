@@ -23,6 +23,7 @@ package-lock.json
 .VSCodeCounter
 **/backend-mock/data
 backend/generated/
+vnpy/
 
 # local env files
 .env.local
