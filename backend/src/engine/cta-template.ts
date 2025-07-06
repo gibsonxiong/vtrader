@@ -1,11 +1,11 @@
-import {
-  BacktestingEngine,
-  BarData,
-  Direction,
-  OrderData,
-  TickData,
-  TradeData,
-} from './backtesting-engine';
+import { BarData, Direction, OrderData, TickData, TradeData } from './types/common';
+
+export interface Broker {
+  cancelOrder(orderId: string): void;
+  cancelStopOrder(stopOrderId: string): void;
+  sendOrder(direction: Direction, offset: string, price: number, volume: number): string;
+  sendStopOrder(direction: Direction, offset: string, price: number, volume: number): string;
+}
 
 /**
  * CTA策略模板基类
@@ -20,20 +20,20 @@ export abstract class CtaTemplate {
 
   // 策略参数列表
   public parameters: string[] = [];
-
   public pos: number = 0;
+
   public trading: boolean = false;
-  // 策略变量列表
   public variables: string[] = [];
+  // 策略变量列表
 
   // 引擎和基本信息
-  protected ctaEngine: BacktestingEngine;
+  protected broker: Broker;
   protected setting: any;
   protected strategyName: string;
   protected vtSymbol: string;
 
-  constructor(ctaEngine: BacktestingEngine, strategyName: string, vtSymbol: string, setting: any) {
-    this.ctaEngine = ctaEngine;
+  constructor(ctaEngine: Broker, strategyName: string, vtSymbol: string, setting: any) {
+    this.broker = ctaEngine;
     this.strategyName = strategyName;
     this.vtSymbol = vtSymbol;
     this.setting = setting;
@@ -143,14 +143,14 @@ export abstract class CtaTemplate {
    * 撤销委托
    */
   protected cancelOrder(orderId: string): void {
-    this.ctaEngine.cancelOrder(orderId);
+    this.broker.cancelOrder(orderId);
   }
 
   /**
    * 撤销停止单
    */
   protected cancelStopOrder(stopOrderId: string): void {
-    this.ctaEngine.cancelStopOrder(stopOrderId);
+    this.broker.cancelStopOrder(stopOrderId);
   }
 
   /**
@@ -180,7 +180,7 @@ export abstract class CtaTemplate {
       return null;
     }
 
-    return this.ctaEngine.sendOrder(direction, offset, price, volume);
+    return this.broker.sendOrder(direction, offset, price, volume);
   }
 
   /**
@@ -196,7 +196,7 @@ export abstract class CtaTemplate {
       return null;
     }
 
-    return this.ctaEngine.sendStopOrder(direction, offset, price, volume);
+    return this.broker.sendStopOrder(direction, offset, price, volume);
   }
 
   /**

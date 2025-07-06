@@ -1,155 +1,16 @@
+import type { BarData, OrderData, TickData, TradeData } from '../engine/types/common';
+
 import { Injectable } from '@nestjs/common';
 
-import { CtaTemplate } from './cta-template';
+import { CtaTemplate } from '../engine/cta-template';
+import { Direction, Interval, OrderStatus, OrderType } from '../engine/types/common';
+import { MarketDataService } from '../market-data/market-data.service';
 
 /**
  * 回测模式枚举
  */
 export enum BacktestingMode {
   BAR = 'bar', // K线回测
-  TICK = 'tick', // Tick回测
-}
-
-/**
- * 订单状态枚举
- */
-export enum OrderStatus {
-  ALLTRADED = 'alltraded',
-  CANCELLED = 'cancelled',
-  NOTTRADED = 'nottraded',
-  PARTTRADED = 'parttraded',
-  REJECTED = 'rejected',
-  SUBMITTING = 'submitting',
-}
-
-/**
- * 订单方向枚举
- */
-export enum Direction {
-  LONG = 'long',
-  SHORT = 'short',
-}
-
-/**
- * 订单类型枚举
- */
-export enum OrderType {
-  LIMIT = 'limit',
-  MARKET = 'market',
-  STOP = 'stop',
-}
-
-/**
- * K线数据接口
- */
-export interface BarData {
-  closePrice: number;
-  datetime: Date;
-  highPrice: number;
-  interval: string;
-  lowPrice: number;
-  openInterest?: number;
-  openPrice: number;
-  symbol: string;
-  volume: number;
-}
-
-/**
- * Tick数据接口
- */
-export interface TickData {
-  askPrice1: number;
-  askPrice2: number;
-  askPrice3: number;
-  askPrice4: number;
-  askPrice5: number;
-  askVolume1: number;
-  askVolume2: number;
-  askVolume3: number;
-  askVolume4: number;
-  askVolume5: number;
-  bidPrice1: number;
-  bidPrice2: number;
-  bidPrice3: number;
-  bidPrice4: number;
-  bidPrice5: number;
-  bidVolume1: number;
-  bidVolume2: number;
-  bidVolume3: number;
-  bidVolume4: number;
-  bidVolume5: number;
-  datetime: Date;
-  highPrice: number;
-  lastPrice: number;
-  lastVolume: number;
-  limit_down: number;
-  limit_up: number;
-  lowPrice: number;
-  name: string;
-  openPrice: number;
-  preClose: number;
-  symbol: string;
-  volume: number;
-}
-
-export interface OrderbookData {
-  asks: [string, string][];
-  bids: [string, string][];
-}
-
-/**
- * 订单数据接口
- */
-export interface OrderData {
-  direction: Direction;
-  exchange: string;
-  offset: string;
-  orderId: string;
-  price: number;
-  status: OrderStatus;
-  symbol: string;
-  time: Date;
-  traded: number;
-  type: OrderType;
-  volume: number;
-}
-
-/**
- * 成交数据接口
- */
-export interface TradeData {
-  direction: Direction;
-  exchange: string;
-  offset: string;
-  orderId: string;
-  price: number;
-  symbol: string;
-  time: Date;
-  tradeId: string;
-  volume: number;
-}
-
-/**
- * 持仓数据接口
- */
-export interface PositionData {
-  direction: Direction;
-  exchange: string;
-  frozen: number;
-  pnl: number;
-  price: number;
-  symbol: string;
-  volume: number;
-  ydVolume: number;
-}
-
-/**
- * 账户数据接口
- */
-export interface AccountData {
-  accountId: string;
-  balance: number;
-  frozen: number;
 }
 
 /**
@@ -164,7 +25,7 @@ export interface BacktestingResult {
   dailyTradeCount: number;
   dailyTurnover: number;
   endBalance: number;
-  endDate: Date;
+  endDate: string;
   lossDays: number;
   maxDrawdown: number;
   maxDrawdownPercent: number;
@@ -172,7 +33,7 @@ export interface BacktestingResult {
   returnDrawdownRatio: number;
   returnStd: number;
   sharpeRatio: number;
-  startDate: Date;
+  startDate: string;
   totalCommission: number;
   totalDays: number;
   totalNetPnl: number;
@@ -182,38 +43,53 @@ export interface BacktestingResult {
   totalTurnover: number;
 }
 
+export interface DailyResultItem {
+  closePrice: number;
+  commission: number;
+  date: Date;
+  holdingPnl: number;
+  netPnl: number;
+  preClosePrice: number;
+  slippage: number;
+  totalPnl: number;
+  tradeCount: number;
+  trades: TradeData[];
+  tradingPnl: number;
+  turnover: number;
+}
+
 /**
  * CTA回测引擎
  */
 @Injectable()
-export class BacktestingEngine {
+export class BacktestingService {
   private activeLimitOrders: Map<string, OrderData> = new Map();
   private activeStopOrders: Map<string, OrderData> = new Map();
 
   private bar: BarData;
   private capital: number = 1_000_000; // 初始资金
   private commission: number;
-  private dailyResults: Map<string, any> = new Map();
+  private dailyResults: Map<string, DailyResultItem> = new Map();
   private datetime: Date;
   private dts: Date[] = [];
-  private endDate: Date;
+  private endDate: string;
+
   private exchange: string;
-
   private historyData: (BarData | TickData)[] = [];
-  private interval: string;
+  private interval: Interval;
   private limitOrderCount: number = 0;
-  private limitOrders: Map<string, OrderData> = new Map();
 
+  private limitOrders: Map<string, OrderData> = new Map();
   private logs: string[] = [];
   private mockBars: BarData[] = [];
-  private mode: BacktestingMode = BacktestingMode.BAR;
 
+  private mode: BacktestingMode = BacktestingMode.BAR;
   private priceTick: number = 0; // 最小价格变动
   private rate: number = 0; // 手续费率
-  private size: number = 1; // 合约大小
 
+  private size: number = 1; // 合约大小
   private slippage: number = 0; // 滑点
-  private startDate: Date;
+  private startDate: string;
 
   private stopOrderCount: number = 0;
   private stopOrders: Map<string, OrderData> = new Map();
@@ -227,21 +103,20 @@ export class BacktestingEngine {
   private tradeCount: number = 0;
   private trades: TradeData[] = [];
 
-  constructor() {}
+  constructor(private readonly marketDataService: MarketDataService) {}
 
   /**
    * 添加策略
    */
   addStrategy<
     T extends new (
-      ctaEngine: BacktestingEngine,
+      ctaEngine: BacktestingService,
       strategyName: string,
       vtSymbol: string,
       setting: any,
     ) => CtaTemplate,
-  >(StrategyClass: T, strategyName: string, symbol: string, setting: any): void {
+  >(StrategyClass: T, strategyName: string, setting: any): void {
     this.StrategyClass = StrategyClass;
-    this.symbol = symbol;
     this.strategySetting = setting;
     this.strategy = new StrategyClass(this, strategyName, this.symbol, setting);
   }
@@ -391,42 +266,16 @@ export class BacktestingEngine {
   async loadData(): Promise<void> {
     this.output('开始加载历史数据');
 
-    if (this.mockBars.length > 0) {
-      this.historyData = this.mockBars;
-    } else {
-      if (this.mode === BacktestingMode.BAR) {
-        // 从数据库加载K线数据
-        // 这里需要根据实际的数据库结构来实现
-        // const bars = await this.prismaService.barData.findMany({
-        //   where: {
-        //     symbol: this.symbol,
-        //     interval: this.interval,
-        //     datetime: {
-        //       gte: this.startDate,
-        //       lte: this.endDate
-        //     }
-        //   },
-        //   orderBy: {
-        //     datetime: 'asc'
-        //   }
-        // });
-        // this.historyData = bars;
-      } else {
-        // 从数据库加载Tick数据
-        // const ticks = await this.prismaService.tickData.findMany({
-        //   where: {
-        //     symbol: this.symbol,
-        //     datetime: {
-        //       gte: this.startDate,
-        //       lte: this.endDate
-        //     }
-        //   },
-        //   orderBy: {
-        //     datetime: 'asc'
-        //   }
-        // });
-        // this.historyData = ticks;
-      }
+    if (this.mode === BacktestingMode.BAR) {
+      // 从数据库加载K线数据
+      // 这里需要根据实际的数据库结构来实现
+      const bars = await this.marketDataService.getBars({
+        symbol: this.symbol,
+        interval: this.interval,
+        start: this.startDate,
+        end: this.endDate,
+      });
+      this.historyData = bars;
     }
 
     this.output(`历史数据加载完成，数据量：${this.historyData.length}`);
@@ -435,7 +284,7 @@ export class BacktestingEngine {
   /**
    * 运行回测
    */
-  async runBacktesting(): Promise<void> {
+  runBacktesting(): void {
     this.output('开始运行回测');
 
     if (!this.strategy) {
@@ -543,19 +392,14 @@ export class BacktestingEngine {
   }
 
   /**
-   * 设置合约信息
-   */
-  setContract(symbol: string, exchange: string, interval: string = '1m'): void {
-    this.symbol = symbol;
-    this.exchange = exchange;
-    this.interval = interval;
-  }
-
-  /**
    * 设置回测结束日期
    */
-  setEndDate(endDate: Date | string): void {
-    this.endDate = typeof endDate === 'string' ? new Date(endDate) : endDate;
+  setEndDate(endDate: string): void {
+    this.endDate = endDate;
+  }
+
+  setInterval(interval: Interval) {
+    this.interval = interval;
   }
 
   setMockBars(mockData: BarData[]) {
@@ -593,8 +437,15 @@ export class BacktestingEngine {
   /**
    * 设置回测开始日期
    */
-  setStartDate(startDate: Date | string): void {
-    this.startDate = typeof startDate === 'string' ? new Date(startDate) : startDate;
+  setStartDate(startDate: string): void {
+    this.startDate = startDate;
+  }
+
+  /**
+   * 设置回测模式
+   */
+  setSymbol(symbol: string): void {
+    this.symbol = symbol;
   }
 
   /**
@@ -610,8 +461,8 @@ export class BacktestingEngine {
     this.output('='.repeat(50));
     this.output('回测结果');
     this.output('='.repeat(50));
-    this.output(`开始日期：\t${result.startDate.toISOString().split('T')[0]}`);
-    this.output(`结束日期：\t${result.endDate.toISOString().split('T')[0]}`);
+    this.output(`开始日期：\t${result.startDate}`);
+    this.output(`结束日期：\t${result.endDate}`);
     this.output(`总交易日：\t${result.totalDays}`);
     this.output(`盈利交易日：\t${result.profitDays}`);
     this.output(`亏损交易日：\t${result.lossDays}`);
@@ -668,10 +519,10 @@ export class BacktestingEngine {
     let shortBestPrice: number;
 
     if (this.mode === BacktestingMode.BAR) {
-      longCrossPrice = this.bar.lowPrice;
-      shortCrossPrice = this.bar.highPrice;
-      longBestPrice = this.bar.openPrice;
-      shortBestPrice = this.bar.openPrice;
+      longCrossPrice = this.bar.low;
+      shortCrossPrice = this.bar.high;
+      longBestPrice = this.bar.open;
+      shortBestPrice = this.bar.open;
     } else {
       longCrossPrice = this.tick.askPrice1;
       shortCrossPrice = this.tick.bidPrice1;
@@ -748,10 +599,10 @@ export class BacktestingEngine {
     let shortBestPrice: number;
 
     if (this.mode === BacktestingMode.BAR) {
-      longCrossPrice = this.bar.highPrice;
-      shortCrossPrice = this.bar.lowPrice;
-      longBestPrice = this.bar.openPrice;
-      shortBestPrice = this.bar.openPrice;
+      longCrossPrice = this.bar.high;
+      shortCrossPrice = this.bar.low;
+      longBestPrice = this.bar.open;
+      shortBestPrice = this.bar.open;
     } else {
       longCrossPrice = this.tick.lastPrice;
       shortCrossPrice = this.tick.lastPrice;
@@ -801,12 +652,12 @@ export class BacktestingEngine {
    */
   private newBar(bar: BarData): void {
     this.bar = bar;
-    this.datetime = bar.datetime;
+    this.datetime = new Date(bar.timestamp);
 
     this.crossLimitOrder();
     this.crossStopOrder();
     this.strategy.onBar(bar);
-    this.updateDailyClose(bar.closePrice);
+    this.updateDailyClose(bar.close);
   }
 
   /**
@@ -853,6 +704,6 @@ export class BacktestingEngine {
       });
     }
 
-    this.dailyResults.get(date).closePrice = price;
+    this.dailyResults.get(date)!.closePrice = price;
   }
 }

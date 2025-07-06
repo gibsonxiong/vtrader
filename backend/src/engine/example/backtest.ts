@@ -1,5 +1,5 @@
 import { BacktestingEngine, BacktestingMode } from '../backtesting-engine';
-import { DataLoaderFactory, DataSourceType, MockDataGenerator } from '../data-loader';
+// import { DataLoaderFactory, DataSourceType } from '../data-loader';
 import { DoubleMaStrategy } from '../strategies/double-ma-strategy';
 
 /**
@@ -16,77 +16,77 @@ export class BacktestExample {
   /**
    * CSV数据回测示例
    */
-  public async runCsvDataExample(): Promise<void> {
-    console.log('=== CSV数据回测示例 ===\n');
+  // public async runCsvDataExample(): Promise<void> {
+  //   console.log('=== CSV数据回测示例 ===\n');
 
-    try {
-      // 重置引擎
-      this.engine = new BacktestingEngine();
+  //   try {
+  //     // 重置引擎
+  //     this.engine = new BacktestingEngine();
 
-      // 1. 设置回测参数
-      this.engine.setStartDate(new Date('2023-01-01'));
-      this.engine.setEndDate(new Date('2023-12-31'));
-      this.engine.setCapital(50_000);
-      this.engine.setCommission(0.0002);
-      this.engine.setSlippage(0.0001);
-      this.engine.setSize(1);
-      this.engine.setPriceTick(0.01);
-      this.engine.setBacktestingMode(BacktestingMode.BAR);
+  //     // 1. 设置回测参数
+  //     this.engine.setStartDate(new Date('2023-01-01'));
+  //     this.engine.setEndDate(new Date('2023-12-31'));
+  //     this.engine.setCapital(50_000);
+  //     this.engine.setCommission(0.0002);
+  //     this.engine.setSlippage(0.0001);
+  //     this.engine.setSize(1);
+  //     this.engine.setPriceTick(0.01);
+  //     this.engine.setBacktestingMode(BacktestingMode.BAR);
 
-      // 2. 配置CSV数据加载器
-      const dataConfig = {
-        symbol: 'AAPL',
-        startDate: new Date('2023-01-01'),
-        endDate: new Date('2023-12-31'),
-        interval: '1d',
-        sourceType: DataSourceType.CSV,
-        sourcePath: './data/AAPL_2023.csv', // 示例CSV文件路径
-      };
+  //     // 2. 配置CSV数据加载器
+  //     const dataConfig = {
+  //       symbol: 'AAPL',
+  //       startDate: new Date('2023-01-01'),
+  //       endDate: new Date('2023-12-31'),
+  //       interval: Interval.DAILY,
+  //       sourceType: DataSourceType.CSV,
+  //       sourcePath: './data/AAPL_2023.csv', // 示例CSV文件路径
+  //     };
 
-      const csvConfig = {
-        delimiter: ',',
-        hasHeader: true,
-        dateFormat: 'YYYY-MM-DD',
-        columns: {
-          datetime: 0,
-          open: 1,
-          high: 2,
-          low: 3,
-          close: 4,
-          volume: 5,
-        },
-      };
+  //     const csvConfig = {
+  //       delimiter: ',',
+  //       hasHeader: true,
+  //       dateFormat: 'YYYY-MM-DD',
+  //       columns: {
+  //         datetime: 0,
+  //         open: 1,
+  //         high: 2,
+  //         low: 3,
+  //         close: 4,
+  //         volume: 5,
+  //       },
+  //     };
 
-      // 3. 创建数据加载器
-      const dataLoader = DataLoaderFactory.createLoader(dataConfig, { csvConfig });
+  //     // 3. 创建数据加载器
+  //     const dataLoader = DataLoaderFactory.createLoader(dataConfig, { csvConfig });
 
-      // 4. 加载数据
-      console.log('正在从CSV文件加载数据...');
-      const barData = await dataLoader.loadBars();
-      console.log(`从CSV加载了 ${barData.length} 条K线数据`);
+  //     // 4. 加载数据
+  //     console.log('正在从CSV文件加载数据...');
+  //     const barData = await dataLoader.loadBars();
+  //     console.log(`从CSV加载了 ${barData.length} 条K线数据`);
 
-      this.engine.setMockBars(barData);
+  //     this.engine.setMockBars(barData);
 
-      // 5. 添加策略
-      const strategyName = 'DoubleMaStrategy_CSV';
-      const strategySetting = {
-        fastWindow: 5,
-        slowWindow: 15,
-        fixedSize: 1,
-      };
+  //     // 5. 添加策略
+  //     const strategyName = 'DoubleMaStrategy_CSV';
+  //     const strategySetting = {
+  //       fastWindow: 5,
+  //       slowWindow: 15,
+  //       fixedSize: 1,
+  //     };
 
-      this.engine.addStrategy(DoubleMaStrategy, strategyName, dataConfig.symbol, strategySetting);
+  //     this.engine.addStrategy(DoubleMaStrategy, strategyName, dataConfig.symbol, strategySetting);
 
-      // 6. 运行回测
-      console.log('\n开始运行回测...');
-      const result = this.engine.runBacktesting();
+  //     // 6. 运行回测
+  //     console.log('\n开始运行回测...');
+  //     const result = this.engine.runBacktesting();
 
-      // 7. 分析结果
-      this.engine.showBacktestingResult();
-    } catch (error) {
-      console.error('CSV回测运行失败:', error);
-    }
-  }
+  //     // 7. 分析结果
+  //     this.engine.showBacktestingResult();
+  //   } catch (error) {
+  //     console.error('CSV回测运行失败:', error);
+  //   }
+  // }
 
   /**
    * 运行双均线策略回测示例
@@ -109,18 +109,9 @@ export class BacktestExample {
 
       // 2. 生成模拟数据
       const symbol = 'BTCUSDT';
-      const startDate = new Date('2021-01-01');
-      const endDate = new Date('2024-12-31');
-      const interval = '1m';
-
-      console.log('正在生成模拟数据...');
-      const mockData = MockDataGenerator.generateBars(symbol, startDate, endDate, interval, 30_000);
-      console.log(`生成了 ${mockData.length} 条K线数据`);
 
       // 3. 加载数据到引擎
-      this.engine.setMockBars(mockData);
-      this.engine.loadData();
-      console.log('数据加载完成');
+      await this.engine.loadData();
 
       // 4. 添加策略
       const strategyName = 'DoubleMaStrategy';

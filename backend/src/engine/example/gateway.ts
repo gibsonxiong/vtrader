@@ -1,8 +1,5 @@
-import {
-  BinanceLinearGateway,
-  Exchange,
-  GatewaySettings,
-} from '../gateways/binance-linear-gateway';
+import { BinanceLinearGateway, GatewaySettings } from '../gateways/binance-linear';
+import { Exchange } from '../types/common';
 
 const gateway = new BinanceLinearGateway();
 

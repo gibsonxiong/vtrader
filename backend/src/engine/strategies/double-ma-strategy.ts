@@ -1,5 +1,6 @@
-import { BacktestingEngine, BarData } from '../backtesting-engine';
-import { CtaTemplate, TechnicalIndicators } from '../cta-template';
+import type { BarData } from '../types/common';
+
+import { Broker, CtaTemplate, TechnicalIndicators } from '../cta-template';
 
 /**
  * 双均线策略
@@ -29,8 +30,8 @@ export class DoubleMaStrategy extends CtaTemplate {
   // 数据缓存
   private closeData: number[] = [];
 
-  constructor(ctaEngine: BacktestingEngine, strategyName: string, vtSymbol: string, setting: any) {
-    super(ctaEngine, strategyName, vtSymbol, setting);
+  constructor(broker: Broker, strategyName: string, vtSymbol: string, setting: any) {
+    super(broker, strategyName, vtSymbol, setting);
   }
 
   /**
@@ -42,7 +43,7 @@ export class DoubleMaStrategy extends CtaTemplate {
     this.slowMa1 = this.slowMa;
 
     // 添加新的收盘价
-    this.closeData.push(bar.closePrice);
+    this.closeData.push(bar.close);
 
     // 保持数据长度不超过慢速均线周期的2倍
     if (this.closeData.length > this.slowWindow * 2) {
@@ -58,7 +59,7 @@ export class DoubleMaStrategy extends CtaTemplate {
       this.slowMa = slowMaArray[slowMaArray.length - 1];
 
       // 执行交易逻辑
-      this.executeTrading();
+      this.executeTrading(bar);
     }
   }
 
@@ -91,7 +92,7 @@ export class DoubleMaStrategy extends CtaTemplate {
   /**
    * 执行交易逻辑
    */
-  private executeTrading(): void {
+  private executeTrading(bar: BarData): void {
     // 如果均线值无效，不执行交易
     if (!this.fastMa || !this.slowMa || !this.fastMa1 || !this.slowMa1) {
       return;
@@ -101,13 +102,13 @@ export class DoubleMaStrategy extends CtaTemplate {
     if (this.fastMa > this.slowMa && this.fastMa1 <= this.slowMa1) {
       // 如果当前有空头持仓，先平仓
       if (this.pos < 0) {
-        this.cover(0, Math.abs(this.pos));
+        this.cover(bar.close, Math.abs(this.pos));
         this.writeLog('平空仓');
       }
 
       // 如果没有多头持仓，开多仓
       if (this.pos === 0) {
-        this.buy(0, this.fixedSize);
+        this.buy(bar.close, this.fixedSize);
         this.writeLog('买入开仓');
       }
     }
@@ -116,13 +117,13 @@ export class DoubleMaStrategy extends CtaTemplate {
     else if (this.fastMa < this.slowMa && this.fastMa1 >= this.slowMa1) {
       // 如果当前有多头持仓，先平仓
       if (this.pos > 0) {
-        this.sell(0, this.pos);
+        this.sell(bar.close, this.pos);
         this.writeLog('平多仓');
       }
 
       // 如果没有空头持仓，开空仓
       if (this.pos === 0) {
-        this.short(0, this.fixedSize);
+        this.short(bar.close, this.fixedSize);
         this.writeLog('卖出开仓');
       }
     }

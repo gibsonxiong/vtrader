@@ -3,9 +3,6 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { AppModule } from './app.module';
 
-// import './backtesting/engine/example/backtest-example';
-import './backtesting/engine/example/gateway-expample';
-
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 

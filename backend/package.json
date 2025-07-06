@@ -28,6 +28,7 @@
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.10.1",
     "axios": "catalog:",
+    "dayjs": "catalog:",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "ws": "^8.18.3"

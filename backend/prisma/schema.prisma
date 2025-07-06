@@ -10,11 +10,26 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
 model Backtesting {
   id    Int     @default(autoincrement()) @id
   name String  @unique
+}
+
+model Bar {
+  id Int @default(autoincrement()) @id
+  symbol String
+  timestamp BigInt
+  open Decimal
+  high Decimal
+  low Decimal
+  close Decimal
+  volume Decimal
+  interval String
+  openInterest Decimal?
+
+  @@unique([symbol, timestamp, interval])
 }
