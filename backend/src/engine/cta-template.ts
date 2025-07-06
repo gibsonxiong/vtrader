@@ -1,10 +1,10 @@
-import { BarData, Direction, OrderData, TickData, TradeData } from './types/common';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData } from './types/common';
 
 export interface Broker {
   cancelOrder(orderId: string): void;
   cancelStopOrder(stopOrderId: string): void;
-  sendOrder(direction: Direction, offset: string, price: number, volume: number): string;
-  sendStopOrder(direction: Direction, offset: string, price: number, volume: number): string;
+  sendOrder(direction: Direction, offset: Offset, price: number, volume: number): string;
+  sendStopOrder(direction: Direction, offset: Offset, price: number, volume: number): string;
 }
 
 /**
@@ -48,9 +48,9 @@ export abstract class CtaTemplate {
   public _onTrade(trade: TradeData): void {
     // 更新持仓
     if (trade.direction === Direction.LONG) {
-      this.pos += trade.volume;
+      this.pos += trade.offset === Offset.OPEN ? trade.volume : -trade.volume;
     } else {
-      this.pos -= trade.volume;
+      this.pos += trade.offset === Offset.OPEN ? -trade.volume : trade.volume;
     }
 
     this.onTrade(trade);
@@ -133,38 +133,31 @@ export abstract class CtaTemplate {
   }
 
   /**
-   * 买入开仓
+   * 开-多仓
    */
   protected buy(price: number, volume: number): null | string {
-    return this.sendOrder(Direction.LONG, 'open', price, volume);
+    return this.sendOrder(Direction.LONG, Offset.OPEN, price, volume);
   }
 
   /**
-   * 撤销委托
-   */
-  protected cancelOrder(orderId: string): void {
-    this.broker.cancelOrder(orderId);
-  }
-
-  /**
-   * 撤销停止单
-   */
-  protected cancelStopOrder(stopOrderId: string): void {
-    this.broker.cancelStopOrder(stopOrderId);
-  }
-
-  /**
-   * 买入平仓
-   */
-  protected cover(price: number, volume: number): null | string {
-    return this.sendOrder(Direction.LONG, 'close', price, volume);
-  }
-
-  /**
-   * 卖出平仓
+   * 平-多仓
    */
   protected sell(price: number, volume: number): null | string {
-    return this.sendOrder(Direction.SHORT, 'close', price, volume);
+    return this.sendOrder(Direction.LONG, Offset.CLOSE, price, volume);
+  }
+
+  /**
+   * 开-空仓
+   */
+  protected short(price: number, volume: number): null | string {
+    return this.sendOrder(Direction.SHORT, Offset.OPEN, price, volume);
+  }
+
+  /**
+   * 平-空仓
+   */
+  protected cover(price: number, volume: number): null | string {
+    return this.sendOrder(Direction.SHORT, Offset.CLOSE, price, volume);
   }
 
   /**
@@ -172,7 +165,7 @@ export abstract class CtaTemplate {
    */
   protected sendOrder(
     direction: Direction,
-    offset: string,
+    offset: Offset,
     price: number,
     volume: number,
   ): null | string {
@@ -188,7 +181,7 @@ export abstract class CtaTemplate {
    */
   protected sendStopOrder(
     direction: Direction,
-    offset: string,
+    offset: Offset,
     price: number,
     volume: number,
   ): null | string {
@@ -200,10 +193,17 @@ export abstract class CtaTemplate {
   }
 
   /**
-   * 卖出开仓
+   * 撤销委托
    */
-  protected short(price: number, volume: number): null | string {
-    return this.sendOrder(Direction.SHORT, 'open', price, volume);
+  protected cancelOrder(orderId: string): void {
+    this.broker.cancelOrder(orderId);
+  }
+
+  /**
+   * 撤销停止单
+   */
+  protected cancelStopOrder(stopOrderId: string): void {
+    this.broker.cancelStopOrder(stopOrderId);
   }
 
   /**

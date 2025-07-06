@@ -1,10 +1,35 @@
-import type { BarData, OrderData, TickData, TradeData } from '../engine/types/common';
-
+import {
+  BarData,
+  Offset,
+  OrderData,
+  TickData,
+  TradeData,
+  Direction,
+  Interval,
+  OrderStatus,
+  OrderType,
+} from '../engine/types/common';
+import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
 import { CtaTemplate } from '../engine/cta-template';
-import { Direction, Interval, OrderStatus, OrderType } from '../engine/types/common';
 import { MarketDataService } from '../market-data/market-data.service';
+
+/**
+ * 回测设置接口
+ */
+export interface BacktestingSetting {
+  startDate: string;
+  endDate: string;
+  symbol: string;
+  interval: Interval;
+  capital: number;
+  commission: number;
+  slippage: number;
+  size: number;
+  priceTick: number;
+  mode: BacktestingMode;
+}
 
 /**
  * 回测模式枚举
@@ -106,6 +131,22 @@ export class BacktestingService {
   constructor(private readonly marketDataService: MarketDataService) {}
 
   /**
+   * 设置回测参数
+   */
+  setSetting(setting: BacktestingSetting): void {
+    this.startDate = setting.startDate;
+    this.endDate = setting.endDate;
+    this.symbol = setting.symbol;
+    this.interval = setting.interval;
+    this.capital = setting.capital;
+    this.commission = setting.commission;
+    this.slippage = setting.slippage;
+    this.size = setting.size;
+    this.priceTick = setting.priceTick;
+    this.mode = setting.mode;
+  }
+
+  /**
    * 添加策略
    */
   addStrategy<
@@ -119,95 +160,6 @@ export class BacktestingService {
     this.StrategyClass = StrategyClass;
     this.strategySetting = setting;
     this.strategy = new StrategyClass(this, strategyName, this.symbol, setting);
-  }
-
-  /**
-   * 计算回测结果
-   */
-  calculateResult(): BacktestingResult {
-    this.output('开始计算回测结果');
-
-    if (this.trades.length === 0) {
-      this.output('无交易记录');
-      throw new Error('无交易记录');
-    }
-
-    // 计算每日盈亏
-    this.calculateDailyResult();
-
-    // 计算统计指标
-    const results = [...this.dailyResults.values()];
-    const totalDays = results.length;
-    const profitDays = results.filter((r) => r.netPnl > 0).length;
-    const lossDays = results.filter((r) => r.netPnl < 0).length;
-
-    const totalNetPnl = results.reduce((sum, r) => sum + r.netPnl, 0);
-    const totalCommission = results.reduce((sum, r) => sum + r.commission, 0);
-    const totalSlippage = results.reduce((sum, r) => sum + r.slippage, 0);
-    const totalTurnover = results.reduce((sum, r) => sum + r.turnover, 0);
-    const totalTradeCount = results.reduce((sum, r) => sum + r.tradeCount, 0);
-
-    const endBalance = this.capital + totalNetPnl;
-    const totalReturn = totalNetPnl / this.capital;
-    const annualReturn = (totalReturn * 365) / totalDays;
-    const dailyReturn = totalReturn / totalDays;
-
-    // 计算最大回撤
-    let maxDrawdown = 0;
-    let maxDrawdownPercent = 0;
-    let peak = this.capital;
-
-    for (const result of results) {
-      const balance = this.capital + result.totalPnl;
-      if (balance > peak) {
-        peak = balance;
-      }
-
-      const drawdown = peak - balance;
-      const drawdownPercent = drawdown / peak;
-
-      if (drawdown > maxDrawdown) {
-        maxDrawdown = drawdown;
-      }
-
-      if (drawdownPercent > maxDrawdownPercent) {
-        maxDrawdownPercent = drawdownPercent;
-      }
-    }
-
-    // 计算夏普比率
-    const returns = results.map((r) => r.netPnl / this.capital);
-    const returnStd = this.calculateStd(returns);
-    const sharpeRatio = returnStd > 0 ? (dailyReturn / returnStd) * Math.sqrt(365) : 0;
-
-    const backtestingResult: BacktestingResult = {
-      startDate: this.startDate,
-      endDate: this.endDate,
-      totalDays,
-      profitDays,
-      lossDays,
-      endBalance,
-      maxDrawdown,
-      maxDrawdownPercent,
-      totalNetPnl,
-      dailyNetPnl: totalNetPnl / totalDays,
-      totalCommission,
-      dailyCommission: totalCommission / totalDays,
-      totalSlippage,
-      dailySlippage: totalSlippage / totalDays,
-      totalTurnover,
-      dailyTurnover: totalTurnover / totalDays,
-      totalTradeCount,
-      dailyTradeCount: totalTradeCount / totalDays,
-      totalReturn,
-      annualReturn,
-      dailyReturn,
-      returnStd,
-      sharpeRatio,
-      returnDrawdownRatio: maxDrawdown > 0 ? totalNetPnl / maxDrawdown : 0,
-    };
-
-    return backtestingResult;
   }
 
   /**
@@ -322,7 +274,7 @@ export class BacktestingService {
   /**
    * 发送限价单
    */
-  sendOrder(direction: Direction, offset: string, price: number, volume: number): string {
+  sendOrder(direction: Direction, offset: Offset, price: number, volume: number): string {
     const orderId = `${this.limitOrderCount}`;
     this.limitOrderCount++;
 
@@ -349,7 +301,7 @@ export class BacktestingService {
   /**
    * 发送停止单
    */
-  sendStopOrder(direction: Direction, offset: string, price: number, volume: number): string {
+  sendStopOrder(direction: Direction, offset: Offset, price: number, volume: number): string {
     const stopOrderId = `${this.stopOrderCount}`;
     this.stopOrderCount++;
 
@@ -371,142 +323,6 @@ export class BacktestingService {
     this.activeStopOrders.set(stopOrderId, stopOrder);
 
     return stopOrderId;
-  }
-
-  /**
-   * 设置回测模式
-   */
-  setBacktestingMode(mode: BacktestingMode): void {
-    this.mode = mode;
-  }
-
-  /**
-   * 设置初始资金
-   */
-  setCapital(capital: number): void {
-    this.capital = capital;
-  }
-
-  setCommission(commission: number) {
-    this.commission = commission;
-  }
-
-  /**
-   * 设置回测结束日期
-   */
-  setEndDate(endDate: string): void {
-    this.endDate = endDate;
-  }
-
-  setInterval(interval: Interval) {
-    this.interval = interval;
-  }
-
-  setMockBars(mockData: BarData[]) {
-    this.mockBars = mockData;
-  }
-
-  /**
-   * 设置最小价格变动
-   */
-  setPriceTick(priceTick: number): void {
-    this.priceTick = priceTick;
-  }
-
-  /**
-   * 设置手续费率
-   */
-  setRate(rate: number): void {
-    this.rate = rate;
-  }
-
-  /**
-   * 设置合约大小
-   */
-  setSize(size: number): void {
-    this.size = size;
-  }
-
-  /**
-   * 设置滑点
-   */
-  setSlippage(slippage: number): void {
-    this.slippage = slippage;
-  }
-
-  /**
-   * 设置回测开始日期
-   */
-  setStartDate(startDate: string): void {
-    this.startDate = startDate;
-  }
-
-  /**
-   * 设置回测模式
-   */
-  setSymbol(symbol: string): void {
-    this.symbol = symbol;
-  }
-
-  /**
-   * 显示回测结果
-   */
-  showBacktestingResult(): void {
-    const result = this.calculateResult();
-
-    if (!result) {
-      return;
-    }
-
-    this.output('='.repeat(50));
-    this.output('回测结果');
-    this.output('='.repeat(50));
-    this.output(`开始日期：\t${result.startDate}`);
-    this.output(`结束日期：\t${result.endDate}`);
-    this.output(`总交易日：\t${result.totalDays}`);
-    this.output(`盈利交易日：\t${result.profitDays}`);
-    this.output(`亏损交易日：\t${result.lossDays}`);
-    this.output('');
-    this.output(`起始资金：\t${this.capital.toFixed(2)}`);
-    this.output(`结束资金：\t${result.endBalance.toFixed(2)}`);
-    this.output(`总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`);
-    this.output(`年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`);
-    this.output(`最大回撤：\t${result.maxDrawdown.toFixed(2)}`);
-    this.output(`百分比最大回撤：\t${(result.maxDrawdownPercent * 100).toFixed(2)}%`);
-    this.output('');
-    this.output(`总盈亏：\t${result.totalNetPnl.toFixed(2)}`);
-    this.output(`总手续费：\t${result.totalCommission.toFixed(2)}`);
-    this.output(`总滑点：\t${result.totalSlippage.toFixed(2)}`);
-    this.output(`总成交金额：\t${result.totalTurnover.toFixed(2)}`);
-    this.output(`总成交笔数：\t${result.totalTradeCount}`);
-    this.output('');
-    this.output(`日均盈亏：\t${result.dailyNetPnl.toFixed(2)}`);
-    this.output(`日均手续费：\t${result.dailyCommission.toFixed(2)}`);
-    this.output(`日均滑点：\t${result.dailySlippage.toFixed(2)}`);
-    this.output(`日均成交金额：\t${result.dailyTurnover.toFixed(2)}`);
-    this.output(`日均成交笔数：\t${result.dailyTradeCount.toFixed(2)}`);
-    this.output('');
-    this.output(`日均收益率：\t${(result.dailyReturn * 100).toFixed(2)}%`);
-    this.output(`收益标准差：\t${(result.returnStd * 100).toFixed(2)}%`);
-    this.output(`夏普比率：\t${result.sharpeRatio.toFixed(2)}`);
-    this.output(`收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`);
-  }
-
-  /**
-   * 计算每日结果
-   */
-  private calculateDailyResult(): void {
-    // 实现每日盈亏计算逻辑
-    // 这里需要根据具体的交易记录来计算
-  }
-
-  /**
-   * 计算标准差
-   */
-  private calculateStd(values: number[]): number {
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
-    return Math.sqrt(variance);
   }
 
   /**
@@ -685,13 +501,27 @@ export class BacktestingService {
    * 更新每日收盘价
    */
   private updateDailyClose(price: number): void {
-    const date = this.datetime.toISOString().split('T')[0];
+    const date = dayjs(this.datetime).format('YYYY-MM-DD');
 
-    if (!this.dailyResults.has(date)) {
+    if (this.dailyResults.has(date)) {
+      // 更新当日收盘价
+      this.dailyResults.get(date)!.closePrice = price;
+    } else {
+      // 获取前一个交易日的收盘价作为当日的前收盘价
+      let preClosePrice = price; // 默认值
+      const existingDates = [...this.dailyResults.keys()].sort();
+      if (existingDates.length > 0) {
+        const lastDate = existingDates[existingDates.length - 1];
+        const lastResult = this.dailyResults.get(lastDate);
+        if (lastResult) {
+          preClosePrice = lastResult.closePrice;
+        }
+      }
+
       this.dailyResults.set(date, {
         date: new Date(date),
         closePrice: price,
-        preClosePrice: 0,
+        preClosePrice,
         trades: [],
         tradingPnl: 0,
         holdingPnl: 0,
@@ -703,7 +533,260 @@ export class BacktestingService {
         netPnl: 0,
       });
     }
+  }
 
-    this.dailyResults.get(date)!.closePrice = price;
+  /**
+   * 计算每日结果
+   */
+  private calculateDailyResult(): void {
+    // 按日期分组交易记录
+    const tradesByDate = new Map<string, TradeData[]>();
+
+    for (const trade of this.trades) {
+      const date = dayjs(trade.time).format('YYYY-MM-DD');
+      if (!tradesByDate.has(date)) {
+        tradesByDate.set(date, []);
+      }
+      tradesByDate.get(date)!.push(trade);
+    }
+
+    // 计算每日结果
+    let totalPnl = 0;
+    const dates = [...this.dailyResults.keys()].sort();
+
+    for (let i = 0; i < dates.length; i++) {
+      const date = dates[i];
+      const dailyResult = this.dailyResults.get(date)!;
+      const dayTrades = tradesByDate.get(date) || [];
+
+      // 设置前一日收盘价
+      if (i > 0) {
+        const prevDate = dates[i - 1];
+        const prevResult = this.dailyResults.get(prevDate)!;
+        dailyResult.preClosePrice = prevResult.closePrice;
+      } else {
+        // 第一天的前收盘价设为当天收盘价（假设无持仓盈亏）
+        dailyResult.preClosePrice = dailyResult.closePrice;
+      }
+
+      // 计算当日交易相关指标
+      dailyResult.trades = dayTrades;
+      dailyResult.tradeCount = dayTrades.length;
+
+      let tradingPnl = 0;
+      let commission = 0;
+      let slippage = 0;
+      let turnover = 0;
+
+      // 按交易配对计算盈亏（开仓-平仓配对）
+      const longTrades: TradeData[] = [];
+      const shortTrades: TradeData[] = [];
+
+      for (const trade of dayTrades) {
+        const tradeValue = trade.price * trade.volume * this.size;
+        turnover += tradeValue;
+
+        // 计算手续费
+        const tradeCommission = tradeValue * this.commission;
+        commission += tradeCommission;
+
+        // 计算滑点成本
+        const tradeSlippage = this.slippage * trade.volume * this.size;
+        slippage += tradeSlippage;
+
+        // 分类收集多空交易
+        if (trade.direction === Direction.LONG) {
+          longTrades.push(trade);
+        } else {
+          shortTrades.push(trade);
+        }
+      }
+
+      // 计算交易盈亏：简化处理，假设当日的多空交易可以配对
+      const minTradeCount = Math.min(longTrades.length, shortTrades.length);
+      for (let i = 0; i < minTradeCount; i++) {
+        const longTrade = longTrades[i];
+        const shortTrade = shortTrades[i];
+        // 多空配对盈亏：(卖出价 - 买入价) * 数量 * 合约大小
+        tradingPnl += (shortTrade.price - longTrade.price) * longTrade.volume * this.size;
+      }
+
+      // 计算持仓盈亏（基于收盘价变化）
+      const holdingPnl =
+        (dailyResult.closePrice - dailyResult.preClosePrice) * this.getNetPosition() * this.size;
+
+      // 更新每日结果
+      dailyResult.commission = commission;
+      dailyResult.slippage = slippage;
+      dailyResult.turnover = turnover;
+      dailyResult.tradingPnl = tradingPnl;
+      dailyResult.holdingPnl = holdingPnl;
+      dailyResult.netPnl = tradingPnl + holdingPnl - commission - slippage;
+
+      // 累计总盈亏
+      totalPnl += dailyResult.netPnl;
+      dailyResult.totalPnl = totalPnl;
+    }
+  }
+
+  /**
+   * 计算回测结果
+   */
+  calculateResult(output = false): BacktestingResult {
+    this.output('开始计算回测结果');
+
+    // if (this.trades.length === 0) {
+    //   this.output('无交易记录');
+    //   throw new Error('无交易记录');
+    // }
+
+    // 计算每日盈亏
+    this.calculateDailyResult();
+
+    // 计算统计指标
+    const results = [...this.dailyResults.values()];
+    const totalDays = results.length;
+    const profitDays = results.filter((r) => r.netPnl > 0).length;
+    const lossDays = results.filter((r) => r.netPnl < 0).length;
+
+    let totalNetPnl = 0;
+    let totalCommission = 0;
+    let totalSlippage = 0;
+    let totalTurnover = 0;
+    let totalTradeCount = 0;
+
+    results.forEach((result) => {
+      totalNetPnl += result.netPnl;
+      totalCommission += result.commission;
+      totalSlippage += result.slippage;
+      totalTurnover += result.turnover;
+      totalTradeCount += result.tradeCount;
+    });
+
+    const endBalance = this.capital + totalNetPnl;
+    const totalReturn = totalNetPnl / this.capital;
+    const annualReturn = (totalReturn * 365) / totalDays;
+    const dailyReturn = totalReturn / totalDays;
+
+    // 计算最大回撤
+    let maxDrawdown = 0;
+    let maxDrawdownPercent = 0;
+    let peak = this.capital;
+
+    for (const result of results) {
+      const balance = this.capital + result.totalPnl;
+      if (balance > peak) {
+        peak = balance;
+      }
+
+      const drawdown = peak - balance;
+      const drawdownPercent = drawdown / peak;
+
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+      }
+
+      if (drawdownPercent > maxDrawdownPercent) {
+        maxDrawdownPercent = drawdownPercent;
+      }
+    }
+
+    // 计算夏普比率
+    const returns = results.map((r) => r.netPnl / this.capital);
+    const returnStd = this.calculateStd(returns);
+    const sharpeRatio = returnStd > 0 ? (dailyReturn / returnStd) * Math.sqrt(365) : 0;
+
+    const backtestingResult: BacktestingResult = {
+      startDate: this.startDate,
+      endDate: this.endDate,
+      totalDays,
+      profitDays,
+      lossDays,
+      endBalance,
+      maxDrawdown,
+      maxDrawdownPercent,
+      totalNetPnl,
+      dailyNetPnl: totalNetPnl / totalDays,
+      totalCommission,
+      dailyCommission: totalCommission / totalDays,
+      totalSlippage,
+      dailySlippage: totalSlippage / totalDays,
+      totalTurnover,
+      dailyTurnover: totalTurnover / totalDays,
+      totalTradeCount,
+      dailyTradeCount: totalTradeCount / totalDays,
+      totalReturn,
+      annualReturn,
+      dailyReturn,
+      returnStd,
+      sharpeRatio,
+      returnDrawdownRatio: maxDrawdown > 0 ? totalNetPnl / maxDrawdown : 0,
+    };
+
+    if (output) {
+      this.outputBacktestingResult(backtestingResult);
+    }
+
+    return backtestingResult;
+  }
+
+  /**
+   * 显示回测结果
+   */
+  outputBacktestingResult(result: BacktestingResult): void {
+    if (!result) {
+      return;
+    }
+
+    this.output('='.repeat(50));
+    this.output('回测结果');
+    this.output('='.repeat(50));
+    this.output(`开始日期：\t${result.startDate}`);
+    this.output(`结束日期：\t${result.endDate}`);
+    this.output(`总交易日：\t${result.totalDays}`);
+    this.output(`盈利交易日：\t${result.profitDays}`);
+    this.output(`亏损交易日：\t${result.lossDays}`);
+    this.output('');
+    this.output(`起始资金：\t${this.capital.toFixed(2)}`);
+    this.output(`结束资金：\t${result.endBalance.toFixed(2)}`);
+    this.output(`总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`);
+    this.output(`年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`);
+    this.output(`最大回撤：\t${result.maxDrawdown.toFixed(2)}`);
+    this.output(`最大回撤百分比：\t${(result.maxDrawdownPercent * 100).toFixed(2)}%`);
+    this.output('');
+    this.output(`总盈亏：\t${result.totalNetPnl.toFixed(2)}`);
+    this.output(`总手续费：\t${result.totalCommission.toFixed(2)}`);
+    this.output(`总滑点：\t${result.totalSlippage.toFixed(2)}`);
+    this.output(`总成交金额：\t${result.totalTurnover.toFixed(2)}`);
+    this.output(`总成交笔数：\t${result.totalTradeCount}`);
+    this.output('');
+    this.output(`日均盈亏：\t${result.dailyNetPnl.toFixed(2)}`);
+    this.output(`日均手续费：\t${result.dailyCommission.toFixed(2)}`);
+    this.output(`日均滑点：\t${result.dailySlippage.toFixed(2)}`);
+    this.output(`日均成交金额：\t${result.dailyTurnover.toFixed(2)}`);
+    this.output(`日均成交笔数：\t${result.dailyTradeCount.toFixed(2)}`);
+    this.output(`日均收益率：\t${(result.dailyReturn * 100).toFixed(2)}%`);
+    this.output('');
+    this.output(`收益标准差：\t${(result.returnStd * 100).toFixed(2)}%`);
+    this.output(`夏普比率：\t${result.sharpeRatio.toFixed(2)}`);
+    this.output(`收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`);
+  }
+
+  /**
+   * 获取当前净持仓
+   */
+  private getNetPosition(): number {
+    // 简化实现：假设所有交易都是单位数量
+    // 实际应该根据具体的持仓管理逻辑计算
+    return Math.abs(this.strategy.pos);
+  }
+
+  /**
+   * 计算标准差
+   */
+  private calculateStd(values: number[]): number {
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
+    return Math.sqrt(variance);
   }
 }

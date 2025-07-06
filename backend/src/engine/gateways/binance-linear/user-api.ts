@@ -3,7 +3,7 @@ import type { BinanceLinearGateway } from './index';
 
 import * as WebSocket from 'ws';
 
-import { Direction, Exchange, OrderType } from '../../types/common';
+import { Direction, Exchange, Offset, OrderType } from '../../types/common';
 import {
   DIRECTION_BINANCE2VT,
   REAL_USER_HOST,
@@ -119,7 +119,7 @@ export class UserApi {
       orderId: data.c,
       type: data.o === 'LIMIT' ? OrderType.LIMIT : OrderType.MARKET,
       direction: DIRECTION_BINANCE2VT[data.S],
-      offset: data.ps === 'LONG' ? 'open' : 'close',
+      offset: data.ps === 'LONG' ? Offset.OPEN : Offset.CLOSE,
       price: Number.parseFloat(data.p),
       volume: Number.parseFloat(data.q),
       traded: Number.parseFloat(data.z),
@@ -137,7 +137,7 @@ export class UserApi {
         orderId: data.c,
         tradeId: data.t.toString(),
         direction: DIRECTION_BINANCE2VT[data.S],
-        offset: data.ps === 'LONG' ? 'open' : 'close',
+        offset: data.ps === 'LONG' ? Offset.OPEN : Offset.CLOSE,
         price: Number.parseFloat(data.L),
         volume: Number.parseFloat(data.l),
         time: new Date(data.T),

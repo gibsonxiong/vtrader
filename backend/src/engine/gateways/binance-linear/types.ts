@@ -1,4 +1,4 @@
-import type { Direction, Exchange, Interval, OrderType } from '../../types/common';
+import type { Direction, Exchange, Interval, Offset, OrderType } from '../../types/common';
 
 /**
  * 订阅请求接口
@@ -14,7 +14,7 @@ export interface SubscribeRequest {
 export interface OrderRequest {
   direction: Direction;
   exchange: Exchange;
-  offset?: string;
+  offset?: Offset;
   price?: number;
   reference?: string;
   symbol: string;

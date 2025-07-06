@@ -1,4 +1,4 @@
-import type { BarData } from '../types/common';
+import type { BarData, OrderData, TradeData } from '../types/common';
 
 import { Broker, CtaTemplate, TechnicalIndicators } from '../cta-template';
 
@@ -77,16 +77,18 @@ export class DoubleMaStrategy extends CtaTemplate {
   /**
    * 委托状态更新
    */
-  public onOrder(order: any): void {
-    this.writeLog(`委托更新: ${order.orderId} ${order.direction} ${order.volume} ${order.status}`);
+  public onOrder(order: OrderData): void {
+    //   this.writeLog(`[委托更新] 订单Id：${order.orderId} 方向：${order.direction} ${order.offset} 价格：${order.price} 数量：${order.volume} 状态：${order.status}`);
   }
 
   /**
    * 成交信息更新
    */
-  public onTrade(trade): void {
-    this.writeLog(`成交信息: ${trade.tradeId} ${trade.direction} ${trade.volume} ${trade.price}`);
-    this.writeLog(`当前持仓: ${this.pos}`);
+  public onTrade(trade: TradeData): void {
+    this.writeLog(
+      `[成交信息] 成交Id：${trade.orderId} 方向：${trade.direction} ${trade.offset} 价格：${trade.price} 数量：${trade.volume}`,
+    );
+    this.writeLog(`[当前持仓] ${this.pos}`);
   }
 
   /**
@@ -103,13 +105,13 @@ export class DoubleMaStrategy extends CtaTemplate {
       // 如果当前有空头持仓，先平仓
       if (this.pos < 0) {
         this.cover(bar.close, Math.abs(this.pos));
-        this.writeLog('平空仓');
+        this.writeLog('平-空仓');
       }
 
       // 如果没有多头持仓，开多仓
-      if (this.pos === 0) {
+      else if (this.pos === 0) {
         this.buy(bar.close, this.fixedSize);
-        this.writeLog('买入开仓');
+        this.writeLog('开-多仓');
       }
     }
 
@@ -118,13 +120,13 @@ export class DoubleMaStrategy extends CtaTemplate {
       // 如果当前有多头持仓，先平仓
       if (this.pos > 0) {
         this.sell(bar.close, this.pos);
-        this.writeLog('平多仓');
+        this.writeLog('平-多仓');
       }
 
       // 如果没有空头持仓，开空仓
-      if (this.pos === 0) {
+      else if (this.pos === 0) {
         this.short(bar.close, this.fixedSize);
-        this.writeLog('卖出开仓');
+        this.writeLog('开-空仓');
       }
     }
   }

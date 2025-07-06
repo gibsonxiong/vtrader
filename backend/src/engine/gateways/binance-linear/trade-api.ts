@@ -2,7 +2,7 @@ import type { BinanceLinearGateway } from './index';
 
 import * as WebSocket from 'ws';
 
-import { OrderData, OrderStatus } from '../../types/common';
+import { Offset, OrderData, OrderStatus } from '../../types/common';
 import { REAL_TRADE_HOST, TESTNET_TRADE_HOST } from './constants';
 import { CancelRequest, OrderRequest } from './types';
 
@@ -86,7 +86,7 @@ export class TradeApi {
       orderId,
       type: req.type,
       direction: req.direction,
-      offset: req.offset || 'open',
+      offset: req.offset || Offset.OPEN,
       price: req.price || 0,
       volume: req.volume,
       traded: 0,

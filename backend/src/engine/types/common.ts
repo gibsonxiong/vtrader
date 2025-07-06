@@ -19,6 +19,14 @@ export enum Direction {
 }
 
 /**
+ * 订单方向枚举
+ */
+export enum Offset {
+  OPEN = 'open',
+  CLOSE = 'close',
+}
+
+/**
  * 订单类型枚举
  */
 export enum OrderType {
@@ -91,7 +99,7 @@ export interface OrderbookData {
 export interface OrderData {
   direction: Direction;
   exchange: string;
-  offset: string;
+  offset: Offset;
   orderId: string;
   price: number;
   status: OrderStatus;
@@ -108,7 +116,7 @@ export interface OrderData {
 export interface TradeData {
   direction: Direction;
   exchange: string;
-  offset: string;
+  offset: Offset;
   orderId: string;
   price: number;
   symbol: string;

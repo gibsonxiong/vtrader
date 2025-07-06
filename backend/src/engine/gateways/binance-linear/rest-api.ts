@@ -26,8 +26,6 @@ export class RestApi {
   private client: AxiosInstance;
   private gateway: BinanceLinearGateway;
   private keepAliveCount: number = 0;
-  private orderCount: number = 1_000_000;
-  private orderPrefix: string = '';
   private server: string = '';
   private timeOffset: number = 0;
 
@@ -59,8 +57,6 @@ export class RestApi {
       //   protocol: 'http'
       // } : undefined,
     });
-
-    this.orderPrefix = new Date().toISOString().slice(2, 16).replaceAll(/[-T:]/g, '');
 
     // 查询服务器时间
     await this.queryTime();
@@ -186,7 +182,6 @@ export class RestApi {
       }
     }
 
-    // Remove the unclosed kline
     if (history[history.length - 1]?.timestamp === dayjs(req.end).valueOf()) {
       history.pop();
     }
