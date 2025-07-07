@@ -1,22 +1,22 @@
-import type { BinanceLinearGateway } from './index';
+import type { BinanceLinearBroker } from './index';
 
 import * as WebSocket from 'ws';
 
 import { BarData, Interval, TickData } from '../../types/common';
 import { REAL_DATA_HOST, TESTNET_DATA_HOST } from './constants';
-import { SubscribeRequest } from './types';
+import { SubscribeRequest } from '../../types/broker';
 
 /**
  * 市场数据API客户端
  */
 export class MdApi {
-  private gateway: BinanceLinearGateway;
+  private broker: BinanceLinearBroker;
   private klineStream: boolean = false;
   private subscriptions: Set<string> = new Set();
   private ws: null | WebSocket = null;
 
-  constructor(gateway: BinanceLinearGateway) {
-    this.gateway = gateway;
+  constructor(broker: BinanceLinearBroker) {
+    this.broker = broker;
   }
 
   /**
@@ -36,7 +36,7 @@ export class MdApi {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.on('open', () => {
-        this.gateway.writeLog('市场数据WebSocket连接成功');
+        this.broker.writeLog('市场数据WebSocket连接成功');
         resolve();
       });
 
@@ -45,12 +45,12 @@ export class MdApi {
       });
 
       this.ws.on('error', (error) => {
-        this.gateway.writeLog(`市场数据WebSocket错误: ${error}`);
+        this.broker.writeLog(`市场数据WebSocket错误: ${error}`);
         reject(error);
       });
 
       this.ws.on('close', () => {
-        this.gateway.writeLog('市场数据WebSocket连接关闭');
+        this.broker.writeLog('市场数据WebSocket连接关闭');
       });
     });
   }
@@ -69,9 +69,9 @@ export class MdApi {
    * 订阅市场数据
    */
   public subscribe(req: SubscribeRequest): void {
-    const contract = this.gateway.getContractBySymbol(req.symbol);
+    const contract = this.broker.getContractBySymbol(req.symbol);
     if (!contract) {
-      this.gateway.writeLog(`找不到合约: ${req.symbol}`);
+      this.broker.writeLog(`找不到合约: ${req.symbol}`);
       return;
     }
 
@@ -98,7 +98,7 @@ export class MdApi {
    * 处理深度数据
    */
   private onDepthData(data: any): void {
-    const contract = this.gateway.getContractByName(data.s);
+    const contract = this.broker.getContractByName(data.s);
     if (!contract) {
       return;
     }
@@ -141,14 +141,14 @@ export class MdApi {
       askVolume5: Number.parseFloat(asks[4]?.[1] || '0'),
     };
 
-    this.gateway.onTick(tick);
+    this.broker.onTick(tick);
   }
 
   /**
    * 处理K线数据
    */
   private onKlineData(data: any): void {
-    const contract = this.gateway.getContractByName(data.s);
+    const contract = this.broker.getContractByName(data.s);
     if (!contract) {
       return;
     }
@@ -170,7 +170,7 @@ export class MdApi {
       close: Number.parseFloat(kline.c),
     };
 
-    this.gateway.onBar(bar);
+    this.broker.onBar(bar);
   }
 
   /**
@@ -193,7 +193,7 @@ export class MdApi {
         }
       }
     } catch (error) {
-      this.gateway.writeLog(`解析市场数据消息失败: ${error}`);
+      this.broker.writeLog(`解析市场数据消息失败: ${error}`);
     }
   }
 
@@ -201,7 +201,7 @@ export class MdApi {
    * 处理Ticker数据
    */
   private onTickerData(data: any): void {
-    const contract = this.gateway.getContractByName(data.s);
+    const contract = this.broker.getContractByName(data.s);
     if (!contract) {
       return;
     }
@@ -241,7 +241,7 @@ export class MdApi {
       askVolume5: 0,
     };
 
-    this.gateway.onTick(tick);
+    this.broker.onTick(tick);
   }
 
   /**

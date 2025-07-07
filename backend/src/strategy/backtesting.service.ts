@@ -12,7 +12,7 @@ import {
 import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
-import { CtaTemplate } from '../engine/cta-template';
+import { Strategy } from './strategy';
 import { MarketDataService } from '../market-data/market-data.service';
 
 /**
@@ -24,7 +24,7 @@ export interface BacktestingSetting {
   symbol: string;
   interval: Interval;
   capital: number;
-  commission: number;
+  commissionRate: number;
   slippage: number;
   size: number;
   priceTick: number;
@@ -93,11 +93,9 @@ export class BacktestingService {
 
   private bar: BarData;
   private capital: number = 1_000_000; // 初始资金
-  private commission: number;
+
   private dailyResults: Map<string, DailyResultItem> = new Map();
   private datetime: Date;
-  private dts: Date[] = [];
-  private endDate: string;
 
   private exchange: string;
   private historyData: (BarData | TickData)[] = [];
@@ -106,19 +104,18 @@ export class BacktestingService {
 
   private limitOrders: Map<string, OrderData> = new Map();
   private logs: string[] = [];
-  private mockBars: BarData[] = [];
 
   private mode: BacktestingMode = BacktestingMode.BAR;
   private priceTick: number = 0; // 最小价格变动
-  private rate: number = 0; // 手续费率
-
+  private commissionRate: number;
   private size: number = 1; // 合约大小
   private slippage: number = 0; // 滑点
   private startDate: string;
+  private endDate: string;
 
   private stopOrderCount: number = 0;
   private stopOrders: Map<string, OrderData> = new Map();
-  private strategy: CtaTemplate;
+  private strategy: Strategy;
   private StrategyClass: any;
 
   private strategySetting: any;
@@ -139,7 +136,7 @@ export class BacktestingService {
     this.symbol = setting.symbol;
     this.interval = setting.interval;
     this.capital = setting.capital;
-    this.commission = setting.commission;
+    this.commissionRate = setting.commissionRate;
     this.slippage = setting.slippage;
     this.size = setting.size;
     this.priceTick = setting.priceTick;
@@ -155,11 +152,15 @@ export class BacktestingService {
       strategyName: string,
       vtSymbol: string,
       setting: any,
-    ) => CtaTemplate,
+    ) => Strategy,
   >(StrategyClass: T, strategyName: string, setting: any): void {
     this.StrategyClass = StrategyClass;
     this.strategySetting = setting;
     this.strategy = new StrategyClass(this, strategyName, this.symbol, setting);
+  }
+
+  calcCommission(price: number, volume: number): number {
+    return price * volume * this.commissionRate;
   }
 
   /**
@@ -389,7 +390,6 @@ export class BacktestingService {
       // 创建成交记录
       const trade: TradeData = {
         symbol: order.symbol,
-        exchange: order.exchange,
         orderId: order.orderId,
         tradeId: `${this.tradeCount}`,
         direction: order.direction,
@@ -397,6 +397,7 @@ export class BacktestingService {
         price: tradePrice,
         volume: order.volume,
         time: this.datetime,
+        commission: this.calcCommission(tradePrice, order.volume),
       };
 
       this.tradeCount++;
@@ -587,7 +588,7 @@ export class BacktestingService {
         turnover += tradeValue;
 
         // 计算手续费
-        const tradeCommission = tradeValue * this.commission;
+        const tradeCommission = tradeValue * this.commissionRate;
         commission += tradeCommission;
 
         // 计算滑点成本

@@ -1,4 +1,16 @@
-import type { Direction, Exchange, Interval, Offset, OrderType } from '../../types/common';
+import type { Direction, Exchange, Interval, Offset, OrderType } from '../types/common';
+
+/**
+ * 网关设置接口
+ */
+export interface GatewaySettings {
+  apiKey: string;
+  apiSecret: string;
+  klineStream: boolean;
+  proxyHost?: string;
+  proxyPort?: number;
+  server: 'REAL' | 'TESTNET';
+}
 
 /**
  * 订阅请求接口
@@ -39,16 +51,4 @@ export interface HistoryRequest {
   interval: Interval;
   start: string;
   symbol: string;
-}
-
-/**
- * 网关设置接口
- */
-export interface GatewaySettings {
-  apiKey: string;
-  apiSecret: string;
-  klineStream: boolean;
-  proxyHost?: string;
-  proxyPort?: number;
-  server: 'REAL' | 'TESTNET';
 }

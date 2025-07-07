@@ -114,15 +114,15 @@ export interface OrderData {
  * 成交数据接口
  */
 export interface TradeData {
-  direction: Direction;
-  exchange: string;
-  offset: Offset;
+  tradeId: string;
   orderId: string;
-  price: number;
+  direction: Direction;
+  offset: Offset;
   symbol: string;
   time: Date;
-  tradeId: string;
+  price: number;
   volume: number;
+  commission: number;
 }
 
 /**
@@ -130,7 +130,6 @@ export interface TradeData {
  */
 export interface PositionData {
   direction: Direction;
-  exchange: string;
   frozen: number;
   pnl: number;
   price: number;

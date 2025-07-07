@@ -1,9 +1,5 @@
 import type { ContractData } from '../../types/common';
 
-import { EventEmitter } from 'node:events';
-
-import { Injectable } from '@nestjs/common';
-
 import {
   AccountData,
   BarData,
@@ -23,16 +19,16 @@ import {
   HistoryRequest,
   OrderRequest,
   SubscribeRequest,
-} from './types';
+} from '../../types/broker';
 import { UserApi } from './user-api';
+import { Broker } from 'src/broker-manager/broker';
 
 /**
  * Binance线性合约网关
  */
-@Injectable()
-export class BinanceLinearGateway extends EventEmitter {
+export class BinanceLinearBroker extends Broker {
   public readonly exchange: Exchange = Exchange.BINANCE;
-  public readonly gatewayName: string = 'BINANCE_LINEAR';
+  public readonly brokerName: string = 'BINANCE_LINEAR';
 
   private mdApi: MdApi;
   private nameContractMap: Map<string, ContractData> = new Map();
@@ -54,7 +50,7 @@ export class BinanceLinearGateway extends EventEmitter {
   /**
    * 撤销订单
    */
-  public cancelOrder(req: CancelRequest): void {
+  public async cancelOrder(req: CancelRequest): Promise<void> {
     this.tradeApi.cancelOrder(req);
   }
 
@@ -192,16 +188,9 @@ export class BinanceLinearGateway extends EventEmitter {
    * 写入日志
    */
   public writeLog(msg: string): void {
-    console.log(`[${this.gatewayName}] ${msg}`);
+    console.log(`[${this.brokerName}] ${msg}`);
     this.emit('log', msg);
   }
 }
 
-// 导出所有组件
-export { MdApi } from './md-api';
-export { RestApi } from './rest-api';
-export { TradeApi } from './trade-api';
-export * from './types';
-export { UserApi } from './user-api';
-
-export default BinanceLinearGateway;
+export default BinanceLinearBroker;

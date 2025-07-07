@@ -1,5 +1,5 @@
 import type { ContractData } from '../../types/common';
-import type { BinanceLinearGateway } from './index';
+import type { BinanceLinearBroker } from './index';
 
 import * as crypto from 'node:crypto';
 
@@ -14,7 +14,7 @@ import {
   REAL_REST_HOST,
   TESTNET_REST_HOST,
 } from './constants';
-import { HistoryRequest } from './types';
+import { HistoryRequest } from '../../types/broker';
 
 /**
  * REST API客户端
@@ -24,13 +24,13 @@ export class RestApi {
   private apiKey: string = '';
   private apiSecret: string = '';
   private client: AxiosInstance;
-  private gateway: BinanceLinearGateway;
+  private broker: BinanceLinearBroker;
   private keepAliveCount: number = 0;
   private server: string = '';
   private timeOffset: number = 0;
 
-  constructor(gateway: BinanceLinearGateway) {
-    this.gateway = gateway;
+  constructor(broker: BinanceLinearBroker) {
+    this.broker = broker;
     this.client = axios.create();
   }
 
@@ -67,7 +67,7 @@ export class RestApi {
     // 启动用户数据流
     await this.startUserStream();
 
-    this.gateway.writeLog('REST API连接成功');
+    this.broker.writeLog('REST API连接成功');
   }
 
   /**
@@ -89,7 +89,7 @@ export class RestApi {
         listenKey: this.userStreamKey,
       });
     } catch (error) {
-      this.gateway.writeLog(`保持用户数据流失败: ${error}`);
+      this.broker.writeLog(`保持用户数据流失败: ${error}`);
     }
   }
 
@@ -101,7 +101,7 @@ export class RestApi {
     callback?: (bars: BarData[]) => void,
   ): Promise<BarData[]> {
     // Check if the contract exists
-    const contract = this.gateway.getContractBySymbol(req.symbol);
+    const contract = this.broker.getContractBySymbol(req.symbol);
     if (!contract) {
       return [];
     }
@@ -130,7 +130,7 @@ export class RestApi {
 
         if (!data || data.length === 0) {
           const msg = `未接收到K线历史数据，起始时间: ${startTime}`;
-          this.gateway.writeLog(msg);
+          this.broker.writeLog(msg);
           break;
         }
 
@@ -160,7 +160,7 @@ export class RestApi {
         }
 
         const msg = `K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`;
-        this.gateway.writeLog(msg);
+        this.broker.writeLog(msg);
 
         // Break the loop if the latest data received
         if (
@@ -177,7 +177,7 @@ export class RestApi {
         // Wait to meet request flow limit
         await new Promise((resolve) => setTimeout(resolve, 500));
       } catch (error) {
-        this.gateway.writeLog(`K线历史数据查询失败: ${error}`);
+        this.broker.writeLog(`K线历史数据查询失败: ${error}`);
         break;
       }
     }
@@ -233,12 +233,12 @@ export class RestApi {
           historyData: true,
         };
 
-        this.gateway.onContract(contract);
+        this.broker.onContract(contract);
       }
 
-      this.gateway.writeLog(`合约信息查询完成，共${data.symbols.length}个合约`);
+      this.broker.writeLog(`合约信息查询完成，共${data.symbols.length}个合约`);
     } catch (error) {
-      this.gateway.writeLog(`查询合约信息失败: ${error}`);
+      this.broker.writeLog(`查询合约信息失败: ${error}`);
       throw error;
     }
   }
@@ -252,9 +252,9 @@ export class RestApi {
       const serverTime = response.data.serverTime;
       const localTime = Date.now();
       this.timeOffset = localTime - serverTime;
-      this.gateway.writeLog(`服务器时间同步完成，偏移: ${this.timeOffset}ms`);
+      this.broker.writeLog(`服务器时间同步完成，偏移: ${this.timeOffset}ms`);
     } catch (error) {
-      this.gateway.writeLog(`查询服务器时间失败: ${error}`);
+      this.broker.writeLog(`查询服务器时间失败: ${error}`);
       throw error;
     }
   }
@@ -287,7 +287,7 @@ export class RestApi {
       const response = await this.client.request(config);
       return response.data;
     } catch (error) {
-      this.gateway.writeLog(`REST API请求失败: ${error}`);
+      this.broker.writeLog(`REST API请求失败: ${error}`);
       throw error;
     }
   }
@@ -316,9 +316,9 @@ export class RestApi {
     try {
       const response = await this.sendSignedRequest('POST', '/fapi/v1/listenKey');
       this.userStreamKey = response.listenKey;
-      this.gateway.writeLog('用户数据流启动成功');
+      this.broker.writeLog('用户数据流启动成功');
     } catch (error) {
-      this.gateway.writeLog(`启动用户数据流失败: ${error}`);
+      this.broker.writeLog(`启动用户数据流失败: ${error}`);
       throw error;
     }
   }

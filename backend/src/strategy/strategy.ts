@@ -1,6 +1,6 @@
-import { BarData, Direction, Offset, OrderData, TickData, TradeData } from './types/common';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData } from '../engine/types/common';
 
-export interface Broker {
+export interface StrategyEngie {
   cancelOrder(orderId: string): void;
   cancelStopOrder(stopOrderId: string): void;
   sendOrder(direction: Direction, offset: Offset, price: number, volume: number): string;
@@ -8,10 +8,9 @@ export interface Broker {
 }
 
 /**
- * CTA策略模板基类
- * 参考vnpy的CtaTemplate实现
+ * 策略模板基类
  */
-export abstract class CtaTemplate {
+export abstract class Strategy {
   // 策略作者
   public author: string = '';
 
@@ -27,12 +26,12 @@ export abstract class CtaTemplate {
   // 策略变量列表
 
   // 引擎和基本信息
-  protected broker: Broker;
+  protected broker: StrategyEngie;
   protected setting: any;
   protected strategyName: string;
   protected vtSymbol: string;
 
-  constructor(ctaEngine: Broker, strategyName: string, vtSymbol: string, setting: any) {
+  constructor(ctaEngine: StrategyEngie, strategyName: string, vtSymbol: string, setting: any) {
     this.broker = ctaEngine;
     this.strategyName = strategyName;
     this.vtSymbol = vtSymbol;
@@ -40,20 +39,6 @@ export abstract class CtaTemplate {
 
     // 从设置中更新参数
     this.updateSetting(setting);
-  }
-
-  /**
-   * 成交信息更新
-   */
-  public _onTrade(trade: TradeData): void {
-    // 更新持仓
-    if (trade.direction === Direction.LONG) {
-      this.pos += trade.offset === Offset.OPEN ? trade.volume : -trade.volume;
-    } else {
-      this.pos += trade.offset === Offset.OPEN ? -trade.volume : trade.volume;
-    }
-
-    this.onTrade(trade);
   }
 
   /**
@@ -79,9 +64,15 @@ export abstract class CtaTemplate {
   }
 
   /**
-   * K线数据更新
+   * 更新策略参数
    */
-  public onBar(bar: BarData): void {}
+  private updateSetting(setting: any): void {
+    for (const key in setting) {
+      if (this.parameters.includes(key)) {
+        (this as any)[key] = setting[key];
+      }
+    }
+  }
 
   /**
    * 策略初始化
@@ -89,13 +80,6 @@ export abstract class CtaTemplate {
   public onInit(): void {
     this.writeLog('策略初始化');
     this.inited = true;
-  }
-
-  /**
-   * 委托状态更新
-   */
-  public onOrder(order: OrderData): void {
-    // 默认实现，子类可以重写
   }
 
   /**
@@ -115,6 +99,25 @@ export abstract class CtaTemplate {
   }
 
   /**
+   * Tick数据更新
+   */
+  public onTick(tick: TickData): void {
+    // 子类可以重写
+  }
+
+  /**
+   * K线数据更新
+   */
+  public onBar(bar: BarData): void {}
+
+  /**
+   * 委托状态更新
+   */
+  public onOrder(order: OrderData): void {
+    // 默认实现，子类可以重写
+  }
+
+  /**
    * 停止单状态更新
    */
   public onStopOrder(stopOrder: OrderData): void {
@@ -122,10 +125,17 @@ export abstract class CtaTemplate {
   }
 
   /**
-   * Tick数据更新
+   * 成交信息更新
    */
-  public onTick(tick: TickData): void {
-    // 子类可以重写
+  public _onTrade(trade: TradeData): void {
+    // 更新持仓
+    if (trade.direction === Direction.LONG) {
+      this.pos += trade.offset === Offset.OPEN ? trade.volume : -trade.volume;
+    } else {
+      this.pos += trade.offset === Offset.OPEN ? -trade.volume : trade.volume;
+    }
+
+    this.onTrade(trade);
   }
 
   public onTrade(trade: TradeData): void {
@@ -210,18 +220,7 @@ export abstract class CtaTemplate {
    * 写入日志
    */
   protected writeLog(msg: string): void {
-    console.log(`[${this.strategyName}] ${msg}`);
-  }
-
-  /**
-   * 更新策略参数
-   */
-  private updateSetting(setting: any): void {
-    for (const key in setting) {
-      if (this.parameters.includes(key)) {
-        (this as any)[key] = setting[key];
-      }
-    }
+    console.log(`[${this.constructor.name}] ${msg}`);
   }
 }
 

@@ -1,10 +1,10 @@
-import type { BinanceLinearGateway } from './index';
+import type { BinanceLinearBroker } from './index';
 
 import * as WebSocket from 'ws';
 
 import { Offset, OrderData, OrderStatus } from '../../types/common';
+import { CancelRequest, OrderRequest } from '../../types/broker';
 import { REAL_TRADE_HOST, TESTNET_TRADE_HOST } from './constants';
-import { CancelRequest, OrderRequest } from './types';
 
 /**
  * 交易API客户端
@@ -12,13 +12,13 @@ import { CancelRequest, OrderRequest } from './types';
 export class TradeApi {
   private apiKey: string = '';
   private apiSecret: string = '';
-  private gateway: BinanceLinearGateway;
+  private broker: BinanceLinearBroker;
   private orderCount: number = 1_000_000;
   private server: string = '';
   private ws: null | WebSocket = null;
 
-  constructor(gateway: BinanceLinearGateway) {
-    this.gateway = gateway;
+  constructor(broker: BinanceLinearBroker) {
+    this.broker = broker;
   }
 
   /**
@@ -26,10 +26,10 @@ export class TradeApi {
    */
   public cancelOrder(req: CancelRequest): void {
     // 实现撤单逻辑
-    const order = this.gateway.getOrder(req.orderId);
+    const order = this.broker.getOrder(req.orderId);
     if (order) {
       order.status = OrderStatus.CANCELLED;
-      this.gateway.onOrder(order);
+      this.broker.onOrder(order);
     }
   }
 
@@ -53,7 +53,7 @@ export class TradeApi {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.on('open', () => {
-        this.gateway.writeLog('交易WebSocket连接成功');
+        this.broker.writeLog('交易WebSocket连接成功');
         resolve();
       });
 
@@ -62,12 +62,12 @@ export class TradeApi {
       });
 
       this.ws.on('error', (error) => {
-        this.gateway.writeLog(`交易WebSocket错误: ${error}`);
+        this.broker.writeLog(`交易WebSocket错误: ${error}`);
         reject(error);
       });
 
       this.ws.on('close', () => {
-        this.gateway.writeLog('交易WebSocket连接关闭');
+        this.broker.writeLog('交易WebSocket连接关闭');
       });
     });
   }
@@ -94,7 +94,7 @@ export class TradeApi {
       time: new Date(),
     };
 
-    this.gateway.onOrder(order);
+    this.broker.onOrder(order);
     return orderId;
   }
 
@@ -116,7 +116,7 @@ export class TradeApi {
       const msg = JSON.parse(data);
       // 处理不同类型的消息
     } catch (error) {
-      this.gateway.writeLog(`解析交易消息失败: ${error}`);
+      this.broker.writeLog(`解析交易消息失败: ${error}`);
     }
   }
 }

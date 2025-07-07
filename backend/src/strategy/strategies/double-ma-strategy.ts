@@ -1,12 +1,12 @@
-import type { BarData, OrderData, TradeData } from '../types/common';
-
-import { Broker, CtaTemplate, TechnicalIndicators } from '../cta-template';
+import type { BarData, OrderData, TradeData } from '../../engine/types/common';
+import { Strategy, TechnicalIndicators } from '../strategy';
+import type { StrategyEngie } from '../strategy';
 
 /**
  * 双均线策略
  * 参考vnpy的双均线策略实现
  */
-export class DoubleMaStrategy extends CtaTemplate {
+export default class DoubleMaStrategy extends Strategy {
   // 策略作者
   public author: string = 'VTrader';
 
@@ -30,8 +30,8 @@ export class DoubleMaStrategy extends CtaTemplate {
   // 数据缓存
   private closeData: number[] = [];
 
-  constructor(broker: Broker, strategyName: string, vtSymbol: string, setting: any) {
-    super(broker, strategyName, vtSymbol, setting);
+  constructor(engine: StrategyEngie, strategyName: string, vtSymbol: string, setting: any) {
+    super(engine, strategyName, vtSymbol, setting);
   }
 
   /**

@@ -1,21 +1,26 @@
 import { Injectable } from '@nestjs/common';
 
-import { DoubleMaStrategy } from './engine/strategies/double-ma-strategy';
+import DoubleMaStrategy from './strategy/strategies/double-ma-strategy';
 import { Interval } from './engine/types/common';
+import type { BarData, TradeData } from './engine/types/common';
 import { MarketDataService } from './market-data/market-data.service';
 import {
   BacktestingMode,
   BacktestingService,
   BacktestingSetting,
 } from './strategy/backtesting.service';
+import loadStrategyClasses from './load_strategy';
+import { BrokerManagerService } from './broker-manager/broker-manager.service';
 
 @Injectable()
 export class AppService {
   constructor(
     private readonly marketDataService: MarketDataService,
     private readonly backtestingService: BacktestingService,
+    private readonly brokerMgrService: BrokerManagerService,
   ) {
-    this.test3();
+    this.test2();
+    this.test5();
   }
 
   getHello(): string {
@@ -35,7 +40,7 @@ export class AppService {
 
   async test2(): Promise<void> {
     const count = await this.marketDataService.downloadBars({
-      start: '2025-01-01',
+      start: '2025-07-01',
       // end: '2025-05-02',
       interval: Interval.MINUTE_15,
       symbol: 'BTCUSDT:USDT',
@@ -52,7 +57,7 @@ export class AppService {
       symbol: 'BTCUSDT:USDT',
       interval: Interval.MINUTE_15,
       capital: 50_000,
-      commission: 0.0002,
+      commissionRate: 0.0002,
       slippage: 0.0001,
       size: 1,
       priceTick: 0.01,
@@ -85,5 +90,34 @@ export class AppService {
 
     // 6. 分析结果
     this.backtestingService.calculateResult(true);
+  }
+
+  async test4(): Promise<void> {
+    const maps = await loadStrategyClasses();
+    const strategyName = 'DoubleMaStrategy';
+    const StrategyClass = maps[strategyName];
+    const strategy = new StrategyClass({} as any, 'BTCUSDT:USDT', Interval.MINUTE_15, {
+      fastWindow: 10,
+      slowWindow: 20,
+      fixedSize: 1,
+    });
+
+    console.log(strategy);
+  }
+
+  async test5(): Promise<void> {
+    const broker = await this.brokerMgrService.getBroker();
+
+    const contract = broker.getContractBySymbol('BTCUSDT:USDT');
+
+    console.log('contract', contract);
+
+    broker.on('bar', (bar: BarData) => {
+      console.log(bar);
+    });
+
+    broker.on('trade', (trade: TradeData) => {
+      console.log(trade);
+    });
   }
 }

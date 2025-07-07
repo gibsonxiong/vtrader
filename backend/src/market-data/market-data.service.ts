@@ -1,11 +1,10 @@
-import type { GatewaySettings } from 'src/engine/gateways/binance-linear';
 import type { BarData } from 'src/engine/types/common';
 
 import { Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
-import BinanceLinearGateway from 'src/engine/gateways/binance-linear';
 import { Interval } from 'src/engine/types/common';
 import { PrismaService } from 'src/prisma.service';
+import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 
 export interface GetBarsParams {
   end?: string;
@@ -23,23 +22,17 @@ export interface DownloadParams {
 
 @Injectable()
 export class MarketDataService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private brokerMgr: BrokerManagerService,
+  ) {}
 
   async downloadBars(params: DownloadParams): Promise<number> {
     const { start, end, interval, symbol } = params;
 
-    const gateway = new BinanceLinearGateway();
-    const settings: GatewaySettings = {
-      apiKey: '1c5f9a2a4faefc20b1c0667cecef2ce8998f68133540b1c87a72886d6d3adac6',
-      apiSecret: '3ca3aa8dd892bdecd473fa419fc50658826ff5a864c52956ad670652416a26de',
-      server: 'TESTNET',
-      klineStream: true,
-      proxyHost: '127.0.0.1',
-      proxyPort: 7890,
-    };
-    await gateway.connect(settings);
+    const broker = await this.brokerMgr.getBroker();
 
-    const bars = await gateway.queryHistory({
+    const bars = await broker.queryHistory({
       start,
       end,
       interval,

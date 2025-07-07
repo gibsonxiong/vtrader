@@ -1,5 +1,5 @@
 import type { AccountData, OrderData, PositionData, TradeData } from '../../types/common';
-import type { BinanceLinearGateway } from './index';
+import type { BinanceLinearBroker } from './index';
 
 import * as WebSocket from 'ws';
 
@@ -15,11 +15,11 @@ import {
  * 用户数据API客户端
  */
 export class UserApi {
-  private gateway: BinanceLinearGateway;
+  private broker: BinanceLinearBroker;
   private ws: null | WebSocket = null;
 
-  constructor(gateway: BinanceLinearGateway) {
-    this.gateway = gateway;
+  constructor(broker: BinanceLinearBroker) {
+    this.broker = broker;
   }
 
   /**
@@ -31,7 +31,7 @@ export class UserApi {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.on('open', () => {
-        this.gateway.writeLog('用户数据WebSocket连接成功');
+        this.broker.writeLog('用户数据WebSocket连接成功');
         resolve();
       });
 
@@ -40,12 +40,12 @@ export class UserApi {
       });
 
       this.ws.on('error', (error) => {
-        this.gateway.writeLog(`用户数据WebSocket错误: ${error}`);
+        this.broker.writeLog(`用户数据WebSocket错误: ${error}`);
         reject(error);
       });
 
       this.ws.on('close', () => {
-        this.gateway.writeLog('用户数据WebSocket连接关闭');
+        this.broker.writeLog('用户数据WebSocket连接关闭');
       });
     });
   }
@@ -72,14 +72,13 @@ export class UserApi {
         frozen: Number.parseFloat(balance.cw) - Number.parseFloat(balance.wb),
       };
 
-      this.gateway.onAccount(account);
+      this.broker.onAccount(account);
     }
 
     // 处理持仓更新
     for (const position of data.P) {
       const pos: PositionData = {
         symbol: position.s,
-        exchange: Exchange.BINANCE.toString(),
         direction: position.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
         volume: Math.abs(Number.parseFloat(position.pa)),
         price: Number.parseFloat(position.ep),
@@ -88,7 +87,7 @@ export class UserApi {
         ydVolume: 0,
       };
 
-      this.gateway.onPosition(pos);
+      this.broker.onPosition(pos);
     }
   }
 
@@ -105,7 +104,7 @@ export class UserApi {
         this.onAccountUpdate(msg.a);
       }
     } catch (error) {
-      this.gateway.writeLog(`解析用户数据消息失败: ${error}`);
+      this.broker.writeLog(`解析用户数据消息失败: ${error}`);
     }
   }
 
@@ -127,13 +126,12 @@ export class UserApi {
       time: new Date(data.T),
     };
 
-    this.gateway.onOrder(order);
+    this.broker.onOrder(order);
 
     // 如果有成交，推送成交数据
     if (Number.parseFloat(data.l) > 0) {
       const trade: TradeData = {
         symbol: data.s,
-        exchange: Exchange.BINANCE.toString(),
         orderId: data.c,
         tradeId: data.t.toString(),
         direction: DIRECTION_BINANCE2VT[data.S],
@@ -141,9 +139,10 @@ export class UserApi {
         price: Number.parseFloat(data.L),
         volume: Number.parseFloat(data.l),
         time: new Date(data.T),
+        commission: Number.parseFloat(data.n),
       };
 
-      this.gateway.onTrade(trade);
+      this.broker.onTrade(trade);
     }
   }
 }
