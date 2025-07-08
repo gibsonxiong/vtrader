@@ -1,4 +1,5 @@
-import { BarData, Direction, Offset, OrderData, TickData, TradeData } from '../engine/types/common';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData } from '../types/common';
+import { LongHolding, ShortHolding } from './holding';
 
 export interface StrategyEngie {
   cancelOrder(orderId: string): void;
@@ -14,28 +15,26 @@ export abstract class Strategy {
   // 策略作者
   public author: string = '';
 
-  // 策略实例变量
+  public longHolding: LongHolding = new LongHolding();
+  public shortHolding: ShortHolding = new ShortHolding();
+
   public inited: boolean = false;
+  public trading: boolean = false;
 
   // 策略参数列表
   public parameters: string[] = [];
-  public pos: number = 0;
-
-  public trading: boolean = false;
   public variables: string[] = [];
   // 策略变量列表
 
   // 引擎和基本信息
   protected broker: StrategyEngie;
-  protected setting: any;
   protected strategyName: string;
-  protected vtSymbol: string;
+  protected symbol: string;
 
-  constructor(ctaEngine: StrategyEngie, strategyName: string, vtSymbol: string, setting: any) {
+  constructor(ctaEngine: StrategyEngie, strategyName: string, symbol: string, setting: any) {
     this.broker = ctaEngine;
     this.strategyName = strategyName;
-    this.vtSymbol = vtSymbol;
-    this.setting = setting;
+    this.symbol = symbol;
 
     // 从设置中更新参数
     this.updateSetting(setting);
@@ -129,11 +128,8 @@ export abstract class Strategy {
    */
   public _onTrade(trade: TradeData): void {
     // 更新持仓
-    if (trade.direction === Direction.LONG) {
-      this.pos += trade.offset === Offset.OPEN ? trade.volume : -trade.volume;
-    } else {
-      this.pos += trade.offset === Offset.OPEN ? -trade.volume : trade.volume;
-    }
+    this.longHolding.update(trade);
+    this.shortHolding.update(trade);
 
     this.onTrade(trade);
   }

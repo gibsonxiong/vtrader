@@ -1,4 +1,4 @@
-import type { BarData, OrderData, TradeData } from '../../engine/types/common';
+import type { BarData, OrderData, TradeData } from '../../types/common';
 import { Strategy, TechnicalIndicators } from '../strategy';
 import type { StrategyEngie } from '../strategy';
 
@@ -88,7 +88,9 @@ export default class DoubleMaStrategy extends Strategy {
     this.writeLog(
       `[成交信息] 成交Id：${trade.orderId} 方向：${trade.direction} ${trade.offset} 价格：${trade.price} 数量：${trade.volume}`,
     );
-    this.writeLog(`[当前持仓] ${this.pos}`);
+    this.writeLog(`[当前持仓]`);
+    this.writeLog(`多仓持仓：${this.longHolding}`);
+    this.writeLog(`空仓持仓：${this.shortHolding}`);
   }
 
   /**
@@ -103,30 +105,30 @@ export default class DoubleMaStrategy extends Strategy {
     // 金叉：快线上穿慢线，买入开仓
     if (this.fastMa > this.slowMa && this.fastMa1 <= this.slowMa1) {
       // 如果当前有空头持仓，先平仓
-      if (this.pos < 0) {
-        this.cover(bar.close, Math.abs(this.pos));
-        this.writeLog('平-空仓');
+      if (this.shortHolding.pos > 0) {
+        this.cover(bar.close, this.shortHolding.pos);
+        this.writeLog(`平-空仓 ${bar.close}`);
       }
 
       // 如果没有多头持仓，开多仓
-      else if (this.pos === 0) {
+      if (this.longHolding.pos === 0) {
         this.buy(bar.close, this.fixedSize);
-        this.writeLog('开-多仓');
+        this.writeLog(`开-多仓 ${bar.close}`);
       }
     }
 
     // 死叉：快线下穿慢线，卖出开仓
     else if (this.fastMa < this.slowMa && this.fastMa1 >= this.slowMa1) {
       // 如果当前有多头持仓，先平仓
-      if (this.pos > 0) {
-        this.sell(bar.close, this.pos);
-        this.writeLog('平-多仓');
+      if (this.longHolding.pos > 0) {
+        this.sell(bar.close, this.longHolding.pos);
+        this.writeLog(`平-多仓 ${bar.close}`);
       }
 
       // 如果没有空头持仓，开空仓
-      else if (this.pos === 0) {
+      if (this.shortHolding.pos === 0) {
         this.short(bar.close, this.fixedSize);
-        this.writeLog('开-空仓');
+        this.writeLog(`开-空仓 ${bar.close}`);
       }
     }
   }

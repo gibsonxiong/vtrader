@@ -2,8 +2,8 @@ import type { BinanceLinearBroker } from './index';
 
 import * as WebSocket from 'ws';
 
-import { Offset, OrderData, OrderStatus } from '../../types/common';
-import { CancelRequest, OrderRequest } from '../../types/broker';
+import { Offset, OrderData, OrderStatus } from '../../../types/common';
+import { CancelRequest, OrderRequest } from '../../../types/broker';
 import { REAL_TRADE_HOST, TESTNET_TRADE_HOST } from './constants';
 
 /**

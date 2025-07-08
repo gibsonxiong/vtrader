@@ -5,7 +5,7 @@ import type {
   HistoryRequest,
   OrderRequest,
   SubscribeRequest,
-} from 'src/engine/types/broker';
+} from 'src/types/broker';
 import type {
   AccountData,
   BarData,
@@ -14,7 +14,7 @@ import type {
   PositionData,
   TickData,
   TradeData,
-} from 'src/engine/types/common';
+} from 'src/types/common';
 
 export abstract class Broker extends EventEmitter {
   constructor() {

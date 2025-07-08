@@ -7,7 +7,7 @@ const readdir = promisify(fs.readdir);
 const stat = promisify(fs.stat);
 
 export default async function loadStrategyClasses() {
-  const dirPath = path.resolve(path.dirname(), './strategy/strategies');
+  const dirPath = path.resolve(__dirname, './strategy/strategies');
   const strategyClassMap: Record<
     string,
     new (...args: ConstructorParameters<typeof Strategy>) => Strategy

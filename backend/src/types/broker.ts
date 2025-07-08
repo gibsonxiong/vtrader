@@ -1,4 +1,4 @@
-import type { Direction, Exchange, Interval, Offset, OrderType } from '../types/common';
+import type { Direction, Exchange, Interval, Offset, OrderType } from './common';
 
 /**
  * 网关设置接口

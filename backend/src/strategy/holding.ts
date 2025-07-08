@@ -1,5 +1,5 @@
-import { Direction, Offset } from 'src/engine/types/common';
-import type { TradeData } from 'src/engine/types/common';
+import { Direction, Offset } from 'src/types/common';
+import type { TradeData } from 'src/types/common';
 
 export abstract class Holding {
   public pos: number = 0;
@@ -27,6 +27,11 @@ export abstract class Holding {
       const tradingPnl = this._calcTradingPnl(trade);
       this.pos -= trade.volume;
       this.tradingPnl += tradingPnl;
+
+      if (this.pos === 0) {
+        this.price = 0;
+        this.initPrice = 0;
+      }
     }
   }
 
@@ -34,9 +39,15 @@ export abstract class Holding {
 
   abstract _calcTradingPnl(trade: TradeData): number;
 
+  abstract getHoldingPnl(newPrice: number): number;
+
   abstract getPnl(newPrice: number): number;
 
   abstract getRoi(newPrice: number): number;
+
+  public toString(): string {
+    return `均价: ${this.price}, 持仓: ${this.pos}, 交易盈亏: ${this.tradingPnl}`;
+  }
 }
 
 export class LongHolding extends Holding {
@@ -48,9 +59,14 @@ export class LongHolding extends Holding {
     return (trade.price - this.price) * trade.volume;
   }
 
-  getPnl(newPrice: number): number {
-    return this.tradingPnl + (newPrice - this.price) * this.pos;
+  getHoldingPnl(newPrice: number): number {
+    return (newPrice - this.price) * this.pos;
   }
+
+  getPnl(newPrice: number): number {
+    return this.tradingPnl + this.getHoldingPnl(newPrice);
+  }
+
   getRoi(newPrice: number): number {
     if (this.initPrice === 0) return 0;
     return (newPrice - this.price) / this.price;
@@ -66,8 +82,12 @@ export class ShortHolding extends Holding {
     return (this.price - trade.price) * trade.volume;
   }
 
+  getHoldingPnl(newPrice: number): number {
+    return (this.price - newPrice) * this.pos;
+  }
+
   getPnl(newPrice: number): number {
-    return this.tradingPnl + (this.price - newPrice) * this.pos;
+    return this.tradingPnl + this.getHoldingPnl(newPrice);
   }
 
   getRoi(newPrice: number): number {

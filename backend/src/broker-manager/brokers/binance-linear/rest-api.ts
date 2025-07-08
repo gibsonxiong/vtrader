@@ -1,4 +1,4 @@
-import type { ContractData } from '../../types/common';
+import type { ContractData } from '../../../types/common';
 import type { BinanceLinearBroker } from './index';
 
 import * as crypto from 'node:crypto';
@@ -6,7 +6,7 @@ import * as crypto from 'node:crypto';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 
-import { BarData, Exchange, Interval, Product } from '../../types/common';
+import { BarData, Exchange, Interval, Product } from '../../../types/common';
 import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
@@ -14,7 +14,7 @@ import {
   REAL_REST_HOST,
   TESTNET_REST_HOST,
 } from './constants';
-import { HistoryRequest } from '../../types/broker';
+import { HistoryRequest } from '../../../types/broker';
 
 /**
  * REST API客户端

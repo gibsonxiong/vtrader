@@ -1,4 +1,4 @@
-import type { ContractData } from '../../types/common';
+import type { ContractData } from '../../../types/common';
 
 import {
   AccountData,
@@ -9,7 +9,7 @@ import {
   PositionData,
   TickData,
   TradeData,
-} from '../../types/common';
+} from '../../../types/common';
 import { MdApi } from './md-api';
 import { RestApi } from './rest-api';
 import { TradeApi } from './trade-api';
@@ -19,7 +19,7 @@ import {
   HistoryRequest,
   OrderRequest,
   SubscribeRequest,
-} from '../../types/broker';
+} from '../../../types/broker';
 import { UserApi } from './user-api';
 import { Broker } from 'src/broker-manager/broker';
 

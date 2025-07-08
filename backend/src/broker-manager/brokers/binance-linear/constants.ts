@@ -1,6 +1,6 @@
 import type dayjs from 'dayjs';
 
-import { Direction, Interval, OrderStatus, Product } from '../../types/common';
+import { Direction, Interval, OrderStatus, Product } from '../../../types/common';
 
 // 服务器地址常量
 export const REAL_REST_HOST = 'https://fapi.binance.com';

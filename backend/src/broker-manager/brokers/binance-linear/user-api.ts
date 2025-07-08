@@ -1,9 +1,9 @@
-import type { AccountData, OrderData, PositionData, TradeData } from '../../types/common';
+import type { AccountData, OrderData, PositionData, TradeData } from '../../../types/common';
 import type { BinanceLinearBroker } from './index';
 
 import * as WebSocket from 'ws';
 
-import { Direction, Exchange, Offset, OrderType } from '../../types/common';
+import { Direction, Exchange, Offset, OrderType } from '../../../types/common';
 import {
   DIRECTION_BINANCE2VT,
   REAL_USER_HOST,

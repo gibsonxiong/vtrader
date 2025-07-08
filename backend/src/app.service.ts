@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import DoubleMaStrategy from './strategy/strategies/double-ma-strategy';
-import { Interval } from './engine/types/common';
-import type { BarData, TradeData } from './engine/types/common';
+import { Interval } from './types/common';
+import type { BarData, TradeData } from './types/common';
 import { MarketDataService } from './market-data/market-data.service';
 import {
   BacktestingMode,
@@ -19,8 +19,8 @@ export class AppService {
     private readonly backtestingService: BacktestingService,
     private readonly brokerMgrService: BrokerManagerService,
   ) {
-    this.test2();
-    this.test5();
+    this.test3();
+    // this.test5();
   }
 
   getHello(): string {
@@ -53,12 +53,11 @@ export class AppService {
     // 1. 设置回测参数
     const setting: BacktestingSetting = {
       startDate: '2025-01-01',
-      endDate: '2025-01-02',
+      endDate: '2025-01-03',
       symbol: 'BTCUSDT:USDT',
       interval: Interval.MINUTE_15,
-      capital: 50_000,
-      commissionRate: 0.0002,
-      slippage: 0.0001,
+      capital: 100_000,
+      commissionRate: 0.0005,
       size: 1,
       priceTick: 0.01,
       mode: BacktestingMode.BAR,

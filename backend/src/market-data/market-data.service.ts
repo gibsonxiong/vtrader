@@ -1,8 +1,8 @@
-import type { BarData } from 'src/engine/types/common';
+import type { BarData } from 'src/types/common';
 
 import { Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
-import { Interval } from 'src/engine/types/common';
+import { Interval } from 'src/types/common';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 

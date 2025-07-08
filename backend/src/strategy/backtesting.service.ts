@@ -8,7 +8,7 @@ import {
   Interval,
   OrderStatus,
   OrderType,
-} from '../engine/types/common';
+} from '../types/common';
 import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
@@ -25,7 +25,6 @@ export interface BacktestingSetting {
   interval: Interval;
   capital: number;
   commissionRate: number;
-  slippage: number;
   size: number;
   priceTick: number;
   mode: BacktestingMode;
@@ -46,7 +45,6 @@ export interface BacktestingResult {
   dailyCommission: number;
   dailyNetPnl: number;
   dailyReturn: number;
-  dailySlippage: number;
   dailyTradeCount: number;
   dailyTurnover: number;
   endBalance: number;
@@ -63,24 +61,30 @@ export interface BacktestingResult {
   totalDays: number;
   totalNetPnl: number;
   totalReturn: number;
-  totalSlippage: number;
   totalTradeCount: number;
   totalTurnover: number;
 }
 
 export interface DailyResultItem {
-  closePrice: number;
-  commission: number;
-  date: Date;
+  date: string;
   holdingPnl: number;
   netPnl: number;
-  preClosePrice: number;
-  slippage: number;
-  totalPnl: number;
+  accumPnl: number;
   tradeCount: number;
   trades: TradeData[];
   tradingPnl: number;
+  commission: number;
   turnover: number;
+}
+
+export interface Snapshot {
+  date: string;
+  price: number;
+  pnl: number;
+  minPnl: number;
+  maxPnl: number;
+  tradingPnl: number;
+  holdingPnl: number;
 }
 
 /**
@@ -94,6 +98,7 @@ export class BacktestingService {
   private bar: BarData;
   private capital: number = 1_000_000; // 初始资金
 
+  private snapshots: Map<string, Snapshot> = new Map();
   private dailyResults: Map<string, DailyResultItem> = new Map();
   private datetime: Date;
 
@@ -109,7 +114,6 @@ export class BacktestingService {
   private priceTick: number = 0; // 最小价格变动
   private commissionRate: number;
   private size: number = 1; // 合约大小
-  private slippage: number = 0; // 滑点
   private startDate: string;
   private endDate: string;
 
@@ -137,7 +141,6 @@ export class BacktestingService {
     this.interval = setting.interval;
     this.capital = setting.capital;
     this.commissionRate = setting.commissionRate;
-    this.slippage = setting.slippage;
     this.size = setting.size;
     this.priceTick = setting.priceTick;
     this.mode = setting.mode;
@@ -375,17 +378,9 @@ export class BacktestingService {
       this.activeLimitOrders.delete(orderId);
 
       // 计算成交价格
-      let tradePrice: number;
-      tradePrice = longCross
+      const tradePrice = longCross
         ? Math.min(order.price, longBestPrice)
         : Math.max(order.price, shortBestPrice);
-
-      // 滑点计算
-      if (order.direction === Direction.LONG) {
-        tradePrice += this.slippage;
-      } else {
-        tradePrice -= this.slippage;
-      }
 
       // 创建成交记录
       const trade: TradeData = {
@@ -474,7 +469,8 @@ export class BacktestingService {
     this.crossLimitOrder();
     this.crossStopOrder();
     this.strategy.onBar(bar);
-    this.updateDailyClose(bar.close);
+    // this.updateDailyClose(bar.close);
+    this.snapshot(bar.close);
   }
 
   /**
@@ -487,7 +483,8 @@ export class BacktestingService {
     this.crossLimitOrder();
     this.crossStopOrder();
     this.strategy.onTick(tick);
-    this.updateDailyClose(tick.lastPrice);
+    // this.updateDailyClose(tick.lastPrice);
+    this.snapshot(tick.lastPrice);
   }
 
   /**
@@ -498,43 +495,67 @@ export class BacktestingService {
     this.logs.push(msg);
   }
 
-  /**
-   * 更新每日收盘价
-   */
-  private updateDailyClose(price: number): void {
+  snapshot(price: number): void {
     const date = dayjs(this.datetime).format('YYYY-MM-DD');
+    const tradingPnl = this.strategy.longHolding.tradingPnl + this.strategy.shortHolding.tradingPnl;
+    const holdingPnl =
+      this.strategy.longHolding.getHoldingPnl(price) +
+      this.strategy.shortHolding.getHoldingPnl(price);
+    const pnl = tradingPnl + holdingPnl;
 
-    if (this.dailyResults.has(date)) {
+    if (this.snapshots.has(date)) {
       // 更新当日收盘价
-      this.dailyResults.get(date)!.closePrice = price;
-    } else {
-      // 获取前一个交易日的收盘价作为当日的前收盘价
-      let preClosePrice = price; // 默认值
-      const existingDates = [...this.dailyResults.keys()].sort();
-      if (existingDates.length > 0) {
-        const lastDate = existingDates[existingDates.length - 1];
-        const lastResult = this.dailyResults.get(lastDate);
-        if (lastResult) {
-          preClosePrice = lastResult.closePrice;
-        }
+      const snapshot = this.snapshots.get(date)!;
+
+      snapshot.price = price;
+      snapshot.pnl = pnl;
+      snapshot.holdingPnl = holdingPnl;
+      snapshot.tradingPnl = tradingPnl;
+
+      // 更新最小最大PNL
+      if (pnl < snapshot.minPnl) {
+        snapshot.minPnl = pnl;
       }
 
-      this.dailyResults.set(date, {
-        date: new Date(date),
-        closePrice: price,
-        preClosePrice,
-        trades: [],
-        tradingPnl: 0,
-        holdingPnl: 0,
-        totalPnl: 0,
-        commission: 0,
-        slippage: 0,
-        turnover: 0,
-        tradeCount: 0,
-        netPnl: 0,
+      if (pnl > snapshot.maxPnl) {
+        snapshot.maxPnl = pnl;
+      }
+    } else {
+      this.snapshots.set(date, {
+        date,
+        price,
+        pnl,
+        minPnl: pnl,
+        maxPnl: pnl,
+        tradingPnl,
+        holdingPnl,
       });
     }
   }
+
+  /**
+   * 更新每日收盘价
+   */
+  // private updateDailyClose(price: number): void {
+  //   const date = dayjs(this.datetime).format('YYYY-MM-DD');
+
+  //   if (this.dailyResults.has(date)) {
+  //     // 更新当日收盘价
+  //     this.dailyResults.get(date)!.closePrice = price;
+  //   } else {
+  //     this.dailyResults.set(date, {
+  //       date: date,
+  //       trades: [],
+  //       tradingPnl: 0,
+  //       holdingPnl: 0,
+  //       accumPnl: 0,
+  //       commission: 0,
+  //       turnover: 0,
+  //       tradeCount: 0,
+  //       netPnl: 0,
+  //     });
+  //   }
+  // }
 
   /**
    * 计算每日结果
@@ -551,82 +572,50 @@ export class BacktestingService {
       tradesByDate.get(date)!.push(trade);
     }
 
-    // 计算每日结果
-    let totalPnl = 0;
-    const dates = [...this.dailyResults.keys()].sort();
+    // 计算累计收益
+    let accumPnl = 0;
+    let prevSnapshot: Snapshot | null = null;
+    const dates = [...this.snapshots.keys()].sort();
 
-    for (let i = 0; i < dates.length; i++) {
-      const date = dates[i];
-      const dailyResult = this.dailyResults.get(date)!;
-      const dayTrades = tradesByDate.get(date) || [];
-
-      // 设置前一日收盘价
-      if (i > 0) {
-        const prevDate = dates[i - 1];
-        const prevResult = this.dailyResults.get(prevDate)!;
-        dailyResult.preClosePrice = prevResult.closePrice;
-      } else {
-        // 第一天的前收盘价设为当天收盘价（假设无持仓盈亏）
-        dailyResult.preClosePrice = dailyResult.closePrice;
-      }
-
-      // 计算当日交易相关指标
-      dailyResult.trades = dayTrades;
-      dailyResult.tradeCount = dayTrades.length;
-
-      let tradingPnl = 0;
+    for (const date of dates) {
       let commission = 0;
-      let slippage = 0;
       let turnover = 0;
-
-      // 按交易配对计算盈亏（开仓-平仓配对）
-      const longTrades: TradeData[] = [];
-      const shortTrades: TradeData[] = [];
+      const snapshot = this.snapshots.get(date)!;
+      const dayTrades = tradesByDate.get(date) || [];
 
       for (const trade of dayTrades) {
         const tradeValue = trade.price * trade.volume * this.size;
         turnover += tradeValue;
 
         // 计算手续费
-        const tradeCommission = tradeValue * this.commissionRate;
-        commission += tradeCommission;
-
-        // 计算滑点成本
-        const tradeSlippage = this.slippage * trade.volume * this.size;
-        slippage += tradeSlippage;
-
-        // 分类收集多空交易
-        if (trade.direction === Direction.LONG) {
-          longTrades.push(trade);
-        } else {
-          shortTrades.push(trade);
-        }
-      }
-
-      // 计算交易盈亏：简化处理，假设当日的多空交易可以配对
-      const minTradeCount = Math.min(longTrades.length, shortTrades.length);
-      for (let i = 0; i < minTradeCount; i++) {
-        const longTrade = longTrades[i];
-        const shortTrade = shortTrades[i];
-        // 多空配对盈亏：(卖出价 - 买入价) * 数量 * 合约大小
-        tradingPnl += (shortTrade.price - longTrade.price) * longTrade.volume * this.size;
+        commission += trade.commission;
       }
 
       // 计算持仓盈亏（基于收盘价变化）
-      const holdingPnl =
-        (dailyResult.closePrice - dailyResult.preClosePrice) * this.getNetPosition() * this.size;
-
-      // 更新每日结果
-      dailyResult.commission = commission;
-      dailyResult.slippage = slippage;
-      dailyResult.turnover = turnover;
-      dailyResult.tradingPnl = tradingPnl;
-      dailyResult.holdingPnl = holdingPnl;
-      dailyResult.netPnl = tradingPnl + holdingPnl - commission - slippage;
+      const tradingPnl = prevSnapshot
+        ? snapshot.tradingPnl - prevSnapshot.tradingPnl
+        : snapshot.tradingPnl;
+      const holdingPnl = prevSnapshot
+        ? snapshot.holdingPnl - prevSnapshot.holdingPnl
+        : snapshot.holdingPnl;
+      const netPnl = tradingPnl + holdingPnl - commission;
 
       // 累计总盈亏
-      totalPnl += dailyResult.netPnl;
-      dailyResult.totalPnl = totalPnl;
+      accumPnl += netPnl;
+
+      this.dailyResults.set(date, {
+        date,
+        trades: dayTrades,
+        commission,
+        turnover,
+        tradeCount: dayTrades.length,
+        tradingPnl,
+        holdingPnl,
+        netPnl,
+        accumPnl,
+      });
+
+      prevSnapshot = snapshot;
     }
   }
 
@@ -652,14 +641,12 @@ export class BacktestingService {
 
     let totalNetPnl = 0;
     let totalCommission = 0;
-    let totalSlippage = 0;
     let totalTurnover = 0;
     let totalTradeCount = 0;
 
     results.forEach((result) => {
       totalNetPnl += result.netPnl;
       totalCommission += result.commission;
-      totalSlippage += result.slippage;
       totalTurnover += result.turnover;
       totalTradeCount += result.tradeCount;
     });
@@ -675,7 +662,7 @@ export class BacktestingService {
     let peak = this.capital;
 
     for (const result of results) {
-      const balance = this.capital + result.totalPnl;
+      const balance = this.capital + result.accumPnl;
       if (balance > peak) {
         peak = balance;
       }
@@ -710,8 +697,6 @@ export class BacktestingService {
       dailyNetPnl: totalNetPnl / totalDays,
       totalCommission,
       dailyCommission: totalCommission / totalDays,
-      totalSlippage,
-      dailySlippage: totalSlippage / totalDays,
       totalTurnover,
       dailyTurnover: totalTurnover / totalDays,
       totalTradeCount,
@@ -757,13 +742,11 @@ export class BacktestingService {
     this.output('');
     this.output(`总盈亏：\t${result.totalNetPnl.toFixed(2)}`);
     this.output(`总手续费：\t${result.totalCommission.toFixed(2)}`);
-    this.output(`总滑点：\t${result.totalSlippage.toFixed(2)}`);
     this.output(`总成交金额：\t${result.totalTurnover.toFixed(2)}`);
     this.output(`总成交笔数：\t${result.totalTradeCount}`);
     this.output('');
     this.output(`日均盈亏：\t${result.dailyNetPnl.toFixed(2)}`);
     this.output(`日均手续费：\t${result.dailyCommission.toFixed(2)}`);
-    this.output(`日均滑点：\t${result.dailySlippage.toFixed(2)}`);
     this.output(`日均成交金额：\t${result.dailyTurnover.toFixed(2)}`);
     this.output(`日均成交笔数：\t${result.dailyTradeCount.toFixed(2)}`);
     this.output(`日均收益率：\t${(result.dailyReturn * 100).toFixed(2)}%`);
@@ -779,7 +762,8 @@ export class BacktestingService {
   private getNetPosition(): number {
     // 简化实现：假设所有交易都是单位数量
     // 实际应该根据具体的持仓管理逻辑计算
-    return Math.abs(this.strategy.pos);
+    // @TODO
+    return 0;
   }
 
   /**
