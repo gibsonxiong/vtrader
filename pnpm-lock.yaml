@@ -340,8 +340,8 @@ catalogs:
       specifier: ^4.3.0
       version: 4.4.0
     pkg-types:
-      specifier: ^2.1.0
-      version: 2.1.1
+      specifier: ^2.2.0
+      version: 2.2.0
     playwright:
       specifier: ^1.52.0
       version: 1.53.1
@@ -1185,7 +1185,7 @@ importers:
         version: 8.2.0
       pkg-types:
         specifier: 'catalog:'
-        version: 2.1.1
+        version: 2.2.0
       prettier:
         specifier: 'catalog:'
         version: 3.6.2
@@ -10325,6 +10325,9 @@ packages:
 
   pkg-types@2.1.1:
     resolution: {integrity: sha512-eY0QFb6eSwc9+0d/5D2lFFUq+A3n3QNGSy/X2Nvp+6MfzGw2u6EbA7S80actgjY1lkvvI0pqB+a4hioMh443Ew==}
+
+  pkg-types@2.2.0:
+    resolution: {integrity: sha512-2SM/GZGAEkPp3KWORxQZns4M+WSeXbC2HEvmOIJe3Cmiv6ieAJvdVhDldtHqM5J1Y7MrR1XhkBT/rMlhh9FdqQ==}
 
   playwright-core@1.53.1:
     resolution: {integrity: sha512-Z46Oq7tLAyT0lGoFx4DOuB1IA9D1TPj0QkYxpPVUnGDqHHvDpCftu1J2hM2PiWsNMoZh8+LQaarAWcDfPBc6zg==}
@@ -22613,6 +22616,12 @@ snapshots:
       pathe: 2.0.3
 
   pkg-types@2.1.1:
+    dependencies:
+      confbox: 0.2.2
+      exsolve: 1.0.7
+      pathe: 2.0.3
+
+  pkg-types@2.2.0:
     dependencies:
       confbox: 0.2.2
       exsolve: 1.0.7
