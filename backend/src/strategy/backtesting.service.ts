@@ -13,6 +13,7 @@ import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
 import { Strategy } from './strategy';
+import type { StrategyParams } from './strategy';
 import { MarketDataService } from '../market-data/market-data.service';
 
 /**
@@ -23,7 +24,9 @@ export interface BacktestingSetting {
   endDate: string;
   symbol: string;
   interval: Interval;
-  capital: number;
+  assetTotal: number;
+  assetFrozen?: number;
+  assetName?: string;
   commissionRate: number;
   size: number;
   priceTick: number;
@@ -85,6 +88,8 @@ export interface Snapshot {
   maxPnl: number;
   tradingPnl: number;
   holdingPnl: number;
+  commission: number;
+  turnover: number;
 }
 
 /**
@@ -116,6 +121,9 @@ export class BacktestingService {
   private size: number = 1; // 合约大小
   private startDate: string;
   private endDate: string;
+  private assetTotal: number;
+  private assetName: string = 'USDT';
+  private assetFrozen: number = 0;
 
   private stopOrderCount: number = 0;
   private stopOrders: Map<string, OrderData> = new Map();
@@ -139,7 +147,9 @@ export class BacktestingService {
     this.endDate = setting.endDate;
     this.symbol = setting.symbol;
     this.interval = setting.interval;
-    this.capital = setting.capital;
+    this.assetTotal = setting.assetTotal;
+    this.assetName = setting.assetName ?? this.assetName;
+    this.assetFrozen = setting.assetFrozen ?? this.assetFrozen;
     this.commissionRate = setting.commissionRate;
     this.size = setting.size;
     this.priceTick = setting.priceTick;
@@ -149,17 +159,20 @@ export class BacktestingService {
   /**
    * 添加策略
    */
-  addStrategy<
-    T extends new (
-      ctaEngine: BacktestingService,
-      strategyName: string,
-      vtSymbol: string,
-      setting: any,
-    ) => Strategy,
-  >(StrategyClass: T, strategyName: string, setting: any): void {
+  addStrategy<T extends new (params: StrategyParams) => Strategy>(
+    StrategyClass: T,
+    strategyName: string,
+    setting: any,
+  ): void {
     this.StrategyClass = StrategyClass;
     this.strategySetting = setting;
-    this.strategy = new StrategyClass(this, strategyName, this.symbol, setting);
+    this.strategy = new StrategyClass({
+      engine: this,
+      symbol: this.symbol,
+      setting: this.strategySetting,
+      assetName: this.assetName,
+      assetTotal: this.assetTotal,
+    });
   }
 
   calcCommission(price: number, volume: number): number {
@@ -175,7 +188,7 @@ export class BacktestingService {
       if (order) {
         order.status = OrderStatus.CANCELLED;
         this.activeLimitOrders.delete(orderId);
-        this.strategy.onOrder(order);
+        this.strategy._onOrder(order);
       }
     }
   }
@@ -291,7 +304,10 @@ export class BacktestingService {
       offset,
       price,
       volume,
+      avgPrice: 0,
       traded: 0,
+      lastPrice: 0,
+      lastVolume: 0,
       status: OrderStatus.SUBMITTING,
       time: this.datetime,
     };
@@ -318,7 +334,10 @@ export class BacktestingService {
       offset,
       price,
       volume,
+      avgPrice: 0,
       traded: 0,
+      lastPrice: 0,
+      lastVolume: 0,
       status: OrderStatus.NOTTRADED,
       time: this.datetime,
     };
@@ -354,7 +373,7 @@ export class BacktestingService {
       // 推送委托进入未成交队列的更新状态
       if (order.status === OrderStatus.SUBMITTING) {
         order.status = OrderStatus.NOTTRADED;
-        this.strategy.onOrder(order);
+        this.strategy._onOrder(order);
       }
 
       // 判断是否会成交
@@ -370,17 +389,20 @@ export class BacktestingService {
         continue;
       }
 
-      // 推送成交数据
-      order.traded = order.volume;
-      order.status = OrderStatus.ALLTRADED;
-      this.strategy.onOrder(order);
-
-      this.activeLimitOrders.delete(orderId);
-
       // 计算成交价格
       const tradePrice = longCross
         ? Math.min(order.price, longBestPrice)
         : Math.max(order.price, shortBestPrice);
+
+      // 推送成交数据
+      order.avgPrice = tradePrice;
+      order.traded = order.volume;
+      order.lastPrice = tradePrice;
+      order.lastVolume = order.volume;
+      order.status = OrderStatus.ALLTRADED;
+      this.strategy._onOrder(order);
+
+      this.activeLimitOrders.delete(orderId);
 
       // 创建成交记录
       const trade: TradeData = {
@@ -445,7 +467,10 @@ export class BacktestingService {
         offset: stopOrder.offset,
         price: stopOrder.price,
         volume: stopOrder.volume,
+        avgPrice: 0,
         traded: 0,
+        lastPrice: 0,
+        lastVolume: 0,
         status: OrderStatus.SUBMITTING,
         time: this.datetime,
       };
@@ -455,7 +480,7 @@ export class BacktestingService {
       this.activeLimitOrders.set(order.orderId, order);
 
       this.strategy.onStopOrder(stopOrder);
-      this.strategy.onOrder(order);
+      this.strategy._onOrder(order);
     }
   }
 
@@ -497,11 +522,12 @@ export class BacktestingService {
 
   snapshot(price: number): void {
     const date = dayjs(this.datetime).format('YYYY-MM-DD');
-    const tradingPnl = this.strategy.longHolding.tradingPnl + this.strategy.shortHolding.tradingPnl;
-    const holdingPnl =
-      this.strategy.longHolding.getHoldingPnl(price) +
-      this.strategy.shortHolding.getHoldingPnl(price);
+    const { longHolding, shortHolding } = this.strategy;
+    const tradingPnl = longHolding.accumTradingPnl + shortHolding.accumTradingPnl;
+    const holdingPnl = longHolding.getHoldingPnl(price) + shortHolding.getHoldingPnl(price);
     const pnl = tradingPnl + holdingPnl;
+    const commission = longHolding.commission + shortHolding.commission;
+    const turnover = longHolding.turnover + shortHolding.turnover;
 
     if (this.snapshots.has(date)) {
       // 更新当日收盘价
@@ -511,6 +537,8 @@ export class BacktestingService {
       snapshot.pnl = pnl;
       snapshot.holdingPnl = holdingPnl;
       snapshot.tradingPnl = tradingPnl;
+      snapshot.commission = commission;
+      snapshot.turnover = turnover;
 
       // 更新最小最大PNL
       if (pnl < snapshot.minPnl) {
@@ -529,33 +557,11 @@ export class BacktestingService {
         maxPnl: pnl,
         tradingPnl,
         holdingPnl,
+        commission,
+        turnover,
       });
     }
   }
-
-  /**
-   * 更新每日收盘价
-   */
-  // private updateDailyClose(price: number): void {
-  //   const date = dayjs(this.datetime).format('YYYY-MM-DD');
-
-  //   if (this.dailyResults.has(date)) {
-  //     // 更新当日收盘价
-  //     this.dailyResults.get(date)!.closePrice = price;
-  //   } else {
-  //     this.dailyResults.set(date, {
-  //       date: date,
-  //       trades: [],
-  //       tradingPnl: 0,
-  //       holdingPnl: 0,
-  //       accumPnl: 0,
-  //       commission: 0,
-  //       turnover: 0,
-  //       tradeCount: 0,
-  //       netPnl: 0,
-  //     });
-  //   }
-  // }
 
   /**
    * 计算每日结果
@@ -578,18 +584,8 @@ export class BacktestingService {
     const dates = [...this.snapshots.keys()].sort();
 
     for (const date of dates) {
-      let commission = 0;
-      let turnover = 0;
       const snapshot = this.snapshots.get(date)!;
       const dayTrades = tradesByDate.get(date) || [];
-
-      for (const trade of dayTrades) {
-        const tradeValue = trade.price * trade.volume * this.size;
-        turnover += tradeValue;
-
-        // 计算手续费
-        commission += trade.commission;
-      }
 
       // 计算持仓盈亏（基于收盘价变化）
       const tradingPnl = prevSnapshot
@@ -598,6 +594,13 @@ export class BacktestingService {
       const holdingPnl = prevSnapshot
         ? snapshot.holdingPnl - prevSnapshot.holdingPnl
         : snapshot.holdingPnl;
+
+      const commission = prevSnapshot
+        ? snapshot.commission - prevSnapshot.commission
+        : snapshot.commission;
+
+      const turnover = prevSnapshot ? snapshot.turnover - prevSnapshot.turnover : snapshot.turnover;
+
       const netPnl = tradingPnl + holdingPnl - commission;
 
       // 累计总盈亏

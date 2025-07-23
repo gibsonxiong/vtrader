@@ -162,7 +162,7 @@ export class MdApi {
     const bar: BarData = {
       symbol: contract.symbol,
       timestamp: kline.t,
-      interval: Interval.MINUTE,
+      interval: Interval.MINUTE_1,
       volume: Number.parseFloat(kline.v),
       open: Number.parseFloat(kline.o),
       high: Number.parseFloat(kline.h),

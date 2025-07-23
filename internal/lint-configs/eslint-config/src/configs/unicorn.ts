@@ -33,6 +33,7 @@ export async function unicorn(): Promise<Linter.Config[]> {
         'unicorn/no-empty-file': 'off',
         'unicorn/prefer-event-target': 'off',
         'unicorn/prefer-module': 'off',
+        'unicorn/no-new-array': 'off',
       },
     },
     {

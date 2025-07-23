@@ -2,7 +2,7 @@ import type { BinanceLinearBroker } from './index';
 
 import * as WebSocket from 'ws';
 
-import { Offset, OrderData, OrderStatus } from '../../../types/common';
+import { OrderStatus } from '../../../types/common';
 import { CancelRequest, OrderRequest } from '../../../types/broker';
 import { REAL_TRADE_HOST, TESTNET_TRADE_HOST } from './constants';
 
@@ -80,21 +80,22 @@ export class TradeApi {
 
     // 这里应该实现实际的订单发送逻辑
     // 由于这是回测环境，我们只是模拟订单创建
-    const order: OrderData = {
-      symbol: req.symbol,
-      exchange: req.exchange.toString(),
-      orderId,
-      type: req.type,
-      direction: req.direction,
-      offset: req.offset || Offset.OPEN,
-      price: req.price || 0,
-      volume: req.volume,
-      traded: 0,
-      status: OrderStatus.SUBMITTING,
-      time: new Date(),
-    };
+    // const order: OrderData = {
+    //   symbol: req.symbol,
+    //   exchange: req.exchange.toString(),
+    //   orderId,
+    //   type: req.type,
+    //   direction: req.direction,
+    //   offset: req.offset || Offset.OPEN,
+    //   price: req.price || 0,
+    //   volume: req.volume,
+    //   avgPrice: 0,
+    //   traded: 0,
+    //   status: OrderStatus.SUBMITTING,
+    //   time: new Date(),
+    // };
 
-    this.broker.onOrder(order);
+    // this.broker.onOrder(order);
     return orderId;
   }
 

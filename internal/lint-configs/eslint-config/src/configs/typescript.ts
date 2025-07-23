@@ -70,6 +70,7 @@ export async function typescript(): Promise<Linter.Config[]> {
         '@typescript-eslint/no-unused-vars': 'off',
         '@typescript-eslint/no-empty-function': 'off',
         '@typescript-eslint/no-useless-constructor': 'off',
+        '@typescript-eslint/no-dynamic-delete': 'off',
       },
     },
   ];

@@ -101,13 +101,22 @@ export interface OrderData {
   exchange: string;
   offset: Offset;
   orderId: string;
+  /** 订单原始价格 */
   price: number;
+  /** 订单原始数量 */
+  volume: number;
+  /** 订单平均价格 */
+  avgPrice: number;
+  /** 订单累计已成交量 */
+  traded: number;
+  /** 最后一次成交价格 */
+  lastPrice: number;
+  /** 最后一次成交数量 */
+  lastVolume: number;
   status: OrderStatus;
   symbol: string;
   time: Date;
-  traded: number;
   type: OrderType;
-  volume: number;
 }
 
 /**
@@ -168,16 +177,20 @@ export enum Product {
  * 时间间隔枚举
  */
 export enum Interval {
-  DAILY = '1d',
-  HOUR = '1h',
-  HOUR_2 = '2h',
-  HOUR_4 = '4h',
-  MINUTE = '1m',
+  MINUTE_1 = '1m',
   MINUTE_5 = '5m',
   MINUTE_15 = '15m',
   MINUTE_30 = '30m',
-  MONTHLY = '1M',
-  WEEKLY = '1w',
+  HOUR_1 = '1h',
+  HOUR_2 = '2h',
+  HOUR_4 = '4h',
+  HOUR_6 = '6h',
+  HOUR_8 = '8h',
+  HOUR_12 = '12h',
+  DAILY_1 = '1d',
+  DAILY_3 = '3d',
+  WEEKLY_1 = '1w',
+  MONTHLY_1 = '1M',
 }
 
 /**

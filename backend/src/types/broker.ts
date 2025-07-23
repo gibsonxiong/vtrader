@@ -26,7 +26,7 @@ export interface SubscribeRequest {
 export interface OrderRequest {
   direction: Direction;
   exchange: Exchange;
-  offset?: Offset;
+  offset: Offset;
   price?: number;
   reference?: string;
   symbol: string;

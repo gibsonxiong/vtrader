@@ -4,12 +4,15 @@ import type { BinanceLinearBroker } from './index';
 import * as WebSocket from 'ws';
 
 import { Direction, Exchange, Offset, OrderType } from '../../../types/common';
-import {
-  DIRECTION_BINANCE2VT,
-  REAL_USER_HOST,
-  STATUS_BINANCE2VT,
-  TESTNET_USER_HOST,
-} from './constants';
+import { REAL_USER_HOST, STATUS_BINANCE2VT, TESTNET_USER_HOST } from './constants';
+
+function binance2offset(direction: 'LONG' | 'SHORT', side: 'BUY' | 'SELL'): Offset {
+  if (direction === 'LONG') {
+    return side === 'BUY' ? Offset.OPEN : Offset.CLOSE;
+  } else {
+    return side === 'BUY' ? Offset.CLOSE : Offset.OPEN;
+  }
+}
 
 /**
  * 用户数据API客户端
@@ -117,10 +120,13 @@ export class UserApi {
       exchange: Exchange.BINANCE.toString(),
       orderId: data.c,
       type: data.o === 'LIMIT' ? OrderType.LIMIT : OrderType.MARKET,
-      direction: DIRECTION_BINANCE2VT[data.S],
-      offset: data.ps === 'LONG' ? Offset.OPEN : Offset.CLOSE,
+      direction: data.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
+      offset: binance2offset(data.ps, data.S),
       price: Number.parseFloat(data.p),
       volume: Number.parseFloat(data.q),
+      lastPrice: Number.parseFloat(data.L),
+      lastVolume: Number.parseFloat(data.l),
+      avgPrice: Number.parseFloat(data.ap),
       traded: Number.parseFloat(data.z),
       status: STATUS_BINANCE2VT[data.X],
       time: new Date(data.T),
@@ -134,8 +140,8 @@ export class UserApi {
         symbol: data.s,
         orderId: data.c,
         tradeId: data.t.toString(),
-        direction: DIRECTION_BINANCE2VT[data.S],
-        offset: data.ps === 'LONG' ? Offset.OPEN : Offset.CLOSE,
+        direction: data.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
+        offset: binance2offset(data.ps, data.S),
         price: Number.parseFloat(data.L),
         volume: Number.parseFloat(data.l),
         time: new Date(data.T),
