@@ -1,7 +1,7 @@
 import { BarData, Direction, Offset, OrderData, TickData, TradeData } from '../types/common';
 import { LongHolding, ShortHolding } from './holding';
 import { Wallet } from './wallet';
-import "reflect-metadata";
+import 'reflect-metadata';
 
 export interface StrategyEngine {
   cancelOrder(orderId: string): void;
@@ -18,15 +18,22 @@ export interface StrategyProps {
 }
 
 export interface ParamConfig {
-  type: StringConstructor | NumberConstructor | BooleanConstructor | FunctionConstructor | ObjectConstructor | ArrayConstructor;
+  type:
+    | StringConstructor
+    | NumberConstructor
+    | BooleanConstructor
+    | FunctionConstructor
+    | ObjectConstructor
+    | ArrayConstructor;
   default?: any;
 }
 
-const paramMetadataKey = Symbol("param");
+const paramMetadataKey = Symbol('param');
 
 export function param(paramConfig: ParamConfig) {
   return (target: any, propertyKey: string) => {
-    const paramConfigs: Record<string, ParamConfig> = Reflect.getMetadata(paramMetadataKey, target) || {};
+    const paramConfigs: Record<string, ParamConfig> =
+      Reflect.getMetadata(paramMetadataKey, target) || {};
 
     paramConfigs[propertyKey] = paramConfig;
 

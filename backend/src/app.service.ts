@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 
-import MyStrategy from './strategy/strategies/my-strategy';
 import { Exchange, Interval } from './types/common';
 import type { BarData, OrderData, TradeData } from './types/common';
 import { MarketDataService } from './market-data/market-data.service';
@@ -10,11 +9,9 @@ import {
   BacktestingSetting,
 } from './strategy/backtesting.service';
 import { StrategyService } from './strategy/strategy.service';
-import loadStrategyClasses from './load_strategy';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
-
 
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
@@ -76,8 +73,8 @@ export class AppService {
         strategyName: 'MyStrategy',
         strategySetting: {
           rsiWindow: 20,
-        }
-      }
+        },
+      },
     };
 
     this.backtestingService.backtesting(setting);
@@ -138,6 +135,6 @@ export class AppService {
 
   async test7(): Promise<void> {
     const stategies = await this.strategyService.getStategies();
-    console.log('stategies', stategies)
+    console.log('stategies', stategies);
   }
 }

@@ -9,14 +9,7 @@ import { BacktestingService } from './backtesting.service';
 @Module({
   imports: [MarketDataModule],
   controllers: [BacktestingController],
-  providers: [
-    StrategyService,
-    BacktestingService,
-    PrismaService
-  ],
-  exports: [
-    StrategyService,
-    BacktestingService
-  ],
+  providers: [StrategyService, BacktestingService, PrismaService],
+  exports: [StrategyService, BacktestingService],
 })
 export class StrategyModule {}

@@ -8,12 +8,7 @@ import { StrategyModule } from './strategy/strategy.module';
 import { BrokerManagerModule } from './broker-manager/broker-manager.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot(), 
-    StrategyModule,
-    MarketDataModule,
-    BrokerManagerModule
-  ],
+  imports: [ConfigModule.forRoot(), StrategyModule, MarketDataModule, BrokerManagerModule],
   controllers: [AppController],
   providers: [AppService],
 })

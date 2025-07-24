@@ -1,6 +1,5 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { promisify } from 'node:util';
 import { Injectable } from '@nestjs/common';
 import { Strategy, StrategyProps, ParamConfig } from './strategy';
 
@@ -51,21 +50,21 @@ export class StrategyService {
     if (this.list.length === 0) {
       const list: StrategyInfo[] = [];
       const maps = await loadStrategyClasses();
-  
+
       for (const [name, StrategyClass] of Object.entries(maps)) {
         const instance = new StrategyClass({
           engine: {} as any,
           balance: 0,
           symbol: '',
         });
-        
+
         list.push({
           name,
           strategyClass: StrategyClass,
           paramConfigs: instance.getParamConfigs(),
         });
       }
-  
+
       this.list = list;
     }
 

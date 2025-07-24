@@ -32,7 +32,7 @@ export interface BacktestingSetting {
   strategy: {
     strategyName: string;
     strategySetting?: Record<string, any>;
-  }
+  };
 }
 
 /**
@@ -119,7 +119,7 @@ export class BacktestingService {
   private stopOrderCount: number = 0;
   private tradeCount: number = 0;
   private trades: TradeData[] = [];
-  
+
   private strategy: Strategy;
   private datetime: Date;
   private tick: TickData;
@@ -154,10 +154,7 @@ export class BacktestingService {
   /**
    * 添加策略
    */
-  async addStrategy(
-    strategyName: string,
-    setting: any,
-  ): Promise<void> {
+  async addStrategy(strategyName: string, setting: any): Promise<void> {
     const strategy = await this.strategyService.createInstance(strategyName, {
       engine: this,
       symbol: this.symbol,
@@ -613,7 +610,7 @@ export class BacktestingService {
    */
   calculateResult(output = false): BacktestingResult {
     const capital = this.balance;
-    
+
     this.output('开始统计回测结果');
 
     // if (this.trades.length === 0) {

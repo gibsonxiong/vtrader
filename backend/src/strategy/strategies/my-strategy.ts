@@ -1,10 +1,9 @@
 import { Interval } from '../../types/common';
 import type { BarData } from '../../types/common';
-import { Strategy } from '../strategy';
+import { Strategy, param } from '../strategy';
 import { ArrayManger } from '../array-manager';
 import { rsi } from 'technicalindicators';
 import { BarGenerator } from '../bar-generator';
-import { param } from '../strategy';
 
 /**
  * 双均线策略
@@ -24,7 +23,6 @@ export default class MyStrategy extends Strategy {
    * 策略初始化
    */
   public onInit(): void {
-   
     console.log('rsiWindow', this.rsiWindow);
 
     this.am = new ArrayManger();
