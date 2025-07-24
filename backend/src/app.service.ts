@@ -9,10 +9,12 @@ import {
   BacktestingService,
   BacktestingSetting,
 } from './strategy/backtesting.service';
+import { StrategyService } from './strategy/strategy.service';
 import loadStrategyClasses from './load_strategy';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
+
 
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
@@ -22,8 +24,10 @@ export class AppService {
     private readonly marketDataService: MarketDataService,
     private readonly backtestingService: BacktestingService,
     private readonly brokerMgrService: BrokerManagerService,
+    private readonly strategyService: StrategyService,
   ) {
     // this.test2();
+    // this.test3();
     this.test3();
   }
 
@@ -63,49 +67,26 @@ export class AppService {
       endDate: '2025-07-23',
       symbol: 'BTCUSDT:USDT',
       interval: Interval.MINUTE_1,
-      assetTotal: 100_000,
+      balance: 20_000,
       commissionRate: 0.0005,
       size: 1,
       priceTick: 0.01,
       mode: BacktestingMode.BAR,
-    };
-    this.backtestingService.setSetting(setting);
-
-    // 2. 加载数据到引擎
-    await this.backtestingService.loadData();
-
-    // 3. 添加策略
-    const strategyName = 'DoubleMaStrategy';
-    const strategySetting = {
-      fastWindow: 10,
-      slowWindow: 20,
-      fixedSize: 1,
+      strategy: {
+        strategyName: 'MyStrategy',
+        strategySetting: {
+          rsiWindow: 20,
+        }
+      }
     };
 
-    this.backtestingService.addStrategy(MyStrategy, strategyName, strategySetting);
-    console.log(`策略 ${strategyName} 添加完成`);
-
-    // 4. 运行回测
-    console.log('\n开始运行回测...');
-    const startTime = Date.now();
-
-    this.backtestingService.runBacktesting();
-
-    const endTime = Date.now();
-    console.log(`回测完成，耗时: ${endTime - startTime}ms\n`);
-
-    // 6. 分析结果
-    this.backtestingService.calculateResult(true);
+    this.backtestingService.backtesting(setting);
   }
 
   async test4(): Promise<void> {
-    const maps = await loadStrategyClasses();
-    const strategyName = 'DoubleMaStrategy';
-    const StrategyClass = maps[strategyName];
-    const strategy = new StrategyClass({
+    const strategy = await this.strategyService.createInstance('MyStrategy', {
       engine: {} as any,
-      assetTotal: 100_000,
-      assetName: 'USDT',
+      balance: 100_000,
       symbol: 'BTCUSDT:USDT',
       setting: {
         fastWindow: 10,
@@ -153,5 +134,10 @@ export class AppService {
     mockBars.forEach((bar) => {
       bg.update(bar);
     });
+  }
+
+  async test7(): Promise<void> {
+    const stategies = await this.strategyService.getStategies();
+    console.log('stategies', stategies)
   }
 }

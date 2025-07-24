@@ -6,7 +6,7 @@ export class Wallet {
 
   constructor(
     public _total: number = 0,
-    public _assetName: string = '',
+    public _assetName: string = 'USDT',
   ) {}
 
   get assetName(): string {

@@ -4,30 +4,28 @@ import { Strategy } from '../strategy';
 import { ArrayManger } from '../array-manager';
 import { rsi } from 'technicalindicators';
 import { BarGenerator } from '../bar-generator';
+import { param } from '../strategy';
 
 /**
  * 双均线策略
  * 参考vnpy的双均线策略实现
  */
 export default class MyStrategy extends Strategy {
-  // 策略作者
-  public author: string = 'VTrader';
-
-  // 策略参数列表
-  public rsiWindow = 14;
-
-  public parameters: string[] = ['rsiWindow'];
-  public variables: string[] = [];
+  @param({
+    type: String,
+    default: 14,
+  })
+  rsiWindow!: number;
 
   am: ArrayManger;
-  balance: number = 100_000;
   bg!: BarGenerator;
 
   /**
    * 策略初始化
    */
   public onInit(): void {
-    super.onInit();
+   
+    console.log('rsiWindow', this.rsiWindow);
 
     this.am = new ArrayManger();
     this.bg = new BarGenerator({
@@ -57,7 +55,7 @@ export default class MyStrategy extends Strategy {
     });
 
     if (this.longHolding.pos === 0 && rsiResult[rsiResult.length - 1] > 70) {
-      this.buy(bar.close, this.balance / bar.close);
+      this.buy(bar.close, this.wallet.available / bar.close);
     }
 
     if (this.longHolding.pos > 0 && rsiResult[rsiResult.length - 1] < 30) {

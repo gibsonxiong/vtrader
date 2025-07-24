@@ -13,8 +13,8 @@ import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
 import { Strategy } from './strategy';
-import type { StrategyParams } from './strategy';
 import { MarketDataService } from '../market-data/market-data.service';
+import { StrategyService } from './strategy.service';
 
 /**
  * 回测设置接口
@@ -24,13 +24,15 @@ export interface BacktestingSetting {
   endDate: string;
   symbol: string;
   interval: Interval;
-  assetTotal: number;
-  assetFrozen?: number;
-  assetName?: string;
+  balance: number;
   commissionRate: number;
   size: number;
   priceTick: number;
   mode: BacktestingMode;
+  strategy: {
+    strategyName: string;
+    strategySetting?: Record<string, any>;
+  }
 }
 
 /**
@@ -50,6 +52,7 @@ export interface BacktestingResult {
   dailyReturn: number;
   dailyTradeCount: number;
   dailyTurnover: number;
+  startBalance: number;
   endBalance: number;
   endDate: string;
   lossDays: number;
@@ -97,47 +100,41 @@ export interface Snapshot {
  */
 @Injectable()
 export class BacktestingService {
-  private activeLimitOrders: Map<string, OrderData> = new Map();
-  private activeStopOrders: Map<string, OrderData> = new Map();
-
-  private bar: BarData;
-  private capital: number = 1_000_000; // 初始资金
-
-  private snapshots: Map<string, Snapshot> = new Map();
-  private dailyResults: Map<string, DailyResultItem> = new Map();
-  private datetime: Date;
-
   private exchange: string;
-  private historyData: (BarData | TickData)[] = [];
+  private symbol: string;
   private interval: Interval;
-  private limitOrderCount: number = 0;
-
-  private limitOrders: Map<string, OrderData> = new Map();
-  private logs: string[] = [];
-
   private mode: BacktestingMode = BacktestingMode.BAR;
   private priceTick: number = 0; // 最小价格变动
   private commissionRate: number;
   private size: number = 1; // 合约大小
   private startDate: string;
   private endDate: string;
-  private assetTotal: number;
-  private assetName: string = 'USDT';
-  private assetFrozen: number = 0;
+  private balance: number;
 
-  private stopOrderCount: number = 0;
+  private activeLimitOrders: Map<string, OrderData> = new Map();
+  private limitOrders: Map<string, OrderData> = new Map();
+  private limitOrderCount: number = 0;
+  private activeStopOrders: Map<string, OrderData> = new Map();
   private stopOrders: Map<string, OrderData> = new Map();
-  private strategy: Strategy;
-  private StrategyClass: any;
-
-  private strategySetting: any;
-  private symbol: string;
-  private tick: TickData;
-
+  private stopOrderCount: number = 0;
   private tradeCount: number = 0;
   private trades: TradeData[] = [];
+  
+  private strategy: Strategy;
+  private datetime: Date;
+  private tick: TickData;
+  private bar: BarData;
+  private historyData: (BarData | TickData)[] = [];
 
-  constructor(private readonly marketDataService: MarketDataService) {}
+  private snapshots: Map<string, Snapshot> = new Map();
+  private dailyResults: Map<string, DailyResultItem> = new Map();
+
+  private logs: string[] = [];
+
+  constructor(
+    private readonly marketDataService: MarketDataService,
+    private readonly strategyService: StrategyService,
+  ) {}
 
   /**
    * 设置回测参数
@@ -147,9 +144,7 @@ export class BacktestingService {
     this.endDate = setting.endDate;
     this.symbol = setting.symbol;
     this.interval = setting.interval;
-    this.assetTotal = setting.assetTotal;
-    this.assetName = setting.assetName ?? this.assetName;
-    this.assetFrozen = setting.assetFrozen ?? this.assetFrozen;
+    this.balance = setting.balance;
     this.commissionRate = setting.commissionRate;
     this.size = setting.size;
     this.priceTick = setting.priceTick;
@@ -159,24 +154,22 @@ export class BacktestingService {
   /**
    * 添加策略
    */
-  addStrategy<T extends new (params: StrategyParams) => Strategy>(
-    StrategyClass: T,
+  async addStrategy(
     strategyName: string,
     setting: any,
-  ): void {
-    this.StrategyClass = StrategyClass;
-    this.strategySetting = setting;
-    this.strategy = new StrategyClass({
+  ): Promise<void> {
+    const strategy = await this.strategyService.createInstance(strategyName, {
       engine: this,
       symbol: this.symbol,
-      setting: this.strategySetting,
-      assetName: this.assetName,
-      assetTotal: this.assetTotal,
+      balance: this.balance,
+      setting,
     });
-  }
 
-  calcCommission(price: number, volume: number): number {
-    return price * volume * this.commissionRate;
+    if (!strategy) {
+      throw new Error('未找到该策略，策略创建失败');
+    }
+
+    this.strategy = strategy;
   }
 
   /**
@@ -206,27 +199,6 @@ export class BacktestingService {
         this.strategy.onStopOrder(stopOrder);
       }
     }
-  }
-
-  /**
-   * 获取每日结果
-   */
-  getDailyResults(): any[] {
-    return [...this.dailyResults.values()];
-  }
-
-  /**
-   * 获取日志
-   */
-  getLogs(): string[] {
-    return this.logs;
-  }
-
-  /**
-   * 获取交易记录
-   */
-  getTrades(): TradeData[] {
-    return this.trades;
   }
 
   /**
@@ -261,17 +233,17 @@ export class BacktestingService {
       return;
     }
 
-    if (this.historyData.length === 0) {
-      this.output('请先加载历史数据');
-      return;
-    }
+    // if (this.historyData.length === 0) {
+    //   this.output('请先加载历史数据');
+    //   return;
+    // }
 
     // 调用策略初始化
-    this.strategy.onInit();
+    this.strategy.init();
     this.output('策略初始化完成');
 
     // 调用策略启动
-    this.strategy.onStart();
+    this.strategy.start();
     this.output('策略启动完成');
 
     this.output('开始回放历史数据');
@@ -284,8 +256,22 @@ export class BacktestingService {
         this.newTick(data as TickData);
       }
     }
+    this.strategy.stop();
 
     this.output('历史数据回放结束');
+  }
+
+  async backtesting(setting: BacktestingSetting): Promise<void> {
+    const { strategyName, strategySetting } = setting.strategy;
+
+    this.setSetting(setting);
+
+    await this.addStrategy(strategyName, strategySetting);
+
+    await this.loadData();
+
+    this.runBacktesting();
+    this.calculateResult(true);
   }
 
   /**
@@ -623,10 +609,12 @@ export class BacktestingService {
   }
 
   /**
-   * 计算回测结果
+   * 统计回测结果
    */
   calculateResult(output = false): BacktestingResult {
-    this.output('开始计算回测结果');
+    const capital = this.balance;
+    
+    this.output('开始统计回测结果');
 
     // if (this.trades.length === 0) {
     //   this.output('无交易记录');
@@ -654,18 +642,18 @@ export class BacktestingService {
       totalTradeCount += result.tradeCount;
     });
 
-    const endBalance = this.capital + totalNetPnl;
-    const totalReturn = totalNetPnl / this.capital;
+    const endBalance = capital + totalNetPnl;
+    const totalReturn = totalNetPnl / capital;
     const annualReturn = (totalReturn * 365) / totalDays;
     const dailyReturn = totalReturn / totalDays;
 
     // 计算最大回撤
     let maxDrawdown = 0;
     let maxDrawdownPercent = 0;
-    let peak = this.capital;
+    let peak = capital;
 
     for (const result of results) {
-      const balance = this.capital + result.accumPnl;
+      const balance = capital + result.accumPnl;
       if (balance > peak) {
         peak = balance;
       }
@@ -683,7 +671,7 @@ export class BacktestingService {
     }
 
     // 计算夏普比率
-    const returns = results.map((r) => r.netPnl / this.capital);
+    const returns = results.map((r) => r.netPnl / capital);
     const returnStd = this.calculateStd(returns);
     const sharpeRatio = returnStd > 0 ? (dailyReturn / returnStd) * Math.sqrt(365) : 0;
 
@@ -693,6 +681,7 @@ export class BacktestingService {
       totalDays,
       profitDays,
       lossDays,
+      startBalance: capital,
       endBalance,
       maxDrawdown,
       maxDrawdownPercent,
@@ -736,7 +725,7 @@ export class BacktestingService {
     this.output(`盈利交易日：\t${result.profitDays}`);
     this.output(`亏损交易日：\t${result.lossDays}`);
     this.output('');
-    this.output(`起始资金：\t${this.capital.toFixed(2)}`);
+    this.output(`起始资金：\t${result.startBalance.toFixed(2)}`);
     this.output(`结束资金：\t${result.endBalance.toFixed(2)}`);
     this.output(`总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`);
     this.output(`年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`);
@@ -760,21 +749,15 @@ export class BacktestingService {
   }
 
   /**
-   * 获取当前净持仓
-   */
-  private getNetPosition(): number {
-    // 简化实现：假设所有交易都是单位数量
-    // 实际应该根据具体的持仓管理逻辑计算
-    // @TODO
-    return 0;
-  }
-
-  /**
    * 计算标准差
    */
   private calculateStd(values: number[]): number {
     const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
     const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
     return Math.sqrt(variance);
+  }
+
+  calcCommission(price: number, volume: number): number {
+    return price * volume * this.commissionRate;
   }
 }
