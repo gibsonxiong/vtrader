@@ -3,11 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Exchange, Interval } from './types/common';
 import type { BarData, OrderData, TradeData } from './types/common';
 import { MarketDataService } from './market-data/market-data.service';
-import {
-  BacktestingMode,
-  BacktestingService,
-  BacktestingSetting,
-} from './strategy/backtesting.service';
+import { BacktestingService, BacktestingSetting } from './strategy/backtesting.service';
 import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
@@ -64,17 +60,24 @@ export class AppService {
       endDate: '2025-07-23',
       symbol: 'BTCUSDT:USDT',
       interval: Interval.MINUTE_1,
-      balance: 20_000,
+      balance: 100_000,
       commissionRate: 0.0005,
       size: 1,
       priceTick: 0.01,
-      mode: BacktestingMode.BAR,
-      strategy: {
-        strategyName: 'MyStrategy',
-        strategySetting: {
-          rsiWindow: 20,
+      strategies: [
+        {
+          strategyName: 'MyStrategy',
+          strategySetting: {
+            rsiWindow: 20,
+          },
         },
-      },
+        {
+          strategyName: 'MyStrategy',
+          strategySetting: {
+            rsiWindow: 20,
+          },
+        },
+      ],
     };
 
     this.backtestingService.backtesting(setting);

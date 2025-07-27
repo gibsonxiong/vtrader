@@ -35,15 +35,16 @@ export class Wallet {
           break;
         }
         case OrderStatus.PARTTRADED: {
-          this.frozenMap[order.orderId] =
-            order.volume * order.price - order.avgPrice * order.traded;
-          this._total -= order.lastPrice * order.lastVolume;
+          if (this.frozenMap[order.orderId]) {
+            this.frozenMap[order.orderId] -= order.tradePrice * order.tradeVolume;
+          }
+          this._total -= order.tradePrice * order.tradeVolume + order.tradeCommission;
 
           break;
         }
         case OrderStatus.ALLTRADED: {
           delete this.frozenMap[order.orderId];
-          this._total -= order.lastPrice * order.lastVolume;
+          this._total -= order.tradePrice * order.tradeVolume + order.tradeCommission;
 
           break;
         }
@@ -56,16 +57,14 @@ export class Wallet {
       }
     } else {
       if (order.status === OrderStatus.PARTTRADED) {
-        this._total += order.lastPrice * order.lastVolume;
+        this._total += order.tradePrice * order.tradeVolume - order.tradeCommission;
       } else if (order.status === OrderStatus.ALLTRADED) {
-        this._total += order.lastPrice * order.lastVolume;
+        this._total += order.tradePrice * order.tradeVolume - order.tradeCommission;
       }
     }
   }
 
-  // updateByTrade(trade: TradeData): void {
-  //   if (trade.offset !== Offset.OPEN) return;
-  //   const cost = trade.volume * trade.price;
-  //   this._total -= cost;
-  // }
+  toString() {
+    return `全部：${this.total} 可用：${this.available} 冻结：${this.frozen}`;
+  }
 }

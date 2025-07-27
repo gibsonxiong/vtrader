@@ -1,7 +1,8 @@
-import { Direction, Offset } from 'src/types/common';
-import type { TradeData } from 'src/types/common';
+import { Direction, Offset, OrderStatus } from 'src/types/common';
+import type { OrderData } from 'src/types/common';
 
 export interface Holding {
+  direction: Direction;
   pos: number;
   price: number;
   initPrice: number;
@@ -9,10 +10,14 @@ export interface Holding {
   accumTradingPnl: number;
   commission: number;
   turnover: number;
+  frozenMap: Record<string, number>;
+  frozen: number;
+  available: number;
 
-  update(trade: TradeData): void;
-  needProcessTrade(trade: TradeData): boolean;
-  calcTradingPnl(trade: TradeData): number;
+  calcFrozen(order: OrderData): void;
+  update(order: OrderData): void;
+  needProcessOrder(order: OrderData): boolean;
+  calcTradingPnl(order: OrderData): number;
   getHoldingPnl(newPrice: number): number;
   getPnl(newPrice: number): number;
   getRoi(newPrice: number): number;
@@ -20,6 +25,7 @@ export interface Holding {
 }
 
 export class LongHolding implements Holding {
+  public direction = Direction.LONG;
   public pos = 0;
   public price = 0;
   public initPrice = 0;
@@ -27,47 +33,74 @@ export class LongHolding implements Holding {
   public accumTradingPnl = 0;
   public commission = 0;
   public turnover = 0;
+  public frozenMap: Record<string, number> = {};
 
-  update(trade: TradeData): void {
-    if (!this.needProcessTrade(trade)) return;
+  get frozen(): number {
+    return Object.values(this.frozenMap).reduce((acc, cur) => acc + cur, 0);
+  }
 
-    // 开仓
-    if (trade.offset === Offset.OPEN) {
-      // 首次开仓
-      if (this.initPrice === 0) {
-        this.initPrice = trade.price;
-        this.price = trade.price;
-      } else {
-        this.price = (this.price * this.pos + trade.price * trade.volume) / this.pos + trade.volume;
+  get available(): number {
+    return this.pos - this.frozen;
+  }
+
+  update(order: OrderData): void {
+    if (!this.needProcessOrder(order)) return;
+
+    this.calcFrozen(order);
+
+    if (order.status === OrderStatus.ALLTRADED || order.status === OrderStatus.PARTTRADED) {
+      // 开仓
+      if (order.offset === Offset.OPEN) {
+        // 首次开仓
+        if (this.initPrice === 0) {
+          this.initPrice = order.tradePrice;
+          this.price = order.tradePrice;
+        } else {
+          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / this.pos + order.tradeVolume;
+        }
+
+        this.pos += order.tradeVolume;
+        this.commission += order.tradeCommission;
+        this.turnover += order.tradePrice * order.tradeVolume;
       }
+      // 平仓
+      else {
+        const tradingPnl = this.calcTradingPnl(order);
+        this.pos -= order.tradeVolume;
+        this.tradingPnl += tradingPnl;
+        this.accumTradingPnl += tradingPnl;
+        this.commission += order.tradeCommission;
+        this.turnover += order.tradePrice * order.tradeVolume;
 
-      this.pos += trade.volume;
-      this.commission += trade.commission;
-      this.turnover += trade.price * trade.volume;
-    }
-    // 平仓
-    else {
-      const tradingPnl = this.calcTradingPnl(trade);
-      this.pos -= trade.volume;
-      this.tradingPnl += tradingPnl;
-      this.accumTradingPnl += tradingPnl;
-      this.commission += trade.commission;
-      this.turnover += trade.price * trade.volume;
-
-      if (this.pos === 0) {
-        this.price = 0;
-        this.initPrice = 0;
-        this.tradingPnl = 0;
+        if (this.pos === 0) {
+          this.price = 0;
+          this.initPrice = 0;
+          this.tradingPnl = 0;
+        }
       }
     }
   }
 
-  needProcessTrade(trade: TradeData): boolean {
-    return trade.direction === Direction.LONG;
+  calcFrozen(order: OrderData): void {
+    if (order.status === OrderStatus.NOTTRADED) {
+      this.frozenMap[order.orderId] = order.volume * order.price;
+    } else if (order.status === OrderStatus.PARTTRADED) {
+      if (this.frozenMap[order.orderId]) {
+        this.frozenMap[order.orderId] -= order.tradePrice * order.tradeVolume;
+      }
+    } else if (order.status === OrderStatus.ALLTRADED) {
+      delete this.frozenMap[order.orderId];
+    } else if (order.status === OrderStatus.CANCELLED) {
+      delete this.frozenMap[order.orderId];
+    }
   }
 
-  calcTradingPnl(trade: TradeData): number {
-    return (trade.price - this.price) * trade.volume;
+  needProcessOrder(order: OrderData): boolean {
+    return order.direction === Direction.LONG;
+  }
+
+  calcTradingPnl(order: OrderData): number {
+    return (order.tradePrice - this.price) * order.tradeVolume;
   }
 
   getHoldingPnl(newPrice: number): number {
@@ -89,6 +122,7 @@ export class LongHolding implements Holding {
 }
 
 export class ShortHolding implements Holding {
+  public direction = Direction.SHORT;
   public pos = 0;
   public price = 0;
   public initPrice = 0;
@@ -96,47 +130,74 @@ export class ShortHolding implements Holding {
   public accumTradingPnl = 0;
   public commission = 0;
   public turnover = 0;
+  public frozenMap: Record<string, number> = {};
 
-  update(trade: TradeData): void {
-    if (!this.needProcessTrade(trade)) return;
+  get frozen(): number {
+    return Object.values(this.frozenMap).reduce((acc, cur) => acc + cur, 0);
+  }
 
-    // 开仓
-    if (trade.offset === Offset.OPEN) {
-      // 首次开仓
-      if (this.initPrice === 0) {
-        this.initPrice = trade.price;
-        this.price = trade.price;
-      } else {
-        this.price = (this.price * this.pos + trade.price * trade.volume) / this.pos + trade.volume;
+  get available(): number {
+    return this.pos - this.frozen;
+  }
+
+  update(order: OrderData): void {
+    if (!this.needProcessOrder(order)) return;
+
+    this.calcFrozen(order);
+
+    if (order.status === OrderStatus.ALLTRADED || order.status === OrderStatus.PARTTRADED) {
+      // 开仓
+      if (order.offset === Offset.OPEN) {
+        // 首次开仓
+        if (this.initPrice === 0) {
+          this.initPrice = order.tradePrice;
+          this.price = order.tradePrice;
+        } else {
+          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / this.pos + order.tradeVolume;
+        }
+
+        this.pos += order.tradeVolume;
+        this.commission += order.tradeCommission;
+        this.turnover += order.tradePrice * order.tradeVolume;
       }
+      // 平仓
+      else {
+        const tradingPnl = this.calcTradingPnl(order);
+        this.pos -= order.tradeVolume;
+        this.tradingPnl += tradingPnl;
+        this.accumTradingPnl += tradingPnl;
+        this.commission += order.tradeCommission;
+        this.turnover += order.tradePrice * order.tradeVolume;
 
-      this.pos += trade.volume;
-      this.commission += trade.commission;
-      this.turnover += trade.price * trade.volume;
-    }
-    // 平仓
-    else {
-      const tradingPnl = this.calcTradingPnl(trade);
-      this.pos -= trade.volume;
-      this.tradingPnl += tradingPnl;
-      this.accumTradingPnl += tradingPnl;
-      this.commission += trade.commission;
-      this.turnover += trade.price * trade.volume;
-
-      if (this.pos === 0) {
-        this.price = 0;
-        this.initPrice = 0;
-        this.tradingPnl = 0;
+        if (this.pos === 0) {
+          this.price = 0;
+          this.initPrice = 0;
+          this.tradingPnl = 0;
+        }
       }
     }
   }
 
-  needProcessTrade(trade: TradeData): boolean {
-    return trade.direction === Direction.SHORT;
+  calcFrozen(order: OrderData): void {
+    if (order.status === OrderStatus.NOTTRADED) {
+      this.frozenMap[order.orderId] = order.volume * order.price;
+    } else if (order.status === OrderStatus.PARTTRADED) {
+      if (this.frozenMap[order.orderId]) {
+        this.frozenMap[order.orderId] -= order.tradePrice * order.tradeVolume;
+      }
+    } else if (order.status === OrderStatus.ALLTRADED) {
+      delete this.frozenMap[order.orderId];
+    } else if (order.status === OrderStatus.CANCELLED) {
+      delete this.frozenMap[order.orderId];
+    }
   }
 
-  calcTradingPnl(trade: TradeData): number {
-    return (this.price - trade.price) * trade.volume;
+  needProcessOrder(order: OrderData): boolean {
+    return order.direction === Direction.SHORT;
+  }
+
+  calcTradingPnl(order: OrderData): number {
+    return (this.price - order.tradePrice) * order.tradeVolume;
   }
 
   getHoldingPnl(newPrice: number): number {

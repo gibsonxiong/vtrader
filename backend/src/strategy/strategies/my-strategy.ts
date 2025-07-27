@@ -1,5 +1,5 @@
-import { Interval } from '../../types/common';
-import type { BarData } from '../../types/common';
+import { Direction, Interval, Offset, OrderStatus } from '../../types/common';
+import type { BarData, OrderData } from '../../types/common';
 import { Strategy, param } from '../strategy';
 import { ArrayManger } from '../array-manager';
 import { rsi } from 'technicalindicators';
@@ -34,8 +34,12 @@ export default class MyStrategy extends Strategy {
     });
   }
 
-  public onOrder(): void {
-    console.log(this.wallet);
+  public onOrder(order: OrderData): void {
+    if (order.status === OrderStatus.NOTTRADED) return;
+    console.log(`[${order.offset === Offset.OPEN ? '开' : '平'}${order.direction === Direction.LONG ? '多' : '空'}] 价格：${order.price} 交易额：${order.price * order.volume} 订单[${order.orderId}] ：${order.status}`);
+
+    console.log(`全部：${this.wallet.total} 可用：${this.wallet.available}`);
+    console.log('');
   }
 
   /**
@@ -53,7 +57,7 @@ export default class MyStrategy extends Strategy {
     });
 
     if (this.longHolding.pos === 0 && rsiResult[rsiResult.length - 1] > 70) {
-      this.buy(bar.close, this.wallet.available / bar.close);
+      this.buy(bar.close, (this.wallet.available * 0.95) / bar.close);
     }
 
     if (this.longHolding.pos > 0 && rsiResult[rsiResult.length - 1] < 30) {

@@ -4,10 +4,9 @@ import { Wallet } from './wallet';
 import 'reflect-metadata';
 
 export interface StrategyEngine {
-  cancelOrder(orderId: string): void;
-  cancelStopOrder(stopOrderId: string): void;
-  sendOrder(direction: Direction, offset: Offset, price: number, volume: number): string;
-  sendStopOrder(direction: Direction, offset: Offset, price: number, volume: number): string;
+  sendOrder(strategy: Strategy, direction: Direction, offset: Offset, price: number, volume: number): string | null;
+  cancelOrder(strategy: Strategy, orderId: string): void;
+  cancelAllOrders(strategy: Strategy): void;
 }
 
 export interface StrategyProps {
@@ -143,6 +142,8 @@ export abstract class Strategy {
    */
   public _onOrder(order: OrderData): void {
     this.wallet.updateByOrder(order);
+    this.longHolding.update(order);
+    this.shortHolding.update(order);
 
     this.onOrder(order);
   }
@@ -153,18 +154,9 @@ export abstract class Strategy {
   public onOrder(order: OrderData): void {}
 
   /**
-   * 停止单状态更新
-   */
-  public onStopOrder(stopOrder: OrderData): void {}
-
-  /**
    * 成交信息更新
    */
   public _onTrade(trade: TradeData): void {
-    // 更新持仓
-    this.longHolding.update(trade);
-    this.shortHolding.update(trade);
-
     this.onTrade(trade);
   }
 
@@ -211,37 +203,21 @@ export abstract class Strategy {
       return null;
     }
 
-    return this.engine.sendOrder(direction, offset, price, volume);
-  }
-
-  /**
-   * 发送停止单
-   */
-  protected sendStopOrder(
-    direction: Direction,
-    offset: Offset,
-    price: number,
-    volume: number,
-  ): null | string {
-    if (!this.trading) {
-      return null;
-    }
-
-    return this.engine.sendStopOrder(direction, offset, price, volume);
+    return this.engine.sendOrder(this, direction, offset, price, volume);
   }
 
   /**
    * 撤销委托
    */
   protected cancelOrder(orderId: string): void {
-    this.engine.cancelOrder(orderId);
+    this.engine.cancelOrder(this, orderId);
   }
 
   /**
-   * 撤销停止单
+   * 撤销所有委托
    */
-  protected cancelStopOrder(stopOrderId: string): void {
-    this.engine.cancelStopOrder(stopOrderId);
+  protected cancelAllOrders(): void {
+    this.engine.cancelAllOrders(this);
   }
 
   /**

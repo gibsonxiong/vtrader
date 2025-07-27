@@ -110,9 +110,11 @@ export interface OrderData {
   /** 订单累计已成交量 */
   traded: number;
   /** 最后一次成交价格 */
-  lastPrice: number;
+  tradePrice: number;
   /** 最后一次成交数量 */
-  lastVolume: number;
+  tradeVolume: number;
+  /** 最后一次成交手续费 */
+  tradeCommission: number;
   status: OrderStatus;
   symbol: string;
   time: Date;
