@@ -2,12 +2,13 @@
  * 订单状态枚举
  */
 export enum OrderStatus {
-  ALLTRADED = 'alltraded',
-  CANCELLED = 'cancelled',
+  SUBMITTING = 'submitting',
   NOTTRADED = 'nottraded',
   PARTTRADED = 'parttraded',
+  ALLTRADED = 'alltraded',
+  CANCELLED = 'cancelled',
   REJECTED = 'rejected',
-  SUBMITTING = 'submitting',
+  EXPIRED = 'expired',
 }
 
 /**
@@ -98,7 +99,6 @@ export interface OrderbookData {
  */
 export interface OrderData {
   direction: Direction;
-  exchange: string;
   offset: Offset;
   orderId: string;
   /** 订单原始价格 */
@@ -159,13 +159,6 @@ export interface AccountData {
 }
 
 /**
- * 交易所枚举
- */
-export enum Exchange {
-  BINANCE = 'BINANCE',
-}
-
-/**
  * 产品类型枚举
  */
 export enum Product {
@@ -199,14 +192,13 @@ export enum Interval {
  * 合约数据接口
  */
 export interface ContractData {
-  exchange: Exchange;
-  historyData: boolean;
-  minVolume: number;
   name: string;
-  netPosition: boolean;
-  priceTick: number;
-  product: Product;
-  size: number;
-  stopSupported: boolean;
   symbol: string;
+  minVolume: number;
+  priceTick: number;
+  size: number;
+  product: Product;
+  netPosition: boolean;
+  supportHistory: boolean;
+  supportStopOrder: boolean;
 }

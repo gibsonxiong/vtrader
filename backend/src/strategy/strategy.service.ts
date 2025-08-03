@@ -54,8 +54,7 @@ export class StrategyService {
       for (const [name, StrategyClass] of Object.entries(maps)) {
         const instance = new StrategyClass({
           engine: {} as any,
-          balance: 0,
-          symbol: '',
+          symbols: [],
         });
 
         list.push({

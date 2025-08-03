@@ -3,7 +3,6 @@ import type { ContractData } from '../../../types/common';
 import {
   AccountData,
   BarData,
-  Exchange,
   OrderbookData,
   OrderData,
   PositionData,
@@ -14,11 +13,12 @@ import { MdApi } from './md-api';
 import { RestApi } from './rest-api';
 import { TradeApi } from './trade-api';
 import {
-  CancelRequest,
+  CancelOrderRequest,
   GatewaySettings,
   HistoryRequest,
-  OrderRequest,
+  SendOrderRequest,
   SubscribeRequest,
+  ClearHandler,
 } from '../../../types/broker';
 import { UserApi } from './user-api';
 import { Broker } from 'src/broker-manager/broker';
@@ -27,17 +27,16 @@ import { Broker } from 'src/broker-manager/broker';
  * Binance线性合约网关
  */
 export class BinanceLinearBroker extends Broker {
-  public readonly exchange: Exchange = Exchange.BINANCE;
   public readonly brokerName: string = 'BINANCE_LINEAR';
 
-  private mdApi: MdApi;
-  private nameContractMap: Map<string, ContractData> = new Map();
-  private orders: Map<string, OrderData> = new Map();
   private restApi: RestApi;
-
-  private symbolContractMap: Map<string, ContractData> = new Map();
+  private mdApi: MdApi;
   private tradeApi: TradeApi;
   private userApi: UserApi;
+
+  private orders: Map<string, OrderData> = new Map();
+  private nameContractMap: Map<string, ContractData> = new Map();
+  private symbolContractMap: Map<string, ContractData> = new Map();
 
   constructor() {
     super();
@@ -45,13 +44,6 @@ export class BinanceLinearBroker extends Broker {
     this.tradeApi = new TradeApi(this);
     this.userApi = new UserApi(this);
     this.mdApi = new MdApi(this);
-  }
-
-  /**
-   * 撤销订单
-   */
-  public async cancelOrder(req: CancelRequest): Promise<void> {
-    this.tradeApi.cancelOrder(req);
   }
 
   /**
@@ -162,8 +154,15 @@ export class BinanceLinearBroker extends Broker {
   /**
    * 发送订单
    */
-  public sendOrder(req: OrderRequest): string {
+  public sendOrder(req: SendOrderRequest): Promise<string> {
     return this.tradeApi.sendOrder(req);
+  }
+
+  /**
+   * 撤销订单
+   */
+  public async cancelOrder(req: CancelOrderRequest): Promise<void> {
+    return this.tradeApi.cancelOrder(req);
   }
 
   /**
@@ -190,6 +189,25 @@ export class BinanceLinearBroker extends Broker {
   public writeLog(msg: string): void {
     console.log(`[${this.brokerName}] ${msg}`);
     this.emit('log', msg);
+  }
+
+  public watchOrder(watcher: (order: OrderData) => void): ClearHandler {
+    this.on('order', watcher);
+
+    return () => {
+      this.off('order', watcher);
+    }
+  }
+
+  public watchTrade(watcher: (trade: TradeData) => void): ClearHandler {
+    this.on('trade', watcher);
+
+    return () => {
+      this.off('trade', watcher);
+    }
+  }
+
+  public refresh(bar: BarData): void {
   }
 }
 

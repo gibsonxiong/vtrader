@@ -2,6 +2,7 @@ import { Direction, Offset, OrderStatus } from 'src/types/common';
 import type { OrderData } from 'src/types/common';
 
 export interface Holding {
+  symbol: string;
   direction: Direction;
   pos: number;
   price: number;
@@ -25,6 +26,7 @@ export interface Holding {
 }
 
 export class LongHolding implements Holding {
+  public symbol: string;
   public direction = Direction.LONG;
   public pos = 0;
   public price = 0;
@@ -34,6 +36,10 @@ export class LongHolding implements Holding {
   public commission = 0;
   public turnover = 0;
   public frozenMap: Record<string, number> = {};
+
+  constructor(symbol: string) {
+    this.symbol = symbol;
+  }
 
   get frozen(): number {
     return Object.values(this.frozenMap).reduce((acc, cur) => acc + cur, 0);
@@ -82,7 +88,7 @@ export class LongHolding implements Holding {
   }
 
   calcFrozen(order: OrderData): void {
-    if (order.status === OrderStatus.NOTTRADED) {
+    if (order.status === OrderStatus.SUBMITTING || order.status === OrderStatus.NOTTRADED) {
       this.frozenMap[order.orderId] = order.volume * order.price;
     } else if (order.status === OrderStatus.PARTTRADED) {
       if (this.frozenMap[order.orderId]) {
@@ -122,6 +128,7 @@ export class LongHolding implements Holding {
 }
 
 export class ShortHolding implements Holding {
+  public symbol: string;
   public direction = Direction.SHORT;
   public pos = 0;
   public price = 0;
@@ -131,6 +138,10 @@ export class ShortHolding implements Holding {
   public commission = 0;
   public turnover = 0;
   public frozenMap: Record<string, number> = {};
+
+  constructor(symbol: string) {
+    this.symbol = symbol;
+  }
 
   get frozen(): number {
     return Object.values(this.frozenMap).reduce((acc, cur) => acc + cur, 0);
@@ -179,7 +190,7 @@ export class ShortHolding implements Holding {
   }
 
   calcFrozen(order: OrderData): void {
-    if (order.status === OrderStatus.NOTTRADED) {
+    if (order.status === OrderStatus.SUBMITTING || order.status === OrderStatus.NOTTRADED) {
       this.frozenMap[order.orderId] = order.volume * order.price;
     } else if (order.status === OrderStatus.PARTTRADED) {
       if (this.frozenMap[order.orderId]) {

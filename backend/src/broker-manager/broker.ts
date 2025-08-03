@@ -1,10 +1,11 @@
 import { EventEmitter } from 'node:events';
 import type {
-  CancelRequest,
+  CancelOrderRequest,
   GatewaySettings,
   HistoryRequest,
-  OrderRequest,
+  SendOrderRequest,
   SubscribeRequest,
+  ClearHandler,
 } from 'src/types/broker';
 import type {
   AccountData,
@@ -24,22 +25,27 @@ export abstract class Broker extends EventEmitter {
   public abstract connect(settings: GatewaySettings): Promise<void>;
   public abstract stop(): void;
 
-  public abstract getContractByName(name: string): ContractData | undefined;
+  public abstract refresh(bar: BarData): void;
+
+  // public abstract getContractByName(name: string): ContractData | undefined;
   public abstract getContractBySymbol(symbol: string): ContractData | undefined;
-  public abstract getOrder(orderId: string): OrderData | undefined;
+  // public abstract getOrder(orderId: string): OrderData | undefined;
 
   public abstract queryHistory(req: HistoryRequest): Promise<BarData[]>;
-  public abstract sendOrder(req: OrderRequest): string;
-  public abstract cancelOrder(req: CancelRequest): Promise<void>;
-  public abstract subscribe(req: SubscribeRequest): void;
+  public abstract sendOrder(req: SendOrderRequest): Promise<string>;
+  public abstract cancelOrder(req: CancelOrderRequest): Promise<void>;
+  // public abstract subscribe(req: SubscribeRequest): void;
 
-  public abstract onContract(contract: ContractData): void;
-  public abstract onAccount(account: AccountData): void;
-  public abstract onOrder(order: OrderData): void;
-  public abstract onTrade(trade: TradeData): void;
-  public abstract onBar(bar: BarData): void;
-  public abstract onPosition(position: PositionData): void;
-  public abstract onTick(tick: TickData): void;
+  // public abstract onContract(contract: ContractData): void;
+  // public abstract onAccount(account: AccountData): void;
+  // public abstract onOrder(order: OrderData): void;
+  // public abstract onTrade(trade: TradeData): void;
+  // public abstract onBar(bar: BarData): void;
+  // public abstract onPosition(position: PositionData): void;
+  // public abstract onTick(tick: TickData): void;
+
+  public abstract watchOrder(watcher: (order: OrderData) => void): ClearHandler;
+  public abstract watchTrade(watcher: (trade: TradeData) => void): ClearHandler;
 
   public abstract writeLog(msg: string): void;
 }

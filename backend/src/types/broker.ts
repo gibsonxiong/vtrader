@@ -1,4 +1,4 @@
-import type { Direction, Exchange, Interval, Offset, OrderType } from './common';
+import type { Direction, Interval, Offset, OrderType } from './common';
 
 /**
  * 网关设置接口
@@ -16,29 +16,25 @@ export interface GatewaySettings {
  * 订阅请求接口
  */
 export interface SubscribeRequest {
-  exchange: Exchange;
   symbol: string;
 }
 
 /**
  * 订单请求接口
  */
-export interface OrderRequest {
-  direction: Direction;
-  exchange: Exchange;
-  offset: Offset;
-  price?: number;
-  reference?: string;
+export interface SendOrderRequest {
+  orderId: string;
   symbol: string;
-  type: OrderType;
+  direction: Direction;
+  offset: Offset;
+  price: number;
   volume: number;
 }
 
 /**
  * 撤单请求接口
  */
-export interface CancelRequest {
-  exchange: Exchange;
+export interface CancelOrderRequest {
   orderId: string;
   symbol: string;
 }
@@ -47,8 +43,10 @@ export interface CancelRequest {
  * 历史数据请求接口
  */
 export interface HistoryRequest {
+  symbol: string;
+  start: string;
   end?: string;
   interval: Interval;
-  start: string;
-  symbol: string;
 }
+
+export type ClearHandler = () => void;

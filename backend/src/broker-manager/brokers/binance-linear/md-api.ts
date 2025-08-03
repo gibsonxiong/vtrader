@@ -1,4 +1,4 @@
-import type { BinanceLinearBroker } from './index';
+import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as WebSocket from 'ws';
 

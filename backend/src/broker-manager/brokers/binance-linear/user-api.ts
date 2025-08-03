@@ -1,9 +1,9 @@
 import type { AccountData, OrderData, PositionData, TradeData } from '../../../types/common';
-import type { BinanceLinearBroker } from './index';
+import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as WebSocket from 'ws';
 
-import { Direction, Exchange, Offset, OrderType } from '../../../types/common';
+import { Direction, Offset, OrderType } from '../../../types/common';
 import { REAL_USER_HOST, STATUS_BINANCE2VT, TESTNET_USER_HOST } from './constants';
 
 function binance2offset(direction: 'LONG' | 'SHORT', side: 'BUY' | 'SELL'): Offset {
@@ -117,7 +117,6 @@ export class UserApi {
   private onOrderUpdate(data: any): void {
     const order: OrderData = {
       symbol: data.s,
-      exchange: Exchange.BINANCE.toString(),
       orderId: data.c,
       type: data.o === 'LIMIT' ? OrderType.LIMIT : OrderType.MARKET,
       direction: data.ps === 'LONG' ? Direction.LONG : Direction.SHORT,

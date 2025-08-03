@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Exchange, Interval } from './types/common';
+import { Direction, Interval, Offset } from './types/common';
 import type { BarData, OrderData, TradeData } from './types/common';
 import { MarketDataService } from './market-data/market-data.service';
 import { BacktestingService, BacktestingSetting } from './strategy/backtesting.service';
@@ -21,11 +21,8 @@ export class AppService {
   ) {
     // this.test2();
     // this.test3();
-    this.test3();
-  }
-
-  getHello(): string {
-    return 'Hello World!';
+    // this.backtesting();
+    this.broker();
   }
 
   // 获取K线
@@ -53,12 +50,12 @@ export class AppService {
   }
 
   // 回测
-  async test3(): Promise<void> {
+  async backtesting(): Promise<void> {
     // 1. 设置回测参数
     const setting: BacktestingSetting = {
       startDate: '2025-07-08',
       endDate: '2025-07-23',
-      symbol: 'BTCUSDT:USDT',
+      symbols: ['BTCUSDT:USDT', 'ETHUSDT:USDT'],
       interval: Interval.MINUTE_1,
       balance: 100_000,
       commissionRate: 0.0005,
@@ -72,9 +69,9 @@ export class AppService {
           },
         },
         {
-          strategyName: 'MyStrategy',
+          strategyName: 'RSIStrategy',
           strategySetting: {
-            rsiWindow: 20,
+            rsiWindow: 30,
           },
         },
       ],
@@ -83,11 +80,10 @@ export class AppService {
     this.backtestingService.backtesting(setting);
   }
 
-  async test4(): Promise<void> {
+  async createStrategy(): Promise<void> {
     const strategy = await this.strategyService.createInstance('MyStrategy', {
       engine: {} as any,
-      balance: 100_000,
-      symbol: 'BTCUSDT:USDT',
+      symbols: ['BTCUSDT:USDT'],
       setting: {
         fastWindow: 10,
         slowWindow: 20,
@@ -98,29 +94,42 @@ export class AppService {
     console.log(strategy);
   }
 
-  async test5(): Promise<void> {
+  async broker(): Promise<void> {
     const broker = await this.brokerMgrService.getBroker();
 
     const contract = broker.getContractBySymbol('BTCUSDT:USDT');
 
     console.log('contract', contract);
 
-    broker.subscribe({
-      exchange: Exchange.BINANCE,
-      symbol: 'BTCUSDT:USDT',
-    });
+    // broker.subscribe({
+    //   symbol: 'BTCUSDT:USDT',
+    // });
 
-    broker.on('bar', (bar: BarData) => {
-      console.log(bar);
-    });
+    // broker.on('bar', (bar: BarData) => {
+    //   console.log(bar);
+    // });
 
-    broker.on('trade', (trade: TradeData) => {
+    broker.watchTrade((trade: TradeData) => {
       console.log('trade', trade);
     });
 
-    broker.on('order', (order: OrderData) => {
+    broker.watchOrder((order: OrderData) => {
       console.log('order', order);
     });
+
+    broker.sendOrder({
+      orderId: '1234',
+      symbol: 'BTCUSDT:USDT',
+      direction: Direction.LONG,
+      offset: Offset.OPEN,
+      price: 100000,
+      volume: 2222
+    });
+
+    // broker.cancelOrder({
+    //   orderId: '1234',
+    //   symbol: 'BTCUSDT:USDT',
+    // });
   }
 
   test6(): void {

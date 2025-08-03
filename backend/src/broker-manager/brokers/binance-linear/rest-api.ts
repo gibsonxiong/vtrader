@@ -1,12 +1,12 @@
 import type { ContractData } from '../../../types/common';
-import type { BinanceLinearBroker } from './index';
+import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as crypto from 'node:crypto';
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 
-import { BarData, Exchange, Interval, Product } from '../../../types/common';
+import { BarData, Interval, Product } from '../../../types/common';
 import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
@@ -217,7 +217,6 @@ export class RestApi {
 
         const contract: ContractData = {
           symbol: `${symbolData.symbol}:${symbolData.marginAsset}`,
-          exchange: Exchange.BINANCE,
           name: symbolData.symbol,
           product: PRODUCT_BINANCE2VT[symbolData.contractType] || Product.FUTURES,
           size: 1,
@@ -228,9 +227,9 @@ export class RestApi {
           minVolume: Number.parseFloat(
             symbolData.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.minQty || '1',
           ),
-          stopSupported: true,
+          supportStopOrder: true,
           netPosition: true,
-          historyData: true,
+          supportHistory: true,
         };
 
         this.broker.onContract(contract);

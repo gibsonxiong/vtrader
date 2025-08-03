@@ -25,10 +25,10 @@ export class Wallet {
     return this._total - this.frozen;
   }
 
-  // TODO 计算有误
   updateByOrder(order: OrderData): void {
     if (order.offset === Offset.OPEN) {
       switch (order.status) {
+        case OrderStatus.SUBMITTING:
         case OrderStatus.NOTTRADED: {
           this.frozenMap[order.orderId] = order.volume * order.price;
 
@@ -64,7 +64,7 @@ export class Wallet {
     }
   }
 
-  toString() {
+  public toString(): string {
     return `全部：${this.total} 可用：${this.available} 冻结：${this.frozen}`;
   }
 }
