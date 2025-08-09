@@ -10,6 +10,7 @@ import 'reflect-metadata';
 
 export interface RecordData {
   date: string;
+  timestamp: number;
   // price: number;
   pnl: number;
   minPnl: number;
@@ -33,15 +34,11 @@ export interface DailyResultItem {
 }
 
 export interface BacktestingResult {
+  startDate: string;
+  endDate: string;
   annualReturn: number;
-  dailyCommission: number;
-  dailyNetPnl: number;
-  dailyReturn: number;
-  dailyTradeCount: number;
-  dailyTurnover: number;
   startBalance: number;
   endBalance: number;
-  endDate: string;
   lossDays: number;
   maxDrawdown: number;
   maxDrawdownPercent: number;
@@ -49,7 +46,6 @@ export interface BacktestingResult {
   returnDrawdownRatio: number;
   returnStd: number;
   sharpeRatio: number;
-  startDate: string;
   totalCommission: number;
   totalDays: number;
   totalNetPnl: number;
@@ -102,6 +98,7 @@ export abstract class Strategy {
   // 引擎和基本信息
   protected engine: StrategyEngine;
   public weight = 1;
+  startBalance = 0;
   
   public ctxs: Map<string, Context>;
   public orders: Map<string, OrderData> = new Map();
@@ -140,8 +137,12 @@ export abstract class Strategy {
       });
 
       this.ctxs.set(symbol, ctx);
+
+      this.onInitContext(ctx);
     }
   }
+
+  onInitContext(ctx: Context) {}
 
   /**
    * 获取策略参数字典
@@ -208,18 +209,16 @@ export abstract class Strategy {
   /**
    * K线数据更新
    */
-  public handleBar(bar: BarData): void {
+  public async handleBar(bar: BarData): Promise<void> {
     const ctx = this.ctxs.get(bar.symbol);
     if (!ctx) {
       return;
     }
     
-    if (ctx.am) {
-      ctx.am.add(bar);
-    }
-    this.onBar(bar, ctx);
+    ctx.am.add(bar);
+    await this.onBar(bar, ctx);
   }
-  public onBar(bar: BarData, ctx: Context): void {}
+  public onBar(bar: BarData, ctx: Context): Promise<void> | void {}
 
   /**
    * 委托状态更新
@@ -264,52 +263,6 @@ export abstract class Strategy {
   }
 
   public onTrade(trade: TradeData, ctx: Context): void {}
-
-  doRecord(timestamp: number, price: number): void {
-    const date = dayjs(timestamp).format('YYYY-MM-DD');
-
-    for (let [symbol, ctx] of this.ctxs) {
-      const { longHolding, shortHolding } = ctx;
-      const tradingPnl = longHolding.accumTradingPnl + shortHolding.accumTradingPnl;
-      const holdingPnl = longHolding.getHoldingPnl(price) + shortHolding.getHoldingPnl(price);
-      const pnl = tradingPnl + holdingPnl;
-      const commission = longHolding.commission + shortHolding.commission;
-      const turnover = longHolding.turnover + shortHolding.turnover;
-      const recordData = this.records.get(date);
-  
-      if (recordData) {
-        // 更新当日收盘价
-        // recordData.price = price;
-        recordData.pnl = pnl;
-        recordData.holdingPnl = holdingPnl;
-        recordData.tradingPnl = tradingPnl;
-        recordData.commission = commission;
-        recordData.turnover = turnover;
-  
-        // 更新最小最大PNL
-        if (pnl < recordData.minPnl) {
-          recordData.minPnl = pnl;
-        }
-  
-        if (pnl > recordData.maxPnl) {
-          recordData.maxPnl = pnl;
-        }
-      } else {
-        this.records.set(date, {
-          date,
-          // price,
-          pnl,
-          minPnl: pnl,
-          maxPnl: pnl,
-          tradingPnl,
-          holdingPnl,
-          commission,
-          turnover,
-        });
-      }
-    }
-    
-  }
 
   /**
    * 开-多仓
@@ -362,28 +315,43 @@ export abstract class Strategy {
     const { symbol, direction, offset, price, volume } = params;
 
     if (!this.trading) {
+      // console.warn(`策略未开启`);
       return '';
+      throw new Error('策略未开启');
     }
 
     const ctx = this.ctxs.get(symbol);
 
     if (!ctx) {
-      console.error('为找到该策略上下文');
-      return '';
+      // console.error('未找到该策略上下文');
+      // return '';
+      throw new Error('未找到该策略上下文');
     }
 
-    if (offset === Offset.OPEN && ctx.wallet.available < price * volume) {
-      console.error(`可用资金不足，无法下单`);
-      return '';
+    if (offset === Offset.OPEN && 
+      ctx.wallet.available < price * volume
+    ) {
+      // console.error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}]`);
+      // return '';
+      throw new Error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}] [可用资金：${ctx.wallet.available}， 下单金额：${price * volume}]`);
     }
 
     if (
       offset === Offset.CLOSE &&
-      ((direction === Direction.LONG && ctx.longHolding.available < volume) ||
-        (direction === Direction.SHORT && ctx.shortHolding.available < volume))
+      direction === Direction.LONG && ctx.longHolding.available < volume
     ) {
-      console.error(`[下单_开${direction === Direction.LONG ? '多' : '空'}]可用仓位不足，无法下单`);
-      return '';
+      // console.error(`可用仓位不足，无法下单[平${direction === Direction.LONG ? '多' : '空'}]`);
+      // return '';
+      throw new Error(`可用仓位不足，无法下单[平多] [可用数量：${ctx.longHolding.available}， 下单数量：${volume}]`);
+    }
+
+    if (
+      offset === Offset.CLOSE &&
+      direction === Direction.SHORT && ctx.shortHolding.available < volume
+    ) {
+      // console.error(`可用仓位不足，无法下单[平${direction === Direction.LONG ? '多' : '空'}]`);
+      // return '';
+      throw new Error(`可用仓位不足，无法下单[平空] [可用资金：${ctx.shortHolding.available}， 下单数量：${volume}]`);
     }
 
     const orderId = genOrderId();
@@ -438,16 +406,273 @@ export abstract class Strategy {
       if (symbol && order.symbol !== symbol) continue;
 
       await this.cancelOrder({
-        orderId,
         symbol: order.symbol,
+        orderId
       });
     }
+  }
+
+  doRecord(timestamp: number, price: number): void {
+    let tradingPnl = 0;
+    let holdingPnl = 0;
+    let pnl = 0;
+    let commission = 0;
+    let turnover = 0;
+
+    for (let [symbol, ctx] of this.ctxs) {
+      const { longHolding, shortHolding } = ctx;
+      const _tradingPnl = longHolding.accumTradingPnl + shortHolding.accumTradingPnl;
+      const _holdingPnl = longHolding.getHoldingPnl(price) + shortHolding.getHoldingPnl(price);
+
+      tradingPnl += _tradingPnl;
+      holdingPnl += _holdingPnl;
+      pnl += _tradingPnl + _holdingPnl;
+      commission += longHolding.commission + shortHolding.commission;
+      turnover += longHolding.turnover + shortHolding.turnover;
+    }
+
+    const date = dayjs(timestamp).format('YYYY-MM-DD');
+    const recordData = this.records.get(date);
+  
+    if (recordData) {
+      // 更新当日收盘价
+      // recordData.price = price;
+      recordData.pnl = pnl;
+      recordData.holdingPnl = holdingPnl;
+      recordData.tradingPnl = tradingPnl;
+      recordData.commission = commission;
+      recordData.turnover = turnover;
+      recordData.timestamp = timestamp;
+
+      // 更新最小最大PNL
+      if (pnl < recordData.minPnl) {
+        recordData.minPnl = pnl;
+      }
+
+      if (pnl > recordData.maxPnl) {
+        recordData.maxPnl = pnl;
+      }
+    } else {
+      this.records.set(date, {
+        date,
+        // price,
+        timestamp,
+        pnl,
+        minPnl: pnl,
+        maxPnl: pnl,
+        tradingPnl,
+        holdingPnl,
+        commission,
+        turnover,
+      });
+    }
+  }
+
+
+  /**
+   * 计算每日结果
+   */
+  calculateDailyResult(): void {
+    // 按日期分组交易记录
+    const tradesByDate = new Map<string, TradeData[]>();
+
+    for (const trade of this.trades) {
+      const date = dayjs(trade.time).format('YYYY-MM-DD');
+      if (!tradesByDate.has(date)) {
+        tradesByDate.set(date, []);
+      }
+      tradesByDate.get(date)!.push(trade);
+    }
+
+    // 计算累计收益
+    let accumPnl = 0;
+    let prevRecord: RecordData | null = null;
+    const dates = [...this.records.keys()].sort();
+
+    for (const date of dates) {
+      const record = this.records.get(date)!;
+      const dayTrades = tradesByDate.get(date) || [];
+
+      // 计算持仓盈亏（基于收盘价变化）
+      const tradingPnl = prevRecord
+        ? record.tradingPnl - prevRecord.tradingPnl
+        : record.tradingPnl;
+      const holdingPnl = prevRecord
+        ? record.holdingPnl - prevRecord.holdingPnl
+        : record.holdingPnl;
+
+      const commission = prevRecord
+        ? record.commission - prevRecord.commission
+        : record.commission;
+
+      const turnover = prevRecord ? record.turnover - prevRecord.turnover : record.turnover;
+
+      const netPnl = tradingPnl + holdingPnl - commission;
+
+      // 累计总盈亏
+      accumPnl += netPnl;
+
+      this.dailyResults.set(date, {
+        date,
+        trades: dayTrades,
+        commission,
+        turnover,
+        tradeCount: dayTrades.length,
+        tradingPnl,
+        holdingPnl,
+        netPnl,
+        accumPnl,
+      });
+
+      prevRecord = record;
+    }
+  }
+
+  /**
+   * 统计回测结果
+   */
+  calculateResult(startDate: string, endDate: string,  output = false): void {
+    const startBalance = this.startBalance;
+
+    // 计算每日盈亏
+    this.calculateDailyResult();
+    // 计算统计指标
+    let totalNetPnl = 0;
+    let totalCommission = 0;
+    let totalTurnover = 0;
+    let totalTradeCount = 0;
+    const results = [...this.dailyResults.values()];
+    const totalDays = results.length;
+    const profitDays = results.filter((r) => r.netPnl > 0).length;
+    const lossDays = results.filter((r) => r.netPnl < 0).length;
+
+    results.forEach((result) => {
+      totalNetPnl += result.netPnl;
+      totalCommission += result.commission;
+      totalTurnover += result.turnover;
+      totalTradeCount += result.tradeCount;
+    });
+
+    const endBalance = startBalance + totalNetPnl;
+    const totalReturn = totalNetPnl / startBalance;
+    const annualReturn = (totalReturn * 365) / totalDays;
+    const dailyReturn = totalReturn / totalDays;
+
+    // 计算最大回撤
+    let maxDrawdown = 0;
+    let maxDrawdownPercent = 0;
+    let peak = startBalance;
+
+    for (const result of results) {
+      const balance = startBalance + result.accumPnl;
+      if (balance > peak) {
+        peak = balance;
+      }
+
+      const drawdown = peak - balance;
+      const drawdownPercent = drawdown / peak;
+
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+      }
+
+      if (drawdownPercent > maxDrawdownPercent) {
+        maxDrawdownPercent = drawdownPercent;
+      }
+    }
+
+    // 计算夏普比率
+    const returns = results.map((r) => r.netPnl / startBalance);
+    const returnStd = this.calculateStd(returns);
+    const sharpeRatio = returnStd > 0 ? (dailyReturn / returnStd) * Math.sqrt(365) : 0;
+
+    const backtestingResult: BacktestingResult = {
+      startDate,
+      endDate,
+      totalDays,
+      profitDays,
+      lossDays,
+      startBalance,
+      endBalance,
+      maxDrawdown,
+      maxDrawdownPercent,
+      totalNetPnl,
+      totalCommission,
+      totalTurnover,
+      totalTradeCount,
+      totalReturn,
+      annualReturn,
+      returnStd,
+      sharpeRatio,
+      returnDrawdownRatio: maxDrawdown > 0 ? (totalNetPnl / maxDrawdown) : 0,
+    };
+
+    this.backtestingResult = backtestingResult;
+
+    if (output) {
+      this.outputBacktestingResult(backtestingResult);
+    }
+  }
+
+  /**
+   * 显示回测结果
+   */
+  outputBacktestingResult(result: BacktestingResult): void {
+    if (!result) {
+      return;
+    }
+
+    const logs = [
+      '='.repeat(50),
+      `[${this.constructor.name}]回测结果`,
+      '='.repeat(50),
+      `开始日期：\t${result.startDate}`,
+      `结束日期：\t${result.endDate}`,
+      `总交易日：\t${result.totalDays}`,
+      `盈利交易日：\t${result.profitDays}`,
+      `亏损交易日：\t${result.lossDays}`,
+      '',
+      `起始资金：\t${result.startBalance.toFixed(2)}`,
+      `结束资金：\t${result.endBalance.toFixed(2)}`,
+      `总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`,
+      `年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`,
+      `最大回撤：\t${result.maxDrawdown.toFixed(2)}`,
+      `最大回撤百分比：\t${(result.maxDrawdownPercent * 100).toFixed(2)}%`,
+      '',
+      `总 盈 亏：\t${result.totalNetPnl.toFixed(2)}`,
+      `总手续费：\t${result.totalCommission.toFixed(2)}`,
+      `总成交金额：\t${result.totalTurnover.toFixed(2)}`,
+      `总成交笔数：\t${result.totalTradeCount}`,
+      '',
+      `收益标准差：\t${(result.returnStd * 100).toFixed(2)}%`,
+      `夏普比率：\t${result.sharpeRatio.toFixed(2)}`,
+      `收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`,
+    ]
+
+    this.writeLog(logs);
+  }
+
+  /**
+   * 计算标准差
+   */
+  private calculateStd(values: number[]): number {
+    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+    const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
+    return Math.sqrt(variance);
   }
 
   /**
    * 写入日志
    */
-  protected writeLog(msg: string): void {
-    console.log(`[${this.constructor.name}] ${msg}`);
+  protected writeLog(msg: string | string[]): void {
+    if (Array.isArray(msg)) {
+      console.log(`[${this.constructor.name}]`);
+      msg.forEach((m) => {
+        console.log(m);
+      });
+    } else {
+      console.log(`[${this.constructor.name}] ${msg}`);
+    }
+
   }
 }

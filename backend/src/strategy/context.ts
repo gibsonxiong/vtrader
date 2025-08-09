@@ -18,7 +18,9 @@ export class Context {
   wallet: Wallet;
   longHolding: LongHolding;
   shortHolding: ShortHolding;
-  am?: ArrayManger;
+  am: ArrayManger;
+
+  [key: string]: any;
 
   constructor(props: ContextProps) {
     this.strategy = props.strategy;
@@ -26,10 +28,7 @@ export class Context {
     this.wallet = props.wallet;
     this.longHolding = new LongHolding(props.symbol);
     this.shortHolding = new ShortHolding(props.symbol);
-
-    if (props.amLength > 0) {
-      this.am = new ArrayManger(props.amLength);
-    }
+    this.am = new ArrayManger(props.amLength);
   }
 
   sendOrder(params: Omit<SendOrderParams, 'orderId' | 'symbol'>): Promise<string> {

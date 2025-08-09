@@ -21,12 +21,11 @@ export class AppService {
   ) {
     // this.test2();
     // this.test3();
-    // this.backtesting();
-    this.broker();
+    this.backtesting();
   }
 
   // 获取K线
-  async test1(): Promise<void> {
+  async getBars(): Promise<void> {
     const bars = await this.marketDataService.getBars({
       start: '2022-01-01',
       end: '2025-01-02',
@@ -62,16 +61,22 @@ export class AppService {
       size: 1,
       priceTick: 0.01,
       strategies: [
+        // {
+        //   strategyName: 'MyStrategy',
+        //   strategySetting: {
+        //     rsiWindow: 20,
+        //   },
+        // },
+        // {
+        //   strategyName: 'RSIStrategy',
+        //   strategySetting: {
+        //     rsiWindow: 20,
+        //   },
+        // },
         {
-          strategyName: 'MyStrategy',
+          strategyName: 'GridStrategy',
           strategySetting: {
-            rsiWindow: 20,
-          },
-        },
-        {
-          strategyName: 'RSIStrategy',
-          strategySetting: {
-            rsiWindow: 30,
+            // rsiWindow: 20,
           },
         },
       ],

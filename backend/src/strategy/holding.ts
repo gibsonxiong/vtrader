@@ -62,7 +62,7 @@ export class LongHolding implements Holding {
           this.initPrice = order.tradePrice;
           this.price = order.tradePrice;
         } else {
-          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / this.pos + order.tradeVolume;
+          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / (this.pos + order.tradeVolume);
         }
 
         this.pos += order.tradeVolume;
@@ -88,11 +88,13 @@ export class LongHolding implements Holding {
   }
 
   calcFrozen(order: OrderData): void {
+    if (order.offset !== Offset.CLOSE) return;
+
     if (order.status === OrderStatus.SUBMITTING || order.status === OrderStatus.NOTTRADED) {
-      this.frozenMap[order.orderId] = order.volume * order.price;
+      this.frozenMap[order.orderId] = order.volume;
     } else if (order.status === OrderStatus.PARTTRADED) {
       if (this.frozenMap[order.orderId]) {
-        this.frozenMap[order.orderId] -= order.tradePrice * order.tradeVolume;
+        this.frozenMap[order.orderId] -= order.tradeVolume;
       }
     } else if (order.status === OrderStatus.ALLTRADED) {
       delete this.frozenMap[order.orderId];
@@ -164,7 +166,7 @@ export class ShortHolding implements Holding {
           this.initPrice = order.tradePrice;
           this.price = order.tradePrice;
         } else {
-          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / this.pos + order.tradeVolume;
+          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / (this.pos + order.tradeVolume);
         }
 
         this.pos += order.tradeVolume;
@@ -190,11 +192,13 @@ export class ShortHolding implements Holding {
   }
 
   calcFrozen(order: OrderData): void {
+    if (order.offset !== Offset.CLOSE) return;
+
     if (order.status === OrderStatus.SUBMITTING || order.status === OrderStatus.NOTTRADED) {
-      this.frozenMap[order.orderId] = order.volume * order.price;
+      this.frozenMap[order.orderId] = order.volume;
     } else if (order.status === OrderStatus.PARTTRADED) {
       if (this.frozenMap[order.orderId]) {
-        this.frozenMap[order.orderId] -= order.tradePrice * order.tradeVolume;
+        this.frozenMap[order.orderId] -= order.tradeVolume;
       }
     } else if (order.status === OrderStatus.ALLTRADED) {
       delete this.frozenMap[order.orderId];

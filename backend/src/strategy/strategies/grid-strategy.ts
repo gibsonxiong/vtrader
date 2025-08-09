@@ -28,21 +28,19 @@ class GridItem {
   }
 }
 
+interface GridContext extends Context {
+  bg: BarGenerator;
+  enterLong: boolean;
+  enterShort: boolean;
+  am1hour: ArrayManger;
+}
+
 /**
  * 网格策略
  * 基于RSI、TEMA和布林带的网格交易策略
  */
 export default class GridStrategy extends Strategy {
   // 入场参数
-  @param({ type: Number, default: 14 })
-  rsiLength!: number;
-
-  @param({ type: Number, default: 25 })
-  rsiDown!: number;
-
-  @param({ type: Number, default: 75 })
-  rsiUp!: number;
-
   @param({ type: Number, default: 9 })
   temaLength!: number;
 
@@ -53,14 +51,11 @@ export default class GridStrategy extends Strategy {
   bbDev!: number;
 
   // 网格参数
-  @param({ type: Number, default: 0.015 })
+  @param({ type: Number, default: 0.001 })
   gridStep!: number;
 
-  @param({ type: Number, default: 80 })
+  @param({ type: Number, default: 10 })
   gridSize!: number;
-
-  @param({ type: Number, default: 100000 })
-  gridCapital!: number;
 
   @param({ type: Number, default: 0.001 })
   minVolume!: number;
@@ -71,14 +66,6 @@ export default class GridStrategy extends Strategy {
   @param({ type: Boolean, default: true })
   useAdjustGrid!: boolean;
 
-  // 状态变量
-  private rsiValue: number = 0;
-  private temaValue: number = 0;
-  private lastTemaValue: number = 0;
-  private bbMid: number = 0;
-  private lastRsiValue: number = 0;
-  private last2RsiValue: number = 0;
-
   private longGrid: GridItem[] = [];
   private shortGrid: GridItem[] = [];
   private longCount: number = 0;
@@ -86,18 +73,14 @@ export default class GridStrategy extends Strategy {
   private longRemoveOrderId: string = '';
   private shortRemoveOrderId: string = '';
 
-  private enterLong: boolean = false;
-  private enterShort: boolean = false;
-
-  private bg?: BarGenerator;
-  private am?: ArrayManger;
+  private bg: BarGenerator;
 
   preloadCount(): number {
-    return Math.max(this.rsiLength, this.temaLength, this.bbLength) + 10;
+    return Math.max(this.temaLength, this.bbLength) + 10;
   }
 
   amLength(): number {
-    return Math.max(this.rsiLength, this.temaLength, this.bbLength) + 10;
+    return Math.max(this.temaLength, this.bbLength) + 10;
   }
 
   /**
@@ -111,31 +94,75 @@ export default class GridStrategy extends Strategy {
     this.shortGrid = [];
     this.longRemoveOrderId = '';
     this.shortRemoveOrderId = '';
-    
-    // 初始化数组管理器和K线生成器
-    this.am = new ArrayManger(50);
-    this.bg = new BarGenerator({
-      interval: Interval.HOUR_2,
+  }
+
+  public onInitContext(ctx: GridContext): void {
+    ctx.enterLong = false;
+    ctx.enterShort = false;
+    ctx.bg = new BarGenerator({
+      interval: Interval.MINUTE_5,
       callback: (bar: BarData) => {
+        this.on1HourBar(bar, ctx);
       }
     });
+    ctx.am1hour = new ArrayManger(10);
   }
 
   /**
-   * 订单状态更新
+   * K线数据更新（1分钟）
    */
-  public onOrder(order: OrderData, ctx: Context): void {
-    if (order.status === OrderStatus.NOTTRADED) return;
+  public async onBar(bar: BarData, ctx: GridContext): Promise<void> {
+    // console.log('onBar', new Date(bar.timestamp));
+
+    ctx.bg.update(bar);
     
-    const action = order.offset === Offset.OPEN ? '开' : '平';
-    const direction = order.direction === Direction.LONG ? '多' : '空';
-    this.writeLog(`[${action}${direction}${order.symbol}] 价格：${order.price} 数量：${order.volume} 订单[${order.orderId}]：${order.status}`);
+    // 执行网格逻辑
+    if (ctx.am1hour.inited) {
+      await this.gridLogic(bar.close, ctx);
+    }
+  }
+
+  /**
+   * 1小时K线数据更新
+   */
+  private on1HourBar(bar: BarData, ctx: GridContext): void {
+    ctx.am1hour.add(bar);
+
+    if (!ctx.am1hour.inited) return;
+
+    // console.log('on1HourBar', new Date(bar.timestamp));
+
+    // 计算典型价格
+    const typicalPrice = ctx.am.high.map((high, i) => 
+      (high + ctx.am.low[i] + ctx.am.close[i]) / 3
+    );
+
+    // 计算TEMA
+    const temaArray = talib.ema({
+      values: ctx.am.close,
+      period: this.temaLength
+    });
+    const temaValue = temaArray[temaArray.length - 1] || 0;
+    const lastTemaValue = temaArray[temaArray.length - 2] || 0;
+
+    // 计算布林带
+    const bbResult = talib.bollingerbands({
+      values: typicalPrice,
+      period: this.bbLength,
+      stdDev: this.bbDev
+    });
+    const bbMid = bbResult[bbResult.length - 1].middle || 0;
+
+    // 计算入场信号
+    ctx.enterLong = true;
+
+    ctx.enterShort = false;
   }
 
   /**
    * 成交回报处理
    */
-  public onTrade(trade: TradeData, ctx: Context): void {
+  public onTrade(trade: TradeData, ctx: GridContext): void {
     const orderId = trade.orderId;
 
     // 处理移除网格的订单
@@ -151,114 +178,43 @@ export default class GridStrategy extends Strategy {
     // 处理多头网格订单
     let found = false;
     for (const gridItem of this.longGrid) {
+      if (found) break;
       if (gridItem.orderId === orderId) {
         found = true;
-        if (gridItem.pos === 0) {
+        if (trade.offset === Offset.OPEN) {
           // 开仓订单完成
           gridItem.pos = trade.volume;
           this.longCount += 1;
-          this.writeLog(`开多仓完成 价格:${trade.price} 数量:${trade.volume}`);
+          this.writeLog(`[开多] 价格:${trade.price} 数量:${trade.volume}`);
         } else {
           // 平仓订单完成
           gridItem.pos = 0;
           this.longCount -= 1;
-          this.writeLog(`平多仓完成 价格:${trade.price} 数量:${trade.volume}`);
+          this.writeLog(`[平多] 获利:${(trade.price - gridItem.price) * trade.volume - trade.commission}`);
         }
         gridItem.orderId = '';
-        break;
       }
     }
 
     // 处理空头网格订单
-    if (!found) {
-      for (const gridItem of this.shortGrid) {
-        if (gridItem.orderId === orderId) {
-          if (gridItem.pos === 0) {
-            // 开仓订单完成
-            gridItem.pos = trade.volume;
-            this.shortCount += 1;
-            this.writeLog(`开空仓完成 价格:${trade.price} 数量:${trade.volume}`);
-          } else {
-            // 平仓订单完成
-            gridItem.pos = 0;
-            this.shortCount -= 1;
-            this.writeLog(`平空仓完成 价格:${trade.price} 数量:${trade.volume}`);
-          }
-          gridItem.orderId = '';
-          break;
+    for (const gridItem of this.shortGrid) {
+      if (found) break;
+      if (gridItem.orderId === orderId) {
+        found = true;
+        if (trade.offset === Offset.OPEN) {
+          // 开仓订单完成
+          gridItem.pos = trade.volume;
+          this.shortCount += 1;
+          this.writeLog(`[开空] 价格:${trade.price} 数量:${trade.volume}`);
+        } else {
+          // 平仓订单完成
+          gridItem.pos = 0;
+          this.shortCount -= 1;
+          this.writeLog(`[平空] 获利:${(gridItem.price - trade.price) * trade.volume - trade.commission}`);
         }
+        gridItem.orderId = '';
       }
     }
-  }
-
-  /**
-   * K线数据更新（1分钟）
-   */
-  public onBar(bar: BarData, ctx: Context): void {
-    if (!this.bg) return;
-    this.bg.update(bar);
-    
-    if (!this.am?.inited) return;
-
-    // 执行网格逻辑
-    this.gridLogic(bar.close, ctx);
-  }
-
-  /**
-   * 1小时K线数据更新
-   */
-  private on1HourBar(bar: BarData, ctx: Context): void {
-    if (!this.am) return;
-    
-    this.am.add(bar);
-    if (!this.am.inited) return;
-
-    // 计算典型价格
-    const typicalPrice = this.am.high.map((high, i) => 
-      (high + this.am!.low[i] + this.am!.close[i]) / 3
-    );
-
-    // 计算RSI
-    const rsiArray = talib.rsi({
-      values: this.am.close,
-      period: this.rsiLength
-    });
-    this.rsiValue = rsiArray[rsiArray.length - 1] || 0;
-    this.lastRsiValue = rsiArray[rsiArray.length - 2] || 0;
-    this.last2RsiValue = rsiArray[rsiArray.length - 3] || 0;
-
-    // 计算TEMA
-    const temaArray = talib.ema({
-      values: this.am.close,
-      period: this.temaLength
-    });
-    this.temaValue = temaArray[temaArray.length - 1] || 0;
-    this.lastTemaValue = temaArray[temaArray.length - 2] || 0;
-
-    // 计算布林带
-    const bbResult = talib.bollingerbands({
-      values: typicalPrice,
-      period: this.bbLength,
-      stdDev: this.bbDev
-    });
-    this.bbMid = bbResult[bbResult.length - 1].middle || 0;
-
-    // 计算入场信号
-    this.enterLong = (
-      this.rsiValue >= this.rsiDown && 
-      this.lastRsiValue < this.rsiDown && 
-      this.last2RsiValue < this.rsiDown &&
-      this.temaValue <= this.bbMid &&
-      this.temaValue > this.lastTemaValue
-    );
-
-    this.enterShort = (
-      this.rsiValue <= this.rsiUp && 
-      this.lastRsiValue > this.rsiUp && 
-      this.last2RsiValue > this.rsiUp &&
-      this.temaValue > this.bbMid &&
-      this.temaValue < this.lastTemaValue
-    );
   }
 
   /**
@@ -316,6 +272,7 @@ export default class GridStrategy extends Strategy {
     }
 
     this.writeLog(`初始化${isLong ? '多头' : '空头'}网格，中心价格：${entryPrice}，网格数量：${grid.length}`);
+    console.log(grid);
   }
 
   /**
@@ -384,13 +341,20 @@ export default class GridStrategy extends Strategy {
   /**
    * 网格交易逻辑
    */
-  private async gridLogic(price: number, ctx: Context): Promise<void> {
+  private async gridLogic(price: number, ctx: GridContext): Promise<void> {
+    
     const longGrid = this.longGrid;
     const shortGrid = this.shortGrid;
+    
+    if (longGrid.length > 0 && longGrid[0].symbol !== ctx.symbol) return;
+    if (shortGrid.length > 0 && shortGrid[0].symbol !== ctx.symbol) return; 
+
+    this.writeLog(``);
+    this.writeLog(`网格交易逻辑，价格：${price} ${ctx.symbol}`);
 
     // 多头网格处理
     if (longGrid.length === 0) {
-      if (this.enterLong || this.enterShort) {
+      if (ctx.enterLong || ctx.enterShort) {
         this.initGrid(ctx.symbol, price, true);
       }
     } else if (this.useAdjustGrid) {
@@ -411,8 +375,9 @@ export default class GridStrategy extends Strategy {
             volume: gridItem.pos
           });
           gridItem.orderId = orderId;
+          this.writeLog(`[平多]委托成功`);
         } catch (error) {
-          this.writeLog(`多头平仓下单失败：${error}`);
+          this.writeLog(`委托失败[平多]：${error}`);
         }
       }
     }
@@ -428,15 +393,16 @@ export default class GridStrategy extends Strategy {
             volume: volume
           });
           gridItem.orderId = orderId;
+          this.writeLog(`[开多]委托`);
         } catch (error) {
-          this.writeLog(`多头开仓下单失败：${error}`);
+          this.writeLog(`[开多]委托失败：${error}`);
         }
       }
     }
 
     // 空头网格处理
     if (shortGrid.length === 0) {
-      if (this.enterShort || this.enterLong) {
+      if (ctx.enterShort || ctx.enterLong) {
         this.initGrid(ctx.symbol, price, false);
       }
     } else if (this.useAdjustGrid) {
@@ -458,8 +424,9 @@ export default class GridStrategy extends Strategy {
             volume: gridItem.pos
           });
           gridItem.orderId = orderId;
+          this.writeLog(`[平空]委托`);
         } catch (error) {
-          this.writeLog(`空头平仓下单失败：${error}`);
+          this.writeLog(`[平空]委托失败：${error}`);
         }
       }
     }
@@ -474,13 +441,15 @@ export default class GridStrategy extends Strategy {
             volume: volume
           });
           gridItem.orderId = orderId;
+          this.writeLog(`委托成功[开空]`);
         } catch (error) {
-          this.writeLog(`空头开仓下单失败：${error}`);
+          this.writeLog(`委托成功[开空]：${error}`);
         }
       }
     }
   }
 
+ 
   /**
    * 建立底仓
    */
@@ -503,8 +472,9 @@ export default class GridStrategy extends Strategy {
             });
             gridItem.orderId = orderId;
             leftCount -= 1;
+            this.writeLog(`多头底仓开仓下单成功`);
           } catch (error) {
-            this.writeLog(`多头底仓开仓失败：${error}`);
+            this.writeLog(`多头底仓开仓下单失败：${error}`);
           }
         }
       }
@@ -524,8 +494,9 @@ export default class GridStrategy extends Strategy {
             });
             gridItem.orderId = orderId;
             leftCount -= 1;
+            this.writeLog(`空头底仓开仓下单成功`);
           } catch (error) {
-            this.writeLog(`空头底仓开仓失败：${error}`);
+            this.writeLog(`空头底仓开仓下单失败：${error}`);
           }
         }
       }
@@ -536,7 +507,7 @@ export default class GridStrategy extends Strategy {
    * 获取网格交易数量
    */
   private getVolume(price: number): number {
-    let volume = this.gridCapital / this.gridSize / price / 2;
+    let volume = this.wallet.available / this.gridSize / price / 2;
     volume = Math.floor(volume / this.minVolume) * this.minVolume;
     return Math.max(volume, this.minVolume);
   }

@@ -52,7 +52,7 @@ export class MockBroker extends Broker {
       traded: 0,
       tradePrice: 0,
       tradeVolume: 0,
-      status: OrderStatus.SUBMITTING,
+      status: OrderStatus.NOTTRADED,
       time: new Date(),
       tradeCommission: 0,
     };
@@ -60,7 +60,7 @@ export class MockBroker extends Broker {
     this.activeLimitOrders.set(orderId, order);
     this.limitOrders.set(orderId, order);
 
-    // this.emit('order', order);
+    this.emit('order', order);
 
     return orderId;
   }
@@ -125,18 +125,20 @@ export class MockBroker extends Broker {
         continue;
       }
 
-      // 推送委托进入未成交队列的更新状态
-      if (order.status === OrderStatus.SUBMITTING) {
-        order.status = OrderStatus.NOTTRADED;
-        this.emit('order', order);
-      }
-
       // 判断是否会成交
-      const longCross =
-        order.direction === Direction.LONG && order.price >= longCrossPrice && longCrossPrice > 0;
+      const longCross = 
+        (
+          (order.direction === Direction.LONG && order.offset === Offset.OPEN) ||
+          (order.direction === Direction.SHORT && order.offset === Offset.CLOSE)
+        ) &&
+        order.price >= longCrossPrice &&
+        longCrossPrice > 0;
 
       const shortCross =
-        order.direction === Direction.SHORT &&
+        (
+          (order.direction === Direction.SHORT && order.offset === Offset.OPEN) ||
+          (order.direction === Direction.LONG && order.offset === Offset.CLOSE)
+        ) &&
         order.price <= shortCrossPrice &&
         shortCrossPrice > 0;
 
@@ -170,7 +172,7 @@ export class MockBroker extends Broker {
         offset: order.offset,
         price: tradePrice,
         volume: order.volume,
-        time: new Date(),
+        time: new Date(bar.timestamp),
         commission: this.calcCommission(tradePrice, order.volume),
       };
 
