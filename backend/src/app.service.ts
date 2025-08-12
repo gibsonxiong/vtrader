@@ -8,6 +8,9 @@ import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
+import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
+
+
 
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
@@ -21,7 +24,9 @@ export class AppService {
   ) {
     // this.test2();
     // this.test3();
-    this.backtesting();
+    // this.backtesting();
+
+    this.optimization();
   }
 
   // 获取K线
@@ -153,5 +158,9 @@ export class AppService {
   async test7(): Promise<void> {
     const stategies = await this.strategyService.getStategies();
     console.log('stategies', stategies);
+  }
+
+  async optimization(): Promise<void> {
+    await gridStrategyOptimizationExample();
   }
 }
