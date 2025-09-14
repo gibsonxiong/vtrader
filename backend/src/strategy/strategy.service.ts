@@ -10,7 +10,12 @@ export interface StrategyInfo {
 }
 
 export default async function loadStrategyClasses() {
-  const dirPath = path.resolve(__dirname, './strategies');
+  // 在开发环境使用src目录，在生产环境使用dist目录
+  const isDev = process.env.NODE_ENV !== 'production';
+  const dirPath = isDev 
+    ? path.resolve(__dirname, './strategies')
+    : path.resolve(__dirname, './strategies');
+  
   const strategyClassMap: Record<
     string,
     new (...args: ConstructorParameters<typeof Strategy>) => Strategy
@@ -24,7 +29,7 @@ export default async function loadStrategyClasses() {
 
       if (stats.isDirectory()) {
         await traverse(itemPath); // 递归遍历子目录
-      } else if (stats.isFile() && item.endsWith('.js')) {
+      } else if (stats.isFile() && item.endsWith('.js') && !item.endsWith('.d.ts')) {
         try {
           const module = await import(itemPath);
           if (typeof module.default === 'function') {

@@ -18,6 +18,7 @@ export const viteNestBackendPlugin = ({
     async configureServer(server) {
       const availablePort = await getPort({ port });
       if (availablePort !== port) {
+        consola.log(`Port ${port} is not available. Skip Nest backend.`);
         return;
       }
 

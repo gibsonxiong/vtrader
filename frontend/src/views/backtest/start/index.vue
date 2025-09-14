@@ -289,7 +289,7 @@ const onFinishFailed = (errorInfo: any) => {
         <div class="grid grid-cols-2 gap-4">
           <template v-for="(config, key) in strategyParamsConfig" :key="key">
             <!-- 整数类型 -->
-            <Form.Item v-if="config.type === 'int'" :label="`${key} <class '${config.type}'>`">
+            <Form.Item v-if="config.type === 'number'" :label="`${key} <class '${config.type}'>`">
               <InputNumber 
                 v-model:value="strategyParamsForm[key]" 
                 style="width: 100%" 
@@ -297,17 +297,17 @@ const onFinishFailed = (errorInfo: any) => {
             </Form.Item>
             
             <!-- 浮点数类型 -->
-            <Form.Item v-else-if="config.type === 'float'" :label="`${key} <class '${config.type}'>`">
+            <!-- <Form.Item v-else-if="config.type === 'float'" :label="`${key} <class '${config.type}'>`">
               <InputNumber 
                 v-model:value="strategyParamsForm[key]" 
                 :step="0.001" 
                 :precision="3" 
                 style="width: 100%" 
               />
-            </Form.Item>
+            </Form.Item> -->
             
             <!-- 布尔类型 -->
-            <Form.Item v-else-if="config.type === 'bool'" :label="`${key} <class '${config.type}'>`">
+            <Form.Item v-else-if="config.type === 'boolean'" :label="`${key} <class '${config.type}'>`">
               <Checkbox v-model:checked="strategyParamsForm[key]"></Checkbox>
             </Form.Item>
             
