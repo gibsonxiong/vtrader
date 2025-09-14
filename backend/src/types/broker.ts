@@ -36,7 +36,6 @@ export interface SendOrderRequest {
  */
 export interface CancelOrderRequest {
   orderId: string;
-  symbol: string;
 }
 
 /**

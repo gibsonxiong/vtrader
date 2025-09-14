@@ -1,11 +1,10 @@
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as WebSocket from 'ws';
-import * as crypto from 'node:crypto';
 
-import { OrderStatus, Direction, Offset, OrderType, OrderData } from '../../../types/common';
+import { OrderStatus } from '../../../types/common';
 import { CancelOrderRequest, SendOrderRequest } from '../../../types/broker';
-import { REAL_TRADE_HOST, TESTNET_TRADE_HOST, DIRECTION_OFFSET2BINANCE, ORDERTYPE_VT2BINANCE, formatFloat } from './constants';
+import { REAL_TRADE_HOST, TESTNET_TRADE_HOST } from './constants';
 
 /**
  * 交易API客户端
@@ -14,10 +13,9 @@ export class TradeApi {
   private apiKey: string = '';
   private apiSecret: string = '';
   private broker: BinanceLinearBroker;
+  private orderCount: number = 1_000_000;
   private server: string = '';
   private ws: null | WebSocket = null;
-
-  private orders: Map<string, OrderData> = new Map();
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -63,142 +61,44 @@ export class TradeApi {
   }
 
   /**
-   * 签名参数
-   * 生成请求所需的HMAC-SHA256签名
-   */
-  private sign(params: any): void {
-    // 添加时间戳
-    const timestamp = Date.now();
-    params.timestamp = timestamp;
-
-    // 按字母顺序排序参数并生成查询字符串
-    const sortedKeys = Object.keys(params).sort();
-    const payload = sortedKeys
-      .map(key => `${key}=${params[key]}`)
-      .join('&');
-
-    // 使用HMAC-SHA256生成签名
-    const signature = crypto
-      .createHmac('sha256', this.apiSecret)
-      .update(payload)
-      .digest('hex');
-
-    // 将签名添加到参数中
-    params.signature = signature;
-  }
-
-  /**
    * 发送订单
    */
   public async sendOrder(req: SendOrderRequest): Promise<string> {
-    // 获取合约信息
-    const contract = this.broker.getContractBySymbol(req.symbol);
-    if (!contract) {
-      this.broker.writeLog(`发送订单失败，未找到合约: ${req.symbol}`);
-      return '';
-    }
+    const orderId = `${this.orderCount++}`;
 
-    const order: OrderData = {
-      symbol: req.symbol,
-      orderId: req.orderId,
-      type: OrderType.LIMIT,
-      direction: req.direction,
-      offset: req.offset,
-      price: req.price,
-      volume: req.volume,
-      avgPrice: 0,
-      traded: 0,
-      tradePrice: 0,
-      tradeVolume: 0,
-      status: OrderStatus.SUBMITTING,
-      time: new Date(),
-      tradeCommission: 0,
-    };
+    // 这里应该实现实际的订单发送逻辑
+    // 由于这是回测环境，我们只是模拟订单创建
+    // const order: OrderData = {
+    //   symbol: req.symbol,
+    //   exchange: req.exchange.toString(),
+    //   orderId,
+    //   type: req.type,
+    //   direction: req.direction,
+    //   offset: req.offset || Offset.OPEN,
+    //   price: req.price || 0,
+    //   volume: req.volume,
+    //   avgPrice: 0,
+    //   traded: 0,
+    //   status: OrderStatus.SUBMITTING,
+    //   time: new Date(),
+    // };
 
-    this.orders.set(order.orderId, order);
-
-    // 构建订单参数
-    const params: any = {
-      apiKey: this.apiKey,
-      symbol: contract.name,
-      positionSide: DIRECTION_OFFSET2BINANCE[req.direction],
-      quantity: formatFloat(req.volume),
-      newClientOrderId: req.orderId,
-    };
-
-    // 设置买卖方向
-    if (req.direction === Direction.LONG) {
-      params.side = req.offset === Offset.OPEN ? 'BUY' : 'SELL';
-    } else {
-      params.side = req.offset === Offset.OPEN ? 'SELL' : 'BUY';
-    }
-
-    // 设置订单类型和价格
-    const orderType = OrderType.LIMIT;
-
-      const [binanceType, timeCondition] = ORDERTYPE_VT2BINANCE[orderType];
-      params.type = binanceType;
-      params.timeInForce = timeCondition;
-      params.price = formatFloat(req.price);
-
-    // 签名参数
-    this.sign(params);
-
-    // 发送WebSocket消息
-    const packet = {
-      id: req.orderId, // 使用时间戳作为请求ID
-      method: 'order.place',
-      params: params,
-    };
-
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(packet));
-      this.broker.writeLog(`发送订单: ${req.symbol} ${req.direction} ${req.volume}`);
-    } else {
-      this.broker.writeLog('WebSocket连接未建立，无法发送订单');
-      return '';
-    }
-
-    return req.orderId;
+    // this.broker.onOrder(order);
+    return orderId;
   }
-
-  
 
     /**
    * 撤销订单
    */
-  public async cancelOrder(req: CancelOrderRequest): Promise<void> {
-    // 获取合约信息
-    const contract = this.broker.getContractBySymbol(req.symbol);
-    if (!contract) {
-      this.broker.writeLog(`撤单失败，未找到合约: ${req.symbol}`);
+    public async cancelOrder(req: CancelOrderRequest): Promise<void> {
+      // 实现撤单逻辑
+      // const order = this.broker.getOrder(req.orderId);
+      // if (order) {
+      //   order.status = OrderStatus.CANCELLED;
+      //   this.broker.onOrder(order);
+      // }
       return;
     }
-
-    // 构建撤单参数
-    const params: any = {
-      apiKey: this.apiKey,
-      symbol: contract.name,
-      origClientOrderId: req.orderId
-    };
-
-    // 签名参数
-    this.sign(params);
-
-    // 发送WebSocket消息
-    const packet = {
-      id: req.orderId, // 使用时间戳作为请求ID
-      method: 'order.cancel',
-      params: params,
-    };
-
-    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(packet));
-      this.broker.writeLog(`发送撤单请求: ${req.symbol} 订单ID: ${req.orderId}`);
-    } else {
-      this.broker.writeLog('WebSocket连接未建立，无法发送撤单请求');
-    }
-  }
 
   /**
    * 停止交易API
@@ -216,23 +116,7 @@ export class TradeApi {
   private onMessage(data: string): void {
     try {
       const msg = JSON.parse(data);
-      const id = msg.id;
-
-      // console.log('onMessage', msg);
-      
-      // 处理异常情况
-      if (msg.status !== 200) {
-        const order = this.orders.get(id);
-
-        if (order) {
-          order.status = OrderStatus.REJECTED;
-          this.broker.emit('order', order);
-          this.orders.delete(id);
-        }
-      } else {
-        this.orders.delete(id);
-      }
-
+      // 处理不同类型的消息
     } catch (error) {
       this.broker.writeLog(`解析交易消息失败: ${error}`);
     }

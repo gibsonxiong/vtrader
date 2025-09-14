@@ -1,7 +1,6 @@
 import type dayjs from 'dayjs';
 
 import { Direction, Interval, OrderStatus, Product } from '../../../types/common';
-import { OrderType } from '../../../types/common';
 
 // 服务器地址常量
 export const REAL_REST_HOST = 'https://fapi.binance.com';
@@ -79,21 +78,3 @@ export const INTERVAL_VT2DAYJS: Record<Interval, [number, dayjs.ManipulateType]>
   [Interval.WEEKLY_1]: [1, 'w'],
   [Interval.MONTHLY_1]: [1, 'M'],
 };
-
-// 方向偏移映射（用于positionSide）
-export const DIRECTION_OFFSET2BINANCE: Record<Direction, string> = {
-  [Direction.LONG]: 'LONG',
-  [Direction.SHORT]: 'SHORT',
-};
-
-// 订单类型映射
-export const ORDERTYPE_VT2BINANCE: Record<OrderType, [string, string]> = {
-  [OrderType.LIMIT]: ['LIMIT', 'GTC'],
-  [OrderType.MARKET]: ['MARKET', 'GTC'],
-  [OrderType.STOP]: ['STOP_MARKET', 'GTC'],
-};
-
-// 格式化浮点数函数
-export function formatFloat(value: number): string {
-  return value.toFixed(8).replace(/\.?0+$/, '');
-}

@@ -5,14 +5,12 @@ import * as dayjs from 'dayjs';
 import { Interval } from 'src/types/common';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
-import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';
 
 export interface GetBarsParams {
   end?: string;
   interval: Interval;
   start: string;
   symbol: string;
-  preload?: number;
 }
 
 export interface DownloadParams {
@@ -50,23 +48,17 @@ export class MarketDataService {
   }
 
   async getBars(params: GetBarsParams): Promise<BarData[]> {
-    const { start, end, interval, symbol, preload } = params;
-    let startTime = dayjs(start).valueOf();
+    const { start, end, interval, symbol } = params;
 
     if (!interval) {
       throw new Error(`${interval}周期不能为空！`);
     }
 
-    if (preload) {
-      const [n, unit] = INTERVAL_VT2DAYJS[interval];
-      startTime = dayjs(startTime).subtract(preload * n, unit).valueOf();
-    }
-
     const bars = await this.prisma.bar.findMany({
       where: {
         timestamp: {
-          gte: startTime,
-          lte: end ? dayjs(end).valueOf() : undefined,
+          gte: dayjs(start).valueOf(),
+          lte: dayjs(end).valueOf(),
         },
         interval,
         symbol,

@@ -141,7 +141,6 @@ export class BacktestingService implements StrategyEngine {
       //   interval: this.interval,
       //   start: this.startDate,
       //   end: this.endDate,
-      //   preloadCount: maxPreloadCount,
       // });
 
       let bars: BarData[] = [];
@@ -310,11 +309,10 @@ export class BacktestingService implements StrategyEngine {
    * 撤销订单
    */
   cancelOrder(params: CancelOrderParams): Promise<void> {
-    const { orderId, symbol } = params;
+    const { orderId } = params;
 
     return this.broker.cancelOrder({
       orderId,
-      symbol,
     });
   }
 
