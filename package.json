@@ -58,6 +58,8 @@
     "@changesets/cli": "catalog:",
     "@playwright/test": "catalog:",
     "@types/node": "catalog:",
+    "@vitejs/plugin-vue": "catalog:",
+    "@vitejs/plugin-vue-jsx": "catalog:",
     "@vtrader/commitlint-config": "workspace:*",
     "@vtrader/eslint-config": "workspace:*",
     "@vtrader/prettier-config": "workspace:*",
@@ -67,8 +69,6 @@
     "@vtrader/turbo-run": "workspace:*",
     "@vtrader/vite-config": "workspace:*",
     "@vtrader/vsh": "workspace:*",
-    "@vitejs/plugin-vue": "catalog:",
-    "@vitejs/plugin-vue-jsx": "catalog:",
     "@vue/test-utils": "catalog:",
     "autoprefixer": "catalog:",
     "cross-env": "catalog:",
@@ -110,5 +110,8 @@
       "canvas",
       "node-gyp"
     ]
+  },
+  "dependencies": {
+    "bignumber.js": "^9.3.1"
   }
 }

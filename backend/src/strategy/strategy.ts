@@ -4,7 +4,8 @@ import { StrategyEngine, SendOrderParams, CancelOrderParams } from '../types/str
 import { Context } from './context';
 import { LongHolding, ShortHolding } from './holding';
 import { Wallet } from './wallet';
-import { genOrderId, orderCanCancel } from 'src/utils';
+import { genOrderId, canOrderCancel, roundTo } from 'src/utils';
+import { BigNumber } from 'bignumber.js';
 import 'reflect-metadata';
 
 
@@ -313,6 +314,10 @@ export abstract class Strategy {
    */
   public async sendOrder(params: Omit<SendOrderParams, 'orderId'>): Promise<string> {
     const { symbol, direction, offset, price, volume } = params;
+    
+    const fixedPirce = roundTo(price, 0.1);
+    const fixedVolume = roundTo(volume, 0.001);
+    const fixedAmount = new BigNumber(fixedPirce * fixedVolume).toNumber();
 
     if (!this.trading) {
       // console.warn(`策略未开启`);
@@ -329,29 +334,29 @@ export abstract class Strategy {
     }
 
     if (offset === Offset.OPEN && 
-      ctx.wallet.available < price * volume
+      ctx.wallet.available < fixedAmount
     ) {
       // console.error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}]`);
       // return '';
-      throw new Error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}] [可用资金：${ctx.wallet.available}， 下单金额：${price * volume}]`);
+      throw new Error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}] [可用资金：${ctx.wallet.available}， 下单金额：${fixedAmount}]`);
     }
 
     if (
       offset === Offset.CLOSE &&
-      direction === Direction.LONG && ctx.longHolding.available < volume
+      direction === Direction.LONG && ctx.longHolding.available < fixedVolume
     ) {
       // console.error(`可用仓位不足，无法下单[平${direction === Direction.LONG ? '多' : '空'}]`);
       // return '';
-      throw new Error(`可用仓位不足，无法下单[平多] [可用数量：${ctx.longHolding.available}， 下单数量：${volume}]`);
+      throw new Error(`可用仓位不足，无法下单[平多] [可用数量：${ctx.longHolding.available}， 下单数量：${fixedVolume}]`);
     }
 
     if (
       offset === Offset.CLOSE &&
-      direction === Direction.SHORT && ctx.shortHolding.available < volume
+      direction === Direction.SHORT && ctx.shortHolding.available < fixedVolume
     ) {
       // console.error(`可用仓位不足，无法下单[平${direction === Direction.LONG ? '多' : '空'}]`);
       // return '';
-      throw new Error(`可用仓位不足，无法下单[平空] [可用资金：${ctx.shortHolding.available}， 下单数量：${volume}]`);
+      throw new Error(`可用仓位不足，无法下单[平空] [可用资金：${ctx.shortHolding.available}， 下单数量：${fixedVolume}]`);
     }
 
     const orderId = genOrderId();
@@ -362,8 +367,8 @@ export abstract class Strategy {
       type: OrderType.LIMIT,
       direction,
       offset,
-      price,
-      volume,
+      price: fixedPirce,
+      volume: fixedVolume,
       avgPrice: 0,
       traded: 0,
       tradePrice: 0,
@@ -381,8 +386,8 @@ export abstract class Strategy {
       symbol,
       direction,
       offset,
-      price,
-      volume,
+      price: fixedPirce,
+      volume: fixedVolume,
     });
 
     return orderId;
@@ -401,7 +406,7 @@ export abstract class Strategy {
   public async cancelAllOrders(params: {symbol?: string}): Promise<void> {
     const {symbol} = params;
     for (let [orderId, order] of this.orders) {
-      if (orderCanCancel(order)) continue;
+      if (canOrderCancel(order)) continue;
 
       if (symbol && order.symbol !== symbol) continue;
 

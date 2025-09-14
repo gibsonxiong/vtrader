@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Interval } from './types/common';
+import { Direction, Interval, Offset } from './types/common';
 import type { BarData, OrderData, TradeData } from './types/common';
 import { MarketDataService } from './market-data/market-data.service';
 import { BacktestingService, BacktestingSetting } from './strategy/backtesting.service';
@@ -8,7 +8,10 @@ import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
+import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
+import { test2 } from './strategy/optimization/test';
 
+// test2();
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
 @Injectable()
@@ -19,7 +22,6 @@ export class AppService {
     private readonly brokerMgrService: BrokerManagerService,
     private readonly strategyService: StrategyService,
   ) {
-    // this.backtesting();
   }
 
   // 获取K线
@@ -119,6 +121,20 @@ export class AppService {
     broker.watchOrder((order: OrderData) => {
       console.log('order', order);
     });
+
+    broker.sendOrder({
+      orderId: '1234',
+      symbol: 'BTCUSDT:USDT',
+      direction: Direction.LONG,
+      offset: Offset.OPEN,
+      price: 100000,
+      volume: 2222
+    });
+
+    // broker.cancelOrder({
+    //   orderId: '1234',
+    //   symbol: 'BTCUSDT:USDT',
+    // });
   }
 
   test6(): void {
@@ -137,5 +153,9 @@ export class AppService {
   async test7(): Promise<void> {
     const stategies = await this.strategyService.getStategies();
     console.log('stategies', stategies);
+  }
+
+  async optimization(): Promise<void> {
+    await gridStrategyOptimizationExample();
   }
 }

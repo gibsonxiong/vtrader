@@ -508,7 +508,7 @@ export default class GridStrategy extends Strategy {
    */
   private getVolume(price: number): number {
     let volume = this.wallet.available / this.gridSize / price / 2;
-    volume = Math.floor(volume / this.minVolume) * this.minVolume;
+    // volume = Math.floor(volume / this.minVolume) * this.minVolume;
     return Math.max(volume, this.minVolume);
   }
 

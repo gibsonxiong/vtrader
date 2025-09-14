@@ -1,5 +1,6 @@
 import { Direction, Offset, OrderStatus } from 'src/types/common';
 import type { OrderData } from 'src/types/common';
+import { BigNumber } from 'bignumber.js';
 
 export interface Holding {
   symbol: string;
@@ -42,11 +43,11 @@ export class LongHolding implements Holding {
   }
 
   get frozen(): number {
-    return Object.values(this.frozenMap).reduce((acc, cur) => acc + cur, 0);
+    return Object.values(this.frozenMap).reduce((prev, current) => prev.plus(current), BigNumber(0)).toNumber();
   }
 
   get available(): number {
-    return this.pos - this.frozen;
+    return BigNumber(this.pos).minus(this.frozen).toNumber();
   }
 
   update(order: OrderData): void {
@@ -55,28 +56,34 @@ export class LongHolding implements Holding {
     this.calcFrozen(order);
 
     if (order.status === OrderStatus.ALLTRADED || order.status === OrderStatus.PARTTRADED) {
+      const tradeAmount = BigNumber(order.tradePrice).times(order.tradeVolume);
+
       // 开仓
       if (order.offset === Offset.OPEN) {
+        const newPos = BigNumber(this.pos).plus(order.tradeVolume).toNumber();
+
         // 首次开仓
         if (this.initPrice === 0) {
           this.initPrice = order.tradePrice;
           this.price = order.tradePrice;
         } else {
-          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / (this.pos + order.tradeVolume);
+          this.price = BigNumber(this.price).times(this.pos).plus(tradeAmount).div(newPos).toNumber();
         }
 
-        this.pos += order.tradeVolume;
-        this.commission += order.tradeCommission;
-        this.turnover += order.tradePrice * order.tradeVolume;
+        this.pos = newPos;
+        this.commission = BigNumber(this.commission).plus(order.tradeCommission).toNumber();
+        this.turnover = BigNumber(this.turnover).plus(tradeAmount).toNumber();
       }
       // 平仓
       else {
+        const newPos = BigNumber(this.pos).minus(order.tradeVolume).toNumber();
+
         const tradingPnl = this.calcTradingPnl(order);
-        this.pos -= order.tradeVolume;
-        this.tradingPnl += tradingPnl;
-        this.accumTradingPnl += tradingPnl;
-        this.commission += order.tradeCommission;
-        this.turnover += order.tradePrice * order.tradeVolume;
+        this.pos = newPos;
+        this.tradingPnl = BigNumber(this.tradingPnl).plus(tradingPnl).toNumber() ;
+        this.accumTradingPnl = BigNumber(this.accumTradingPnl).plus(tradingPnl).toNumber();
+        this.commission = BigNumber(this.commission).plus(order.tradeCommission).toNumber();
+        this.turnover = BigNumber(this.turnover).plus(tradeAmount).toNumber();
 
         if (this.pos === 0) {
           this.price = 0;
@@ -94,7 +101,7 @@ export class LongHolding implements Holding {
       this.frozenMap[order.orderId] = order.volume;
     } else if (order.status === OrderStatus.PARTTRADED) {
       if (this.frozenMap[order.orderId]) {
-        this.frozenMap[order.orderId] -= order.tradeVolume;
+        this.frozenMap[order.orderId] = BigNumber(this.frozenMap[order.orderId]).minus(order.tradeVolume).toNumber();
       }
     } else if (order.status === OrderStatus.ALLTRADED) {
       delete this.frozenMap[order.orderId];
@@ -108,20 +115,22 @@ export class LongHolding implements Holding {
   }
 
   calcTradingPnl(order: OrderData): number {
-    return (order.tradePrice - this.price) * order.tradeVolume;
+    const diff = BigNumber(order.tradePrice).minus(this.price);
+    return diff.times(order.tradeVolume).toNumber();
   }
 
   getHoldingPnl(newPrice: number): number {
-    return (newPrice - this.price) * this.pos;
+    const diff = BigNumber(newPrice).minus(this.price);
+    return diff.times(this.pos).toNumber();
   }
 
   getPnl(newPrice: number): number {
-    return this.accumTradingPnl + this.getHoldingPnl(newPrice);
+    return BigNumber(this.accumTradingPnl).plus(this.getHoldingPnl(newPrice)).toNumber();
   }
 
   getRoi(newPrice: number): number {
     if (this.initPrice === 0) return 0;
-    return (newPrice - this.price) / this.price;
+    return BigNumber(this.price).minus(newPrice).div(this.price).toNumber();
   }
 
   public toString(): string {
@@ -146,11 +155,11 @@ export class ShortHolding implements Holding {
   }
 
   get frozen(): number {
-    return Object.values(this.frozenMap).reduce((acc, cur) => acc + cur, 0);
+    return Object.values(this.frozenMap).reduce((prev, current) => prev.plus(current), BigNumber(0)).toNumber();
   }
 
   get available(): number {
-    return this.pos - this.frozen;
+    return BigNumber(this.pos).minus(this.frozen).toNumber();
   }
 
   update(order: OrderData): void {
@@ -159,28 +168,34 @@ export class ShortHolding implements Holding {
     this.calcFrozen(order);
 
     if (order.status === OrderStatus.ALLTRADED || order.status === OrderStatus.PARTTRADED) {
+      const tradeAmount = BigNumber(order.tradePrice).times(order.tradeVolume);
+
       // 开仓
       if (order.offset === Offset.OPEN) {
+        const newPos = BigNumber(this.pos).plus(order.tradeVolume).toNumber();
+
         // 首次开仓
         if (this.initPrice === 0) {
           this.initPrice = order.tradePrice;
           this.price = order.tradePrice;
         } else {
-          this.price = (this.price * this.pos + order.tradePrice * order.tradeVolume) / (this.pos + order.tradeVolume);
+          this.price = BigNumber(this.price).times(this.pos).plus(tradeAmount).div(newPos).toNumber();
         }
 
-        this.pos += order.tradeVolume;
-        this.commission += order.tradeCommission;
-        this.turnover += order.tradePrice * order.tradeVolume;
+        this.pos = newPos;
+        this.commission = BigNumber(this.commission).plus(order.tradeCommission).toNumber();
+        this.turnover = BigNumber(this.turnover).plus(tradeAmount).toNumber();
       }
       // 平仓
       else {
+        const newPos = BigNumber(this.pos).minus(order.tradeVolume).toNumber();
+
         const tradingPnl = this.calcTradingPnl(order);
-        this.pos -= order.tradeVolume;
-        this.tradingPnl += tradingPnl;
-        this.accumTradingPnl += tradingPnl;
-        this.commission += order.tradeCommission;
-        this.turnover += order.tradePrice * order.tradeVolume;
+        this.pos = newPos;
+        this.tradingPnl = BigNumber(this.tradingPnl).plus(tradingPnl).toNumber() ;
+        this.accumTradingPnl = BigNumber(this.accumTradingPnl).plus(tradingPnl).toNumber();
+        this.commission = BigNumber(this.commission).plus(order.tradeCommission).toNumber();
+        this.turnover = BigNumber(this.turnover).plus(tradeAmount).toNumber();
 
         if (this.pos === 0) {
           this.price = 0;
@@ -198,7 +213,7 @@ export class ShortHolding implements Holding {
       this.frozenMap[order.orderId] = order.volume;
     } else if (order.status === OrderStatus.PARTTRADED) {
       if (this.frozenMap[order.orderId]) {
-        this.frozenMap[order.orderId] -= order.tradeVolume;
+        this.frozenMap[order.orderId] = BigNumber(this.frozenMap[order.orderId]).minus(order.tradeVolume).toNumber();
       }
     } else if (order.status === OrderStatus.ALLTRADED) {
       delete this.frozenMap[order.orderId];
@@ -212,20 +227,22 @@ export class ShortHolding implements Holding {
   }
 
   calcTradingPnl(order: OrderData): number {
-    return (this.price - order.tradePrice) * order.tradeVolume;
+    const diff = BigNumber(this.price).minus(order.tradePrice);
+    return diff.times(order.tradeVolume).toNumber();
   }
 
   getHoldingPnl(newPrice: number): number {
-    return (this.price - newPrice) * this.pos;
+    const diff = BigNumber(this.price).minus(newPrice);
+    return diff.times(this.pos).toNumber();
   }
 
   getPnl(newPrice: number): number {
-    return this.accumTradingPnl + this.getHoldingPnl(newPrice);
+    return BigNumber(this.accumTradingPnl).plus(this.getHoldingPnl(newPrice)).toNumber();
   }
 
   getRoi(newPrice: number): number {
     if (this.initPrice === 0) return 0;
-    return (this.price - newPrice) / this.price;
+    return BigNumber(this.price).minus(newPrice).div(this.price).toNumber();
   }
 
   public toString(): string {
