@@ -1,5 +1,5 @@
 {
-  "name": "@vben-core/composables",
+  "name": "@vtrader-core/composables",
   "version": "5.5.7",
   "homepage": "https://github.com/vbenjs/vue-vben-admin",
   "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
@@ -35,7 +35,7 @@
     }
   },
   "dependencies": {
-    "@vben-core/shared": "workspace:*",
+    "@vtrader-core/shared": "workspace:*",
     "@vueuse/core": "catalog:",
     "radix-vue": "catalog:",
     "sortablejs": "catalog:",

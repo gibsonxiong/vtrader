@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { ClassType } from '@vben-core/typings';
+import type { ClassType } from '@vtrader-core/typings';
 
 import { computed, ref } from 'vue';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { ScrollArea, ScrollBar } from '../../ui';
 

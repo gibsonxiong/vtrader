@@ -1,8 +1,8 @@
 import type { Component, VNode, VNodeArrayChildren } from 'vue';
 
-import type { Recordable } from '@vben-core/typings';
+import type { Recordable } from '@vtrader-core/typings';
 
-import { createContext } from '@vben-core/shadcn-ui';
+import { createContext } from '@vtrader-core/shadcn-ui';
 
 export type IconType = 'error' | 'info' | 'question' | 'success' | 'warning';
 

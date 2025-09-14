@@ -1,1 +1,1 @@
-import '@vben-core/design';
+import '@vtrader-core/design';

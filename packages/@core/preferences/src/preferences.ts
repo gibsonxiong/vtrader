@@ -1,11 +1,11 @@
-import type { DeepPartial } from '@vben-core/typings';
+import type { DeepPartial } from '@vtrader-core/typings';
 
 import type { InitialOptions, Preferences } from './types';
 
 import { markRaw, reactive, readonly, watch } from 'vue';
 
-import { StorageManager } from '@vben-core/shared/cache';
-import { isMacOs, merge } from '@vben-core/shared/utils';
+import { StorageManager } from '@vtrader-core/shared/cache';
+import { isMacOs, merge } from '@vtrader-core/shared/utils';
 
 import {
   breakpointsTailwind,

@@ -1,6 +1,6 @@
 import type { CAC } from 'cac';
 
-import { getPackages } from '@vben/node-utils';
+import { getPackages } from '@vtrader/node-utils';
 
 import depcheck from 'depcheck';
 
@@ -11,24 +11,24 @@ const DEFAULT_CONFIG = {
     'vite',
     'vitest',
     'unbuild',
-    '@vben/tsconfig',
-    '@vben/vite-config',
-    '@vben/tailwind-config',
+    '@vtrader/tsconfig',
+    '@vtrader/vite-config',
+    '@vtrader/tailwind-config',
     '@types/*',
-    '@vben-core/design',
+    '@vtrader-core/design',
   ],
   // 需要忽略的包
   ignorePackages: [
-    '@vben/backend-mock',
-    '@vben/commitlint-config',
-    '@vben/eslint-config',
-    '@vben/node-utils',
-    '@vben/prettier-config',
-    '@vben/stylelint-config',
-    '@vben/tailwind-config',
-    '@vben/tsconfig',
-    '@vben/vite-config',
-    '@vben/vsh',
+    '@vtrader/backend-mock',
+    '@vtrader/commitlint-config',
+    '@vtrader/eslint-config',
+    '@vtrader/node-utils',
+    '@vtrader/prettier-config',
+    '@vtrader/stylelint-config',
+    '@vtrader/tailwind-config',
+    '@vtrader/tsconfig',
+    '@vtrader/vite-config',
+    '@vtrader/vsh',
   ],
   // 需要忽略的文件模式
   ignorePatterns: ['dist', 'node_modules', 'public'],

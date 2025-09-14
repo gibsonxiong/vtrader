@@ -5,7 +5,7 @@ import { computed, getCurrentInstance, unref, useAttrs, useSlots } from 'vue';
 import {
   getFirstNonNullOrUndefined,
   kebabToCamelCase,
-} from '@vben-core/shared/utils';
+} from '@vtrader-core/shared/utils';
 
 /**
  * 依次从插槽、attrs、props、state 中获取值

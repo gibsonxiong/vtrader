@@ -11,7 +11,7 @@ packages:
   - apps/*
   - scripts/*
   - docs
-  - playground
+  - frontend
   - backend
 catalog:
   '@ast-grep/napi': ^0.37.0

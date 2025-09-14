@@ -55,7 +55,7 @@ interface PrintPluginOptions {
 interface NitroMockPluginOptions {
   /**
    * Mock 服务器包名
-   * @default '@vbenjs/nitro-mock'
+   * @default '@vtraderjs/nitro-mock'
    */
   mockServerPackage?: string;
 
@@ -274,6 +274,15 @@ interface ApplicationPluginOptions extends CommonPluginOptions {
    * @default false
    */
   vxeTableLazyImport?: boolean;
+  /**
+   * 是否开启 Nest Backend
+   * @default false
+   */
+  nestBackend?: boolean;
+  /**
+   * Nest Backend 插件配置
+   */
+  nestBackendOptions?: NestBackendPluginOptions;
 }
 
 /**
@@ -327,6 +336,13 @@ type DefineLibraryOptions = (config?: ConfigEnv) => Promise<{
  */
 type DefineConfig = DefineApplicationOptions | DefineLibraryOptions;
 
+interface NestBackendPluginOptions {
+  backendPackage?: string;
+  script?: string;
+  port?: number;
+  verbose?: boolean;
+}
+
 export type {
   ApplicationPluginOptions,
   ArchiverPluginOptions,
@@ -339,5 +355,6 @@ export type {
   ImportmapPluginOptions,
   LibraryPluginOptions,
   NitroMockPluginOptions,
+  NestBackendPluginOptions,
   PrintPluginOptions,
 };

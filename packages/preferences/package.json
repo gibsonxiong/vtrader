@@ -1,5 +1,5 @@
 {
-  "name": "@vben/preferences",
+  "name": "@vtrader/preferences",
   "version": "5.5.7",
   "homepage": "https://github.com/vbenjs/vue-vben-admin",
   "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
@@ -20,7 +20,7 @@
     }
   },
   "dependencies": {
-    "@vben-core/preferences": "workspace:*",
-    "@vben-core/typings": "workspace:*"
+    "@vtrader-core/preferences": "workspace:*",
+    "@vtrader-core/typings": "workspace:*"
   }
 }

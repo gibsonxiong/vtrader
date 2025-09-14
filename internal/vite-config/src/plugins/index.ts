@@ -26,6 +26,7 @@ import { viteLicensePlugin } from './license';
 import { viteNitroMockPlugin } from './nitro-mock';
 import { vitePrintPlugin } from './print';
 import { viteVxeTableImportsPlugin } from './vxe-table';
+import { viteNestBackendPlugin } from './nest-backend';
 
 /**
  * 获取条件成立的 vite 插件
@@ -111,6 +112,9 @@ async function loadApplicationPlugins(
     pwa,
     pwaOptions,
     vxeTableLazyImport,
+    // 新增：NestJS 后端插件开关与配置
+    nestBackend,
+    nestBackendOptions,
     ...commonOptions
   } = options;
 
@@ -146,6 +150,13 @@ async function loadApplicationPlugins(
       condition: nitroMock,
       plugins: async () => {
         return [await viteNitroMockPlugin(nitroMockOptions)];
+      },
+    },
+    // 新增：按需启动 NestJS 后端
+    {
+      condition: nestBackend,
+      plugins: async () => {
+        return [await viteNestBackendPlugin(nestBackendOptions)];
       },
     },
 

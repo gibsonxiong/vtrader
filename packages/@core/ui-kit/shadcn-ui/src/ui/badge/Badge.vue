@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { BadgeVariants } from './badge';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { badgeVariants } from './badge';
 

@@ -11,8 +11,8 @@ import type {
 
 import { computed } from 'vue';
 
-import { Form } from '@vben-core/shadcn-ui';
-import { cn, isString, mergeWithArrayOverride } from '@vben-core/shared/utils';
+import { Form } from '@vtrader-core/shadcn-ui';
+import { cn, isString, mergeWithArrayOverride } from '@vtrader-core/shared/utils';
 
 import { provideFormRenderProps } from './context';
 import { useExpandable } from './expandable';

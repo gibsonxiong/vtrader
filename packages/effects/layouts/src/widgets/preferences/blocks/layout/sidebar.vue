@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { LayoutType } from '@vben/types';
+import type { LayoutType } from '@vtrader/types';
 
 import { onMounted } from 'vue';
 
-import { $t } from '@vben/locales';
+import { $t } from '@vtrader/locales';
 
 import CheckboxItem from '../checkbox-item.vue';
 import NumberFieldItem from '../number-field-item.vue';

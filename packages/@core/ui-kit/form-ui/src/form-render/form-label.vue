@@ -5,8 +5,8 @@ import {
   FormLabel,
   VbenHelpTooltip,
   VbenRenderContent,
-} from '@vben-core/shadcn-ui';
-import { cn } from '@vben-core/shared/utils';
+} from '@vtrader-core/shadcn-ui';
+import { cn } from '@vtrader-core/shared/utils';
 
 interface Props {
   class?: string;

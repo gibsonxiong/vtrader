@@ -1,10 +1,10 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
-  "extends": "@vben/tsconfig/web.json",
+  "extends": "@vtrader/tsconfig/web.json",
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@vben-core/shadcn-ui/*": ["./src/*"]
+      "@vtrader-core/shadcn-ui/*": ["./src/*"]
     }
   },
   "include": ["src"],

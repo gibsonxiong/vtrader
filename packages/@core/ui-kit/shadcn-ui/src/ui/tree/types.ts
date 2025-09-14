@@ -1,7 +1,7 @@
 import type { Arrayable } from '@vueuse/core';
 import type { FlattenedItem } from 'radix-vue';
 
-import type { Recordable } from '@vben-core/typings';
+import type { Recordable } from '@vtrader-core/typings';
 
 export interface TreeProps {
   /** 单选时允许取消已有选项 */

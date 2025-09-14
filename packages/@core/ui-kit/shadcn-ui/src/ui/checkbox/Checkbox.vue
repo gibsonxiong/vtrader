@@ -3,7 +3,7 @@ import type { CheckboxRootEmits, CheckboxRootProps } from 'radix-vue';
 
 import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { Check, Minus } from 'lucide-vue-next';
 import {

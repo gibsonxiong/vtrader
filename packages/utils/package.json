@@ -1,5 +1,5 @@
 {
-  "name": "@vben/utils",
+  "name": "@vtrader/utils",
   "version": "5.5.7",
   "homepage": "https://github.com/vbenjs/vue-vben-admin",
   "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
@@ -20,8 +20,8 @@
     }
   },
   "dependencies": {
-    "@vben-core/shared": "workspace:*",
-    "@vben-core/typings": "workspace:*",
+    "@vtrader-core/shared": "workspace:*",
+    "@vtrader-core/typings": "workspace:*",
     "vue-router": "catalog:"
   }
 }

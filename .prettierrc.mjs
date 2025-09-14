@@ -1,1 +1,1 @@
-export { default } from '@vben/prettier-config';
+export { default } from '@vtrader/prettier-config';

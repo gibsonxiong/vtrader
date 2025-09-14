@@ -3,7 +3,7 @@ import type { AlertDialogTitleProps } from 'radix-vue';
 
 import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { AlertDialogTitle, useForwardProps } from 'radix-vue';
 

@@ -7,8 +7,8 @@ import {
   useIsMobile,
   usePriorityValues,
   useSimpleLocale,
-} from '@vben-core/composables';
-import { X } from '@vben-core/icons';
+} from '@vtrader-core/composables';
+import { X } from '@vtrader-core/icons';
 import {
   Separator,
   Sheet,
@@ -23,10 +23,10 @@ import {
   VbenIconButton,
   VbenLoading,
   VisuallyHidden,
-} from '@vben-core/shadcn-ui';
-import { ELEMENT_ID_MAIN_CONTENT } from '@vben-core/shared/constants';
-import { globalShareState } from '@vben-core/shared/global-state';
-import { cn } from '@vben-core/shared/utils';
+} from '@vtrader-core/shadcn-ui';
+import { ELEMENT_ID_MAIN_CONTENT } from '@vtrader-core/shared/constants';
+import { globalShareState } from '@vtrader-core/shared/global-state';
+import { cn } from '@vtrader-core/shared/utils';
 
 interface Props extends DrawerProps {
   drawerApi?: ExtendedDrawerApi;

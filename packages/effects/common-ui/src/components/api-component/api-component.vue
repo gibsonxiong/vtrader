@@ -1,13 +1,13 @@
 <script lang="ts" setup>
 import type { Component } from 'vue';
 
-import type { AnyPromiseFunction } from '@vben/types';
+import type { AnyPromiseFunction } from '@vtrader/types';
 
 import { computed, ref, unref, useAttrs, watch } from 'vue';
 
-import { LoaderCircle } from '@vben/icons';
+import { LoaderCircle } from '@vtrader/icons';
 
-import { get, isEqual, isFunction } from '@vben-core/shared/utils';
+import { get, isEqual, isFunction } from '@vtrader-core/shared/utils';
 
 import { objectOmit } from '@vueuse/core';
 

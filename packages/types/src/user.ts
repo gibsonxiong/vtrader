@@ -1,4 +1,4 @@
-import type { BasicUserInfo } from '@vben-core/typings';
+import type { BasicUserInfo } from '@vtrader-core/typings';
 
 /** 用户信息 */
 interface UserInfo extends BasicUserInfo {

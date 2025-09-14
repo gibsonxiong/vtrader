@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { SelectOption } from '@vben/types';
+import type { SelectOption } from '@vtrader/types';
 
 import { useSlots } from 'vue';
 
-import { CircleHelp } from '@vben/icons';
+import { CircleHelp } from '@vtrader/icons';
 
 import {
   Select,
@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
   VbenTooltip,
-} from '@vben-core/shadcn-ui';
+} from '@vtrader-core/shadcn-ui';
 
 defineOptions({
   name: 'PreferenceSelectItem',

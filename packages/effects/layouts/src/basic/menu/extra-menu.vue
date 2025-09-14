@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import type { MenuRecordRaw } from '@vben/types';
+import type { MenuRecordRaw } from '@vtrader/types';
 
-import type { MenuProps } from '@vben-core/menu-ui';
+import type { MenuProps } from '@vtrader-core/menu-ui';
 
 import { useRoute } from 'vue-router';
 
-import { Menu } from '@vben-core/menu-ui';
+import { Menu } from '@vtrader-core/menu-ui';
 
 import { useNavigation } from './use-navigation';
 

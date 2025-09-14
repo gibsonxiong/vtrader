@@ -10,7 +10,7 @@ import {
   watchEffect,
 } from 'vue';
 
-import { VbenTooltip } from '@vben-core/shadcn-ui';
+import { VbenTooltip } from '@vtrader-core/shadcn-ui';
 
 import { useElementSize } from '@vueuse/core';
 

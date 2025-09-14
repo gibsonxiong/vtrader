@@ -5,7 +5,7 @@ import type { SheetVariants } from './sheet';
 
 import { computed, ref } from 'vue';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { DialogContent, DialogPortal, useForwardPropsEmits } from 'radix-vue';
 

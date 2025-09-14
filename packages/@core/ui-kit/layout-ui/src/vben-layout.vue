@@ -9,10 +9,10 @@ import {
   SCROLL_FIXED_CLASS,
   useLayoutFooterStyle,
   useLayoutHeaderStyle,
-} from '@vben-core/composables';
-import { Menu } from '@vben-core/icons';
-import { VbenIconButton } from '@vben-core/shadcn-ui';
-import { ELEMENT_ID_MAIN_CONTENT } from '@vben-core/shared/constants';
+} from '@vtrader-core/composables';
+import { Menu } from '@vtrader-core/icons';
+import { VbenIconButton } from '@vtrader-core/shadcn-ui';
+import { ELEMENT_ID_MAIN_CONTENT } from '@vtrader-core/shared/constants';
 
 import { useMouse, useScroll, useThrottleFn } from '@vueuse/core';
 

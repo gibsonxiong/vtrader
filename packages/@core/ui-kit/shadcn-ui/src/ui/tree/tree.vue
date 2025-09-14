@@ -2,14 +2,14 @@
 import type { Arrayable } from '@vueuse/core';
 import type { FlattenedItem } from 'radix-vue';
 
-import type { ClassType, Recordable } from '@vben-core/typings';
+import type { ClassType, Recordable } from '@vtrader-core/typings';
 
 import type { TreeProps } from './types';
 
 import { onMounted, ref, watchEffect } from 'vue';
 
-import { ChevronRight, IconifyIcon } from '@vben-core/icons';
-import { cn, get } from '@vben-core/shared/utils';
+import { ChevronRight, IconifyIcon } from '@vtrader-core/icons';
+import { cn, get } from '@vtrader-core/shared/utils';
 
 import { TreeItem, TreeRoot } from 'radix-vue';
 

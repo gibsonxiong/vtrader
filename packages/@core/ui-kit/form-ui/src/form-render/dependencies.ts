@@ -6,7 +6,7 @@ import type {
 
 import { computed, ref, watch } from 'vue';
 
-import { isBoolean, isFunction } from '@vben-core/shared/utils';
+import { isBoolean, isFunction } from '@vtrader-core/shared/utils';
 
 import { useFormValues } from 'vee-validate';
 

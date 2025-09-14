@@ -1,4 +1,4 @@
 export default {
-  extends: ['@vben/stylelint-config'],
+  extends: ['@vtrader/stylelint-config'],
   root: true,
 };

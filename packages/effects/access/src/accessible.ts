@@ -4,7 +4,7 @@ import type {
   AccessModeType,
   GenerateMenuAndRoutesOptions,
   RouteRecordRaw,
-} from '@vben/types';
+} from '@vtrader/types';
 
 import { defineComponent, h } from 'vue';
 
@@ -16,7 +16,7 @@ import {
   isFunction,
   isString,
   mapTree,
-} from '@vben/utils';
+} from '@vtrader/utils';
 
 async function generateAccessible(
   mode: AccessModeType,

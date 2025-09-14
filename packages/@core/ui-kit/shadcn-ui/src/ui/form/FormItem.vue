@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { provide, useId } from 'vue';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { FORM_ITEM_INJECTION_KEY } from './injectionKeys';
 

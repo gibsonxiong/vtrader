@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import type { BuiltinThemeType } from '@vben/types';
+import type { BuiltinThemeType } from '@vtrader/types';
 
-import { Palette } from '@vben/icons';
+import { Palette } from '@vtrader/icons';
 import {
   COLOR_PRESETS,
   preferences,
   updatePreferences,
-} from '@vben/preferences';
+} from '@vtrader/preferences';
 
-import { VbenIconButton } from '@vben-core/shadcn-ui';
+import { VbenIconButton } from '@vtrader-core/shadcn-ui';
 
 defineOptions({
   name: 'AuthenticationColorToggle',

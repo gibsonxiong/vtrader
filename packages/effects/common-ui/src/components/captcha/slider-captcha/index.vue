@@ -7,9 +7,9 @@ import type {
 
 import { reactive, unref, useTemplateRef, watch, watchEffect } from 'vue';
 
-import { $t } from '@vben/locales';
+import { $t } from '@vtrader/locales';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { useTimeoutFn } from '@vueuse/core';
 

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { useSlots } from 'vue';
 
-import { CircleHelp } from '@vben/icons';
+import { CircleHelp } from '@vtrader/icons';
 
-import { Switch, VbenTooltip } from '@vben-core/shadcn-ui';
+import { Switch, VbenTooltip } from '@vtrader-core/shadcn-ui';
 
 defineOptions({
   name: 'PreferenceSwitchItem',

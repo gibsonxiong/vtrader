@@ -3,7 +3,7 @@ import type { SwitchRootEmits, SwitchRootProps } from 'radix-vue';
 
 import { computed } from 'vue';
 
-import { cn } from '@vben-core/shared/utils';
+import { cn } from '@vtrader-core/shared/utils';
 
 import { SwitchRoot, SwitchThumb, useForwardPropsEmits } from 'radix-vue';
 

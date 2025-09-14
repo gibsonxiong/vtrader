@@ -1,5 +1,5 @@
 {
-  "name": "@vben/tsconfig",
+  "name": "@vtrader/tsconfig",
   "version": "5.5.7",
   "private": true,
   "homepage": "https://github.com/vbenjs/vue-vben-admin",
@@ -19,7 +19,7 @@
     "web.json"
   ],
   "dependencies": {
-    "@vben/types": "workspace:*",
+    "@vtrader/types": "workspace:*",
     "vite": "catalog:"
   }
 }

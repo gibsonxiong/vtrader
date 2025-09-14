@@ -1,7 +1,7 @@
 import type {
   ApplicationConfig,
   VbenAdminProAppConfigRaw,
-} from '@vben/types/global';
+} from '@vtrader/types/global';
 
 /**
  * 由 vite-inject-app-config 注入的全局配置

@@ -5,7 +5,7 @@
     { "repo": "vbenjs/vue-vben-admin" }
   ],
   "commit": false,
-  "fixed": [["@vben-core/*", "@vben/*"]],
+  "fixed": [["@vtrader-core/*", "@vtrader/*"]],
   "snapshot": {
     "prereleaseTemplate": "{tag}-{datetime}"
   },

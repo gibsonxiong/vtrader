@@ -26,7 +26,7 @@ export class AppService {
     // this.test3();
     // this.backtesting();
 
-    this.optimization();
+    // this.optimization();
   }
 
   // 获取K线

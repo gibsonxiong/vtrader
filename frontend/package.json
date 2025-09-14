@@ -1,0 +1,61 @@
+{
+  "name": "@vtrader/frontend",
+  "version": "5.5.7",
+  "homepage": "https://vben.pro",
+  "bugs": "https://github.com/vbenjs/vue-vben-admin/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vbenjs/vue-vben-admin.git",
+    "directory": "frontend"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "vben",
+    "email": "ann.vben@gmail.com",
+    "url": "https://github.com/anncwb"
+  },
+  "type": "module",
+  "scripts": {
+    "build": "pnpm vite build --mode production",
+    "build:analyze": "pnpm vite build --mode analyze",
+    "dev": "pnpm vite --mode development",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit --skipLibCheck",
+    "test:e2e": "playwright test",
+    "test:e2e-ui": "playwright test --ui",
+    "test:e2e-codegen": "playwright codegen"
+  },
+  "imports": {
+    "#/*": "./src/*"
+  },
+  "dependencies": {
+    "@tanstack/vue-query": "catalog:",
+    "@vtrader-core/menu-ui": "workspace:*",
+    "@vtrader/access": "workspace:*",
+    "@vtrader/common-ui": "workspace:*",
+    "@vtrader/constants": "workspace:*",
+    "@vtrader/hooks": "workspace:*",
+    "@vtrader/icons": "workspace:*",
+    "@vtrader/layouts": "workspace:*",
+    "@vtrader/locales": "workspace:*",
+    "@vtrader/plugins": "workspace:*",
+    "@vtrader/preferences": "workspace:*",
+    "@vtrader/request": "workspace:*",
+    "@vtrader/stores": "workspace:*",
+    "@vtrader/styles": "workspace:*",
+    "@vtrader/types": "workspace:*",
+    "@vtrader/utils": "workspace:*",
+    "@vueuse/core": "catalog:",
+    "ant-design-vue": "catalog:",
+    "axios": "catalog:",
+    "dayjs": "catalog:",
+    "json-bigint": "catalog:",
+    "klinecharts": "10.0.0-alpha8",
+    "pinia": "catalog:",
+    "vue": "catalog:",
+    "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@types/json-bigint": "catalog:"
+  }
+}

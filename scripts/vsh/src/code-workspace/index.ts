@@ -11,7 +11,7 @@ import {
   outputJSON,
   prettierFormat,
   toPosixPath,
-} from '@vben/node-utils';
+} from '@vtrader/node-utils';
 
 const CODE_WORKSPACE_FILE = join('vben-admin.code-workspace');
 

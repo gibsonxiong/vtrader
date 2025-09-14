@@ -11,7 +11,7 @@ import {
   ref,
 } from 'vue';
 
-import { useStore } from '@vben-core/shared/store';
+import { useStore } from '@vtrader-core/shared/store';
 
 import { ModalApi } from './modal-api';
 import VbenModal from './modal.vue';

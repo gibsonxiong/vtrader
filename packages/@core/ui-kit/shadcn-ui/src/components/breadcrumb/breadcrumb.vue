@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { BreadcrumbProps } from './types';
 
-import { ChevronDown } from '@vben-core/icons';
+import { ChevronDown } from '@vtrader-core/icons';
 
 import {
   Breadcrumb,

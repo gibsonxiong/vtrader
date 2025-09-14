@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import type { Recordable } from '@vben/types';
+import type { Recordable } from '@vtrader/types';
 
-import type { VbenFormSchema } from '@vben-core/form-ui';
+import type { VbenFormSchema } from '@vtrader-core/form-ui';
 
 import { computed, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 
-import { $t } from '@vben/locales';
+import { $t } from '@vtrader/locales';
 
-import { useVbenForm } from '@vben-core/form-ui';
-import { VbenButton } from '@vben-core/shadcn-ui';
+import { useVbenForm } from '@vtrader-core/form-ui';
+import { VbenButton } from '@vtrader-core/shadcn-ui';
 
 import Title from './auth-title.vue';
 
