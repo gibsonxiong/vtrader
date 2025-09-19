@@ -81,7 +81,7 @@
     "tailwindcss": "catalog:",
     "turbo": "catalog:",
     "typescript": "catalog:",
-    "unbuild": "^3.5.0",
+    "unbuild": "^3.6.1",
     "vite": "catalog:",
     "vitest": "catalog:",
     "vue": "catalog:",
