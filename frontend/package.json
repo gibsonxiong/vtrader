@@ -50,7 +50,7 @@
     "axios": "catalog:",
     "dayjs": "catalog:",
     "json-bigint": "catalog:",
-    "klinecharts": "10.0.0-alpha8",
+    "klinecharts": "10.0.0-alpha9",
     "pinia": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"

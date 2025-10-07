@@ -10,7 +10,7 @@ import { MarketDataService } from '../../market-data/market-data.service';
 import { StrategyService } from '../strategy.service';
 import { PrismaService } from '../../prisma.service';
 import { BrokerManagerService } from '../../broker-manager/broker-manager.service';
-import { Interval } from '../../types/common';
+import { Interval } from 'src/shared/types/common';
 
 /**
  * 手动实例化所有依赖服务
@@ -51,7 +51,6 @@ export async function gridStrategyOptimizationExample() {
     interval: Interval.MINUTE_1,
     balance: 100000,
     commissionRate: 0.0004,
-    size: 1,
     priceTick: 0.01,
     strategies: [] // 将在优化过程中动态设置
   };
@@ -165,7 +164,6 @@ export async function multiObjectiveOptimizationExample() {
     interval: Interval.MINUTE_5,
     balance: 50000,
     commissionRate: 0.0004,
-    size: 1,
     priceTick: 0.01,
     strategies: []
   };
@@ -221,7 +219,6 @@ export async function parameterSensitivityExample() {
     interval: Interval.MINUTE_1,
     balance: 100000,
     commissionRate: 0.0004,
-    size: 1,
     priceTick: 0.01,
     strategies: []
   };

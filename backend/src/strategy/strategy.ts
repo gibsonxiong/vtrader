@@ -1,10 +1,10 @@
 import * as dayjs from 'dayjs';
-import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from '../types/common';
-import { StrategyEngine, SendOrderParams, CancelOrderParams } from '../types/strategy';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from 'src/shared/types/common';
+import { StrategyEngine, SendOrderParams, CancelOrderParams } from 'src/shared/types/strategy';
 import { Context } from './context';
 import { LongHolding, ShortHolding } from './holding';
 import { Wallet } from './wallet';
-import { genOrderId, canOrderCancel, roundTo } from 'src/utils';
+import { genOrderId, canOrderCancel, roundTo, calculateStd } from 'src/utils';
 import { BigNumber } from 'bignumber.js';
 import 'reflect-metadata';
 
@@ -12,26 +12,19 @@ import 'reflect-metadata';
 export interface RecordData {
   date: string;
   timestamp: number;
-  // price: number;
-  pnl: number;
-  minPnl: number;
-  maxPnl: number;
-  tradingPnl: number;
-  holdingPnl: number;
-  commission: number;
-  turnover: number;
+  netPnl: number;
 }
 
 export interface DailyResultItem {
   date: string;
-  holdingPnl: number;
-  netPnl: number;
-  accumPnl: number;
-  tradeCount: number;
   trades: TradeData[];
-  tradingPnl: number;
-  commission: number;
-  turnover: number;
+  netPnl: number;
+  accumNetPnl: number;
+  // holdingPnl: number;
+  // tradeCount: number;
+  // tradingPnl: number;
+  // commission: number;
+  // turnover: number;
 }
 
 export interface BacktestingResult {
@@ -40,15 +33,15 @@ export interface BacktestingResult {
   annualReturn: number;
   startBalance: number;
   endBalance: number;
-  lossDays: number;
   maxDrawdown: number;
   maxDrawdownPercent: number;
-  profitDays: number;
   returnDrawdownRatio: number;
   returnStd: number;
   sharpeRatio: number;
   totalCommission: number;
-  totalDays: number;
+  // totalDays: number;
+  // profitDays: number;
+  // lossDays: number;
   totalNetPnl: number;
   totalReturn: number;
   totalTradeCount: number;
@@ -420,9 +413,8 @@ export abstract class Strategy {
   doRecord(timestamp: number, price: number): void {
     let tradingPnl = 0;
     let holdingPnl = 0;
-    let pnl = 0;
+    let netPnl = 0;
     let commission = 0;
-    let turnover = 0;
 
     for (let [symbol, ctx] of this.ctxs) {
       const { longHolding, shortHolding } = ctx;
@@ -431,9 +423,8 @@ export abstract class Strategy {
 
       tradingPnl += _tradingPnl;
       holdingPnl += _holdingPnl;
-      pnl += _tradingPnl + _holdingPnl;
       commission += longHolding.commission + shortHolding.commission;
-      turnover += longHolding.turnover + shortHolding.turnover;
+      netPnl += _tradingPnl + _holdingPnl - commission;
     }
 
     const date = dayjs(timestamp).format('YYYY-MM-DD');
@@ -441,34 +432,13 @@ export abstract class Strategy {
   
     if (recordData) {
       // 更新当日收盘价
-      // recordData.price = price;
-      recordData.pnl = pnl;
-      recordData.holdingPnl = holdingPnl;
-      recordData.tradingPnl = tradingPnl;
-      recordData.commission = commission;
-      recordData.turnover = turnover;
       recordData.timestamp = timestamp;
-
-      // 更新最小最大PNL
-      if (pnl < recordData.minPnl) {
-        recordData.minPnl = pnl;
-      }
-
-      if (pnl > recordData.maxPnl) {
-        recordData.maxPnl = pnl;
-      }
+      recordData.netPnl = netPnl;
     } else {
       this.records.set(date, {
         date,
-        // price,
         timestamp,
-        pnl,
-        minPnl: pnl,
-        maxPnl: pnl,
-        tradingPnl,
-        holdingPnl,
-        commission,
-        turnover,
+        netPnl,
       });
     }
   }
@@ -490,7 +460,7 @@ export abstract class Strategy {
     }
 
     // 计算累计收益
-    let accumPnl = 0;
+    let accumNetPnl = 0;
     let prevRecord: RecordData | null = null;
     const dates = [...this.records.keys()].sort();
 
@@ -499,34 +469,32 @@ export abstract class Strategy {
       const dayTrades = tradesByDate.get(date) || [];
 
       // 计算持仓盈亏（基于收盘价变化）
-      const tradingPnl = prevRecord
-        ? record.tradingPnl - prevRecord.tradingPnl
-        : record.tradingPnl;
-      const holdingPnl = prevRecord
-        ? record.holdingPnl - prevRecord.holdingPnl
-        : record.holdingPnl;
+      // const tradingPnl = prevRecord
+      //   ? record.tradingPnl - prevRecord.tradingPnl
+      //   : record.tradingPnl;
 
-      const commission = prevRecord
-        ? record.commission - prevRecord.commission
-        : record.commission;
+      // const holdingPnl = prevRecord
+      //   ? record.holdingPnl - prevRecord.holdingPnl
+      //   : record.holdingPnl;
 
-      const turnover = prevRecord ? record.turnover - prevRecord.turnover : record.turnover;
+      // const commission = prevRecord
+      //   ? record.commission - prevRecord.commission
+      //   : record.commission;
 
-      const netPnl = tradingPnl + holdingPnl - commission;
+      // const turnover = prevRecord 
+      //   ? record.turnover - prevRecord.turnover
+      //   : record.turnover;
+
+      // const netPnl = tradingPnl + holdingPnl - commission;
 
       // 累计总盈亏
-      accumPnl += netPnl;
+      accumNetPnl += record.netPnl;
 
       this.dailyResults.set(date, {
         date,
         trades: dayTrades,
-        commission,
-        turnover,
-        tradeCount: dayTrades.length,
-        tradingPnl,
-        holdingPnl,
-        netPnl,
-        accumPnl,
+        netPnl: record.netPnl,
+        accumNetPnl,
       });
 
       prevRecord = record;
@@ -536,135 +504,126 @@ export abstract class Strategy {
   /**
    * 统计回测结果
    */
-  calculateResult(startDate: string, endDate: string,  output = false): void {
-    const startBalance = this.startBalance;
+  // calculateResult(startDate: string, endDate: string,  output = false): void {
+  //   const startBalance = this.startBalance;
 
-    // 计算每日盈亏
-    this.calculateDailyResult();
-    // 计算统计指标
-    let totalNetPnl = 0;
-    let totalCommission = 0;
-    let totalTurnover = 0;
-    let totalTradeCount = 0;
-    const results = [...this.dailyResults.values()];
-    const totalDays = results.length;
-    const profitDays = results.filter((r) => r.netPnl > 0).length;
-    const lossDays = results.filter((r) => r.netPnl < 0).length;
+  //   // 计算每日盈亏
+  //   this.calculateDailyResult();
+  //   // 计算统计指标
+  //   let totalNetPnl = 0;
+  //   let totalCommission = 0;
+  //   let totalTurnover = 0;
+  //   let totalTradeCount = 0;
+  //   const results = [...this.dailyResults.values()];
+  //   const totalDays = results.length;
+  //   const profitDays = results.filter((r) => r.netPnl > 0).length;
+  //   const lossDays = results.filter((r) => r.netPnl < 0).length;
 
-    results.forEach((result) => {
-      totalNetPnl += result.netPnl;
-      totalCommission += result.commission;
-      totalTurnover += result.turnover;
-      totalTradeCount += result.tradeCount;
-    });
+  //   results.forEach((result) => {
+  //     totalNetPnl += result.netPnl;
+  //     totalCommission += result.commission;
+  //     totalTurnover += result.turnover;
+  //     totalTradeCount += result.tradeCount;
+  //   });
 
-    const endBalance = startBalance + totalNetPnl;
-    const totalReturn = totalNetPnl / startBalance;
-    const annualReturn = (totalReturn * 365) / totalDays;
-    const dailyReturn = totalReturn / totalDays;
+  //   const endBalance = startBalance + totalNetPnl;
+  //   const totalReturn = totalNetPnl / startBalance;
+  //   const annualReturn = (totalReturn * 365) / totalDays;
+  //   const dailyReturn = totalReturn / totalDays;
 
-    // 计算最大回撤
-    let maxDrawdown = 0;
-    let maxDrawdownPercent = 0;
-    let peak = startBalance;
+  //   // 计算最大回撤
+  //   let maxDrawdown = 0;
+  //   let maxDrawdownPercent = 0;
+  //   let peak = startBalance;
 
-    for (const result of results) {
-      const balance = startBalance + result.accumPnl;
-      if (balance > peak) {
-        peak = balance;
-      }
+  //   for (const result of results) {
+  //     const balance = startBalance + result.accumPnl;
+  //     if (balance > peak) {
+  //       peak = balance;
+  //     }
 
-      const drawdown = peak - balance;
-      const drawdownPercent = drawdown / peak;
+  //     const drawdown = peak - balance;
+  //     const drawdownPercent = drawdown / peak;
 
-      if (drawdown > maxDrawdown) {
-        maxDrawdown = drawdown;
-      }
+  //     if (drawdown > maxDrawdown) {
+  //       maxDrawdown = drawdown;
+  //     }
 
-      if (drawdownPercent > maxDrawdownPercent) {
-        maxDrawdownPercent = drawdownPercent;
-      }
-    }
+  //     if (drawdownPercent > maxDrawdownPercent) {
+  //       maxDrawdownPercent = drawdownPercent;
+  //     }
+  //   }
 
-    // 计算夏普比率
-    const returns = results.map((r) => r.netPnl / startBalance);
-    const returnStd = this.calculateStd(returns);
-    const sharpeRatio = returnStd > 0 ? (dailyReturn / returnStd) * Math.sqrt(365) : 0;
+  //   // 计算夏普比率
+  //   const returns = results.map((r) => r.netPnl / startBalance);
+  //   const returnStd = calculateStd(returns);
+  //   const sharpeRatio = returnStd > 0 ? (dailyReturn / returnStd) * Math.sqrt(365) : 0;
 
-    const backtestingResult: BacktestingResult = {
-      startDate,
-      endDate,
-      totalDays,
-      profitDays,
-      lossDays,
-      startBalance,
-      endBalance,
-      maxDrawdown,
-      maxDrawdownPercent,
-      totalNetPnl,
-      totalCommission,
-      totalTurnover,
-      totalTradeCount,
-      totalReturn,
-      annualReturn,
-      returnStd,
-      sharpeRatio,
-      returnDrawdownRatio: maxDrawdown > 0 ? (totalNetPnl / maxDrawdown) : 0,
-    };
+  //   const backtestingResult: BacktestingResult = {
+  //     startDate,
+  //     endDate,
+  //     // totalDays,
+  //     // profitDays,
+  //     // lossDays,
+  //     startBalance,
+  //     endBalance,
+  //     maxDrawdown,
+  //     maxDrawdownPercent,
+  //     totalNetPnl,
+  //     totalCommission,
+  //     totalTurnover,
+  //     totalTradeCount,
+  //     totalReturn,
+  //     annualReturn,
+  //     returnStd,
+  //     sharpeRatio,
+  //     returnDrawdownRatio: maxDrawdown > 0 ? (totalNetPnl / maxDrawdown) : 0,
+  //   };
 
-    this.backtestingResult = backtestingResult;
+  //   this.backtestingResult = backtestingResult;
 
-    if (output) {
-      this.outputBacktestingResult(backtestingResult);
-    }
-  }
+  //   if (output) {
+  //     this.outputBacktestingResult(backtestingResult);
+  //   }
+  // }
 
-  /**
-   * 显示回测结果
-   */
-  outputBacktestingResult(result: BacktestingResult): void {
-    if (!result) {
-      return;
-    }
+  // /**
+  //  * 显示回测结果
+  //  */
+  // outputBacktestingResult(result: BacktestingResult): void {
+  //   if (!result) {
+  //     return;
+  //   }
 
-    const logs = [
-      '='.repeat(50),
-      `[${this.constructor.name}]回测结果`,
-      '='.repeat(50),
-      `开始日期：\t${result.startDate}`,
-      `结束日期：\t${result.endDate}`,
-      `总交易日：\t${result.totalDays}`,
-      `盈利交易日：\t${result.profitDays}`,
-      `亏损交易日：\t${result.lossDays}`,
-      '',
-      `起始资金：\t${result.startBalance.toFixed(2)}`,
-      `结束资金：\t${result.endBalance.toFixed(2)}`,
-      `总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`,
-      `年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`,
-      `最大回撤：\t${result.maxDrawdown.toFixed(2)}`,
-      `最大回撤百分比：\t${(result.maxDrawdownPercent * 100).toFixed(2)}%`,
-      '',
-      `总 盈 亏：\t${result.totalNetPnl.toFixed(2)}`,
-      `总手续费：\t${result.totalCommission.toFixed(2)}`,
-      `总成交金额：\t${result.totalTurnover.toFixed(2)}`,
-      `总成交笔数：\t${result.totalTradeCount}`,
-      '',
-      `收益标准差：\t${(result.returnStd * 100).toFixed(2)}%`,
-      `夏普比率：\t${result.sharpeRatio.toFixed(2)}`,
-      `收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`,
-    ]
+  //   const logs = [
+  //     '='.repeat(50),
+  //     `[${this.constructor.name}]回测结果`,
+  //     '='.repeat(50),
+  //     `开始日期：\t${result.startDate}`,
+  //     `结束日期：\t${result.endDate}`,
+  //     // `总交易日：\t${result.totalDays}`,
+  //     // `盈利交易日：\t${result.profitDays}`,
+  //     // `亏损交易日：\t${result.lossDays}`,
+  //     '',
+  //     `起始资金：\t${result.startBalance.toFixed(2)}`,
+  //     `结束资金：\t${result.endBalance.toFixed(2)}`,
+  //     `总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`,
+  //     `年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`,
+  //     `最大回撤：\t${result.maxDrawdown.toFixed(2)}`,
+  //     `最大回撤百分比：\t${(result.maxDrawdownPercent * 100).toFixed(2)}%`,
+  //     '',
+  //     `总 盈 亏：\t${result.totalNetPnl.toFixed(2)}`,
+  //     `总手续费：\t${result.totalCommission.toFixed(2)}`,
+  //     `总成交金额：\t${result.totalTurnover.toFixed(2)}`,
+  //     `总成交笔数：\t${result.totalTradeCount}`,
+  //     '',
+  //     `收益标准差：\t${(result.returnStd * 100).toFixed(2)}%`,
+  //     `夏普比率：\t${result.sharpeRatio.toFixed(2)}`,
+  //     `收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`,
+  //   ]
 
-    this.writeLog(logs);
-  }
-
-  /**
-   * 计算标准差
-   */
-  private calculateStd(values: number[]): number {
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
-    return Math.sqrt(variance);
-  }
+  //   this.writeLog(logs);
+  // }
 
   /**
    * 写入日志

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Broker } from './broker';
-import type { GatewaySettings } from 'src/types/broker';
+import type { GatewaySettings } from 'src/shared/types/broker';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear/binance-linear-broker';
 
 export interface BrokerConfig {
@@ -17,8 +17,8 @@ const config: BrokerConfig = {
       id: '1',
       Class: BinanceLinearBroker,
       settings: {
-        apiKey: '1c5f9a2a4faefc20b1c0667cecef2ce8998f68133540b1c87a72886d6d3adac6',
-        apiSecret: '3ca3aa8dd892bdecd473fa419fc50658826ff5a864c52956ad670652416a26de',
+        apiKey: 'nzadRyiGuHIrLZGHuFeMiyING98FbpZi9127Lf3I8GvMCgMcc70QqZqnVInkFJx7',
+        apiSecret: 'KgyQpJrZiYkHsKl4Abj0cy6XwN12bAbxQ2jhbYNUAt6cysSpaEg4Eh7Ry1VEwsTM',
         server: 'TESTNET',
         klineStream: true,
         proxyHost: '127.0.0.1',

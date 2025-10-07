@@ -51,7 +51,8 @@
     "test:e2e": "turbo run test:e2e",
     "update:deps": "npx taze -r -w",
     "version": "pnpm exec changeset version && pnpm install --no-frozen-lockfile",
-    "catalog": "pnpx codemod pnpm/catalog"
+    "catalog": "pnpx codemod pnpm/catalog",
+    "copy:shared": "node ./scripts/copyShare.mjs"
   },
   "devDependencies": {
     "@changesets/changelog-github": "catalog:",

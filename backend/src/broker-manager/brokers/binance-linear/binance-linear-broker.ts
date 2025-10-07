@@ -1,4 +1,4 @@
-import type { ContractData } from '../../../types/common';
+import type { ContractData } from 'src/shared/types/common';
 
 import {
   AccountData,
@@ -8,7 +8,7 @@ import {
   PositionData,
   TickData,
   TradeData,
-} from '../../../types/common';
+} from 'src/shared/types/common';
 import { MdApi } from './md-api';
 import { RestApi } from './rest-api';
 import { TradeApi } from './trade-api';
@@ -19,7 +19,7 @@ import {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from '../../../types/broker';
+} from 'src/shared/types/broker';
 import { UserApi } from './user-api';
 import { Broker } from 'src/broker-manager/broker';
 
@@ -62,6 +62,10 @@ export class BinanceLinearBroker extends Broker {
     ]);
 
     this.writeLog('网关连接成功');
+  }
+
+  public getAllContracts(): ContractData[] {
+    return [...this.nameContractMap.values()];
   }
 
   /**

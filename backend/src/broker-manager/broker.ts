@@ -6,7 +6,7 @@ import type {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from 'src/types/broker';
+} from 'src/shared/types/broker';
 import type {
   AccountData,
   BarData,
@@ -15,7 +15,7 @@ import type {
   PositionData,
   TickData,
   TradeData,
-} from 'src/types/common';
+} from 'src/shared/types/common';
 
 export abstract class Broker extends EventEmitter {
   constructor() {
@@ -27,7 +27,8 @@ export abstract class Broker extends EventEmitter {
 
   public abstract refresh(bar: BarData): void;
 
-  // public abstract getContractByName(name: string): ContractData | undefined;
+  public abstract getAllContracts(): ContractData[];
+  public abstract getContractByName(name: string): ContractData | undefined;
   public abstract getContractBySymbol(symbol: string): ContractData | undefined;
   // public abstract getOrder(orderId: string): OrderData | undefined;
 

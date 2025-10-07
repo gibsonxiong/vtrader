@@ -23,6 +23,8 @@ package-lock.json
 .VSCodeCounter
 **/backend-mock/data
 backend/generated/
+backend/shared/
+frontend/shared/
 
 # local env files
 .env.local

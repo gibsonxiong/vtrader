@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Direction, Interval, Offset } from './types/common';
-import type { BarData, OrderData, TradeData } from './types/common';
+import { Direction, Interval, Offset } from 'src/shared/types/common';
+import type { BarData, OrderData, TradeData } from 'src/shared/types/common';
 import { MarketDataService } from './market-data/market-data.service';
 import { BacktestingService, BacktestingSetting } from './strategy/backtesting.service';
 import { StrategyService } from './strategy/strategy.service';
@@ -58,7 +58,6 @@ export class AppService {
       interval: Interval.MINUTE_1,
       balance: 100_000,
       commissionRate: 0.0005,
-      size: 1,
       priceTick: 0.01,
       strategies: [
         // {

@@ -1,5 +1,5 @@
-import { Offset, OrderStatus } from 'src/types/common';
-import type { OrderData } from 'src/types/common';
+import { Offset, OrderStatus } from 'src/shared/types/common';
+import type { OrderData } from 'src/shared/types/common';
 import { BigNumber } from 'bignumber.js';
 
 export class Wallet {

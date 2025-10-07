@@ -1,4 +1,4 @@
-import { BarData, Interval } from '../types/common';
+import { BarData, Interval } from 'src/shared/types/common';
 
 export interface Params {
   interval: Interval;

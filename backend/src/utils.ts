@@ -1,4 +1,4 @@
-import { OrderData, OrderStatus } from "./types/common";
+import { OrderData, OrderStatus } from 'src/shared/types/common';
 import { BigNumber } from 'bignumber.js';
 
 let orderCount: number = 0;
@@ -34,4 +34,10 @@ export function floorTo(source: number, target: number): number {
 
 export function ceilTo(source: number, target: number): number {
   return roundTo(source, target, BigNumber.ROUND_CEIL);
+}
+
+export function calculateStd(values: number[]): number {
+  const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+  const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
+  return Math.sqrt(variance);
 }

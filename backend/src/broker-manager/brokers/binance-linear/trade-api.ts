@@ -3,8 +3,8 @@ import type { BinanceLinearBroker } from './binance-linear-broker';
 import * as WebSocket from 'ws';
 import * as crypto from 'node:crypto';
 
-import { OrderStatus, Direction, Offset, OrderType, OrderData } from '../../../types/common';
-import { CancelOrderRequest, SendOrderRequest } from '../../../types/broker';
+import { OrderStatus, Direction, Offset, OrderType, OrderData } from 'src/shared/types/common';
+import { CancelOrderRequest, SendOrderRequest } from 'src/shared/types/broker';
 import { REAL_TRADE_HOST, TESTNET_TRADE_HOST, DIRECTION_OFFSET2BINANCE, ORDERTYPE_VT2BINANCE, formatFloat } from './constants';
 
 /**

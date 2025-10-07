@@ -1,4 +1,4 @@
-import type { ContractData } from '../../../types/common';
+import type { ContractData } from 'src/shared/types/common';
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as crypto from 'node:crypto';
@@ -6,7 +6,7 @@ import * as crypto from 'node:crypto';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 
-import { BarData, Interval, Product } from '../../../types/common';
+import { BarData, Interval, Product } from 'src/shared/types/common';
 import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
@@ -14,7 +14,7 @@ import {
   REAL_REST_HOST,
   TESTNET_REST_HOST,
 } from './constants';
-import { HistoryRequest } from '../../../types/broker';
+import { HistoryRequest } from 'src/shared/types/broker';
 
 /**
  * REST API客户端
@@ -219,7 +219,6 @@ export class RestApi {
           symbol: `${symbolData.symbol}:${symbolData.marginAsset}`,
           name: symbolData.symbol,
           product: PRODUCT_BINANCE2VT[symbolData.contractType] || Product.FUTURES,
-          size: 1,
           priceTick: Number.parseFloat(
             symbolData.filters.find((f: any) => f.filterType === 'PRICE_FILTER')?.tickSize ||
               '0.01',

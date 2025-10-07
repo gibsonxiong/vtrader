@@ -1,5 +1,5 @@
-import { Direction, Offset, OrderStatus } from 'src/types/common';
-import type { OrderData } from 'src/types/common';
+import { Direction, Offset, OrderStatus } from 'src/shared/types/common';
+import type { OrderData } from 'src/shared/types/common';
 import { BigNumber } from 'bignumber.js';
 
 export interface Holding {

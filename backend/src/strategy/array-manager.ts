@@ -1,4 +1,4 @@
-import type { BarData } from 'src/types/common';
+import type { BarData } from 'src/shared/types/common';
 
 export class ArrayManger {
   length: number;

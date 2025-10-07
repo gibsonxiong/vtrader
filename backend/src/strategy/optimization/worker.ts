@@ -1,5 +1,5 @@
 import { parentPort, workerData } from 'worker_threads';
-import { Direction, Interval, Offset } from '../../types/common';
+import { Direction, Interval, Offset } from 'src/shared/types/common';
 import { BacktestingService, BacktestingSetting } from '../backtesting.service';
 import { MarketDataService } from '../../market-data/market-data.service';
 import { StrategyService } from '../strategy.service';
@@ -17,7 +17,6 @@ async function main(): Promise<void> {
     interval: Interval.MINUTE_1,
     balance: 100_000,
     commissionRate: 0.0005,
-    size: 1,
     priceTick: 0.01,
     strategies: [
       // {

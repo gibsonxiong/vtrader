@@ -1,5 +1,5 @@
-import { Direction, Offset } from '../types/common';
-import { SendOrderParams, CancelOrderParams } from '../types/strategy';
+import { Direction, Offset } from 'src/shared/types/common';
+import { SendOrderParams, CancelOrderParams } from 'src/shared/types/strategy';
 import { LongHolding, ShortHolding } from './holding';
 import { Wallet } from './wallet';
 import { Strategy } from './strategy';

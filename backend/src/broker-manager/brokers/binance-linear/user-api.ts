@@ -1,9 +1,9 @@
-import type { AccountData, OrderData, PositionData, TradeData } from '../../../types/common';
+import type { AccountData, OrderData, PositionData, TradeData } from 'src/shared/types/common';
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as WebSocket from 'ws';
 
-import { Direction, Offset, OrderType } from '../../../types/common';
+import { Direction, Offset, OrderType } from 'src/shared/types/common';
 import { REAL_USER_HOST, STATUS_BINANCE2VT, TESTNET_USER_HOST } from './constants';
 
 function binance2offset(direction: 'LONG' | 'SHORT', side: 'BUY' | 'SELL'): Offset {

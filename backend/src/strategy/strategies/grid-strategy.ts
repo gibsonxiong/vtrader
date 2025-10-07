@@ -1,5 +1,5 @@
-import { Direction, Interval, Offset, OrderStatus } from '../../types/common';
-import type { BarData, OrderData, TradeData } from '../../types/common';
+import { Direction, Interval, Offset, OrderStatus } from 'src/shared/types/common';
+import type { BarData, OrderData, TradeData } from 'src/shared/types/common';
 import { Strategy, param } from '../strategy';
 import { ArrayManger } from '../array-manager';
 import * as talib from 'technicalindicators';

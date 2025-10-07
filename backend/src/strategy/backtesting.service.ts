@@ -7,15 +7,15 @@ import {
   Interval,
   OrderStatus,
   OrderType,
-} from '../types/common';
+} from 'src/shared/types/common';
 import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
-import { Strategy, BacktestingResult, DailyResultItem, RecordData } from './strategy';
+import { Strategy, DailyResultItem, RecordData } from './strategy';
 import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from './strategy.service';
-import { SendOrderParams, CancelOrderParams, StrategyEngine } from '../types/strategy';
-import { SendOrderRequest, CancelOrderRequest, HistoryRequest } from '../types/broker';
+import { SendOrderParams, CancelOrderParams, StrategyEngine } from 'src/shared/types/strategy';
+import { SendOrderRequest, CancelOrderRequest, HistoryRequest } from 'src/shared/types/broker';
 import { MockBroker } from '../broker-manager/brokers/mock/mock-broker';
 
 import btcData from './history/btc';
@@ -24,6 +24,28 @@ import { INTERVAL_VT2DAYJS } from 'src/broker-manager/brokers/binance-linear/con
 import { Wallet } from './wallet';
 import { Context } from './context';
 import { Broker } from '../broker-manager/broker';
+import { calculateStd } from 'src/utils';
+
+export interface BacktestingResult {
+  startDate: string;
+  endDate: string;
+  startBalance: number;
+  endBalance: number;
+  totalNetPnl: number;
+  totalReturnPercent: number;
+  maxDrawdown: number;
+  maxDrawdownPercent: number;
+  // annualReturn: number;
+  // returnDrawdownRatio: number;
+  // returnStd: number;
+  // sharpeRatio: number;
+  // totalCommission: number;
+  // totalDays: number;
+  // profitDays: number;
+  // lossDays: number;
+  // totalTradeCount: number;
+  // totalTurnover: number;
+}
 
 /**
  * 回测设置接口
@@ -35,7 +57,6 @@ export interface BacktestingSetting {
   interval: Interval;
   balance: number;
   commissionRate: number;
-  size: number;
   priceTick: number;
   strategies: {
     strategyName: string;
@@ -53,7 +74,6 @@ export class BacktestingService implements StrategyEngine {
   private interval: Interval;
   private priceTick: number = 0; // 最小价格变动
   private commissionRate: number;
-  private size: number = 1; // 合约大小
   private startDate: string;
   private endDate: string;
   private balance: number;
@@ -85,7 +105,6 @@ export class BacktestingService implements StrategyEngine {
     this.interval = setting.interval;
     this.balance = setting.balance;
     this.commissionRate = setting.commissionRate;
-    this.size = setting.size;
     this.priceTick = setting.priceTick;
   }
 
@@ -136,21 +155,21 @@ export class BacktestingService implements StrategyEngine {
 
     // 从数据库加载K线数据
     for (let symbol of this.symbols) {
-      // const bars = await this.marketDataService.getBars({
-      //   symbol: symbol,
-      //   interval: this.interval,
-      //   start: this.startDate,
-      //   end: this.endDate,
-      //   preloadCount: maxPreloadCount,
-      // });
+      const bars = await this.marketDataService.getBars({
+        symbol: symbol,
+        interval: this.interval,
+        start: this.startDate,
+        end: this.endDate,
+        preload: maxPreloadCount,
+      });
 
-      let bars: BarData[] = [];
+      // let bars: BarData[] = [];
 
-      if (symbol === 'BTCUSDT:USDT') {
-        bars = btcData as BarData[];
-      } else if (symbol === 'ETHUSDT:USDT') {
-        bars = ethData as BarData[];
-      }
+      // if (symbol === 'BTCUSDT:USDT') {
+      //   bars = btcData as BarData[];
+      // } else if (symbol === 'ETHUSDT:USDT') {
+      //   bars = ethData as BarData[];
+      // }
   
       this.historyData.push(...bars);
     }
@@ -239,7 +258,7 @@ export class BacktestingService implements StrategyEngine {
     // this.doRecord(lastBar.close);
   }
 
-  async backtesting(setting: BacktestingSetting): Promise<void> {
+  async backtesting(setting: BacktestingSetting): Promise<BacktestingResult> {
     await this.initBroker();
 
     this.setSetting(setting);
@@ -255,7 +274,8 @@ export class BacktestingService implements StrategyEngine {
     await this.loadData();
 
     await this.runBacktesting();
-    this.calculateResult(true);
+
+    return this.calculateResult(true);
   }
 
   async initBroker(): Promise<void> {
@@ -336,11 +356,64 @@ export class BacktestingService implements StrategyEngine {
   /**
    * 统计回测结果
    */
-  calculateResult(output = false): void {
+  calculateResult(output = false): BacktestingResult {
     this.writeLog('开始统计回测结果');
+
+    // 计算统计指标
+    const startBalance = this.balance;
+    const dailyResults: DailyResultItem[] = [];
+    let totalNetPnl = 0;
+
     for (const strategy of this.strategies) {
-      strategy.calculateResult(this.startDate, this.endDate, output);
+      strategy.calculateDailyResult();
+
+      dailyResults.push(...strategy.dailyResults.values());
+  
+      dailyResults.forEach((result) => {
+        totalNetPnl += result.netPnl;
+      });
     }
+
+    // 计算最大回撤
+    let maxDrawdown = 0;
+    let maxDrawdownPercent = 0;
+    let peak = startBalance;
+
+    // 计算最大回撤
+    for (const result of dailyResults) {
+      const balance = startBalance + result.netPnl;
+      if (balance > peak) {
+        peak = balance;
+      }
+
+      const drawdown = peak - balance;
+      const drawdownPercent = drawdown / peak;
+
+      if (drawdown > maxDrawdown) {
+        maxDrawdown = drawdown;
+      }
+
+      if (drawdownPercent > maxDrawdownPercent) {
+        maxDrawdownPercent = drawdownPercent;
+      }
+    }
+
+
+    const endBalance = startBalance + totalNetPnl;
+    const totalReturnPercent = totalNetPnl / startBalance;
+
+    const backtestingResult: BacktestingResult = {
+      startDate: this.startDate,
+      endDate: this.endDate,
+      startBalance,
+      endBalance,
+      maxDrawdown,
+      maxDrawdownPercent,
+      totalNetPnl,
+      totalReturnPercent,
+    };
+
+    return backtestingResult;
   }
 
   /**

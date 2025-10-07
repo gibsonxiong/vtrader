@@ -1,8 +1,8 @@
-import type { BarData } from 'src/types/common';
+import type { BarData, ContractData } from 'src/shared/types/common';
 
 import { Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
-import { Interval } from 'src/types/common';
+import { Interval } from 'src/shared/types/common';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';
@@ -29,24 +29,10 @@ export class MarketDataService {
     private brokerMgr: BrokerManagerService,
   ) {}
 
-  async downloadBars(params: DownloadParams): Promise<number> {
-    const { start, end, interval, symbol } = params;
-
+  async getAllContracts(): Promise<ContractData[]> {
     const broker = await this.brokerMgr.getBroker();
 
-    const bars = await broker.queryHistory({
-      start,
-      end,
-      interval,
-      symbol,
-    });
-
-    const { count } = await this.prisma.bar.createMany({
-      data: bars,
-      skipDuplicates: true,
-    });
-
-    return count;
+    return broker.getAllContracts();
   }
 
   async getBars(params: GetBarsParams): Promise<BarData[]> {
@@ -87,5 +73,25 @@ export class MarketDataService {
       volume: bar.volume.toNumber(),
       openInterest: bar.openInterest?.toNumber(),
     }));
+  }
+
+  async downloadBars(params: DownloadParams): Promise<number> {
+    const { start, end, interval, symbol } = params;
+
+    const broker = await this.brokerMgr.getBroker();
+
+    const bars = await broker.queryHistory({
+      start,
+      end,
+      interval,
+      symbol,
+    });
+
+    const { count } = await this.prisma.bar.createMany({
+      data: bars,
+      skipDuplicates: true,
+    });
+
+    return count;
   }
 }

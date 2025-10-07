@@ -1,5 +1,5 @@
-import { Interval } from 'src/types/common';
-import type { BarData } from 'src/types/common';
+import { Interval } from 'src/shared/types/common';
+import type { BarData } from 'src/shared/types/common';
 
 export const mockBars: BarData[] = [];
 

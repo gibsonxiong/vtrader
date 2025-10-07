@@ -1,4 +1,4 @@
-import { TradeData, OrderData, OrderType, BarData, ContractData, OrderStatus, Direction, Offset } from 'src/types/common';
+import { TradeData, OrderData, OrderType, BarData, ContractData, OrderStatus, Direction, Offset } from 'src/shared/types/common';
 import {
   CancelOrderRequest,
   GatewaySettings,
@@ -6,12 +6,13 @@ import {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from 'src/types/broker';
+} from 'src/shared/types/broker';
 import { Broker } from 'src/broker-manager/broker';
-
+import BinanceLinearBroker from '../binance-linear/binance-linear-broker';
 let tradeCount: number = 0;
 
 export class MockBroker extends Broker {
+  private market: Broker;
   private activeLimitOrders: Map<string, OrderData> = new Map();
   private limitOrders: Map<string, OrderData> = new Map();
 
@@ -20,6 +21,14 @@ export class MockBroker extends Broker {
 
   constructor() {
     super();
+
+    // this.market = new BinanceLinearBroker();
+    // this.market.connect({
+    //   apiKey: 'nzadRyiGuHIrLZGHuFeMiyING98FbpZi9127Lf3I8GvMCgMcc70QqZqnVInkFJx7',
+    //   apiSecret: 'KgyQpJrZiYkHsKl4Abj0cy6XwN12bAbxQ2jhbYNUAt6cysSpaEg4Eh7Ry1VEwsTM',
+    //   server: 'TESTNET',
+    //   klineStream: true,
+    // })
   }
 
   public connect(settings: GatewaySettings): Promise<void> {
@@ -27,6 +36,14 @@ export class MockBroker extends Broker {
   }
   public stop(): void {
     return;
+  }
+
+  public getAllContracts(): ContractData[] {
+    return [];
+  }
+
+  public getContractByName(name: string): ContractData | undefined {
+    return undefined;
   }
 
   public getContractBySymbol(symbol: string): ContractData | undefined {

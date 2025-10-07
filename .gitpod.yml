@@ -1,5 +1,5 @@
 ports:
-  - port: 5555
+  - port: 8000
     onOpen: open-preview
 tasks:
   - init: npm i -g corepack && pnpm install
