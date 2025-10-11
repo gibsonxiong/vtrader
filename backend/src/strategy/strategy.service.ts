@@ -55,6 +55,8 @@ export class StrategyService {
         const instance = new StrategyClass({
           engine: {} as any,
           symbols: [],
+          assetBalance: 1000,
+          assetName: 'USDT',
         });
 
         list.push({

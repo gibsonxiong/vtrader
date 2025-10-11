@@ -10,115 +10,46 @@ import dayjs from 'dayjs';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 
-interface BacktestRecord {
-  id: number;
-  class_name: string;
-  vt_symbol: string;
-  interval: string;
-  start: string;
-  end: string;
-  rate: number;
-  slippage: number;
-  size: number;
-  pricetick: number;
-  capital: number;
-  setting: string;
-  status: string;
-  total_return: number | null;
-  annual_return: number | null;
-  max_drawdown: number | null;
-  sharpe_ratio: number | null;
-  total_trades: number | null;
-  win_rate: number | null;
-  created_time: string;
-  updated_time: string;
-}
-
 const state = reactive({
-  data: [] as BacktestRecord[],
+  data: [] as any[],
   loading: false,
 });
 
-const gridOptions: VxeGridProps<BacktestRecord> = {
+const gridOptions: VxeGridProps<any> = {
   columns: [
     { field: 'id', title: 'ID', width: 60 },
-    { field: 'class_name', title: '策略名称', width: 150 },
-    { field: 'vt_symbol', title: '交易对', width: 180 },
+    { field: 'strategyName', title: '策略名称', width: 150 },
+    { field: 'symbol', title: '交易对', width: 180 },
     { field: 'interval', title: '时间间隔', width: 80 },
     { 
-      field: 'start', 
+      field: 'startDate', 
       title: '开始时间', 
       width: 120,
       formatter: ({ cellValue }) => dayjs(cellValue).format('YYYY-MM-DD')
     },
     { 
-      field: 'end', 
+      field: 'endDate', 
       title: '结束时间', 
       width: 120,
       formatter: ({ cellValue }) => dayjs(cellValue).format('YYYY-MM-DD')
     },
     { 
-      field: 'status', 
-      title: '回测状态', 
-      width: 120,
-      slots: { default: 'status' }
-    },
-    { 
-      field: 'rate', 
-      title: '手续费率', 
-      width: 100,
-      formatter: ({ cellValue }) => (cellValue * 100).toFixed(3) + '%'
-    },
-    { field: 'slippage', title: '滑点', width: 80 },
-    { field: 'size', title: '合约大小', width: 100 },
-    { field: 'pricetick', title: '最小价格变动', width: 120 },
-    { 
-      field: 'capital', 
+      field: 'startBalance', 
       title: '初始资金', 
       width: 120,
       formatter: ({ cellValue }) => cellValue.toLocaleString()
     },
     { 
-      field: 'total_return', 
+      field: 'totalReturnPercent', 
       title: '总收益率', 
       width: 120,
-      slots: { default: 'total_return' }
+      slots: { default: 'totalReturnPercent' }
     },
     { 
-      field: 'annual_return', 
-      title: '年化收益率', 
-      width: 120,
-      slots: { default: 'annual_return' }
-    },
-    { 
-      field: 'max_drawdown', 
+      field: 'maxDrawdownPercent', 
       title: '最大回撤', 
       width: 120,
-      slots: { default: 'max_drawdown' }
-    },
-    { 
-      field: 'sharpe_ratio', 
-      title: '夏普比率', 
-      width: 100,
-      formatter: ({ cellValue }) => cellValue == null || cellValue === '' ? '--' : cellValue.toFixed(3)
-    },
-    { 
-      field: 'total_trades', 
-      title: '总交易次数', 
-      width: 120,
-      formatter: ({ cellValue }) => cellValue == null || cellValue === '' ? '--' : cellValue
-    },
-    { 
-      field: 'win_rate', 
-      title: '胜率', 
-      width: 100,
-      formatter: ({ cellValue }) => cellValue == null || cellValue === '' ? '--' : cellValue.toFixed(2) + '%'
-    },
-    { 
-      field: 'created_time', 
-      title: '创建时间', 
-      width: 160,
-      formatter: ({ cellValue }) => dayjs(cellValue).format('YYYY-MM-DD HH:mm:ss')
+      formatter: ({ cellValue }) => Number(cellValue).toFixed(2) + '%'
     },
     {
       field: 'actions',
@@ -140,7 +71,7 @@ const gridOptions: VxeGridProps<BacktestRecord> = {
   },
 };
 
-const gridEvents: VxeGridListeners<BacktestRecord> = {};
+const gridEvents: VxeGridListeners<any> = {};
 
 const [Grid, gridApi] = useVbenVxeGrid({ gridEvents, gridOptions });
 
@@ -173,8 +104,8 @@ const fetchData = async (params?: Partial<typeof queryParams>) => {
       }
     });
     
-    const response = await axios.get(`http://127.0.0.1:8000/backtesting/results?${searchParams.toString()}`);
-    state.data = response.data;
+    const response = await axios.get(`http://127.0.0.1:3000/backtesting?${searchParams.toString()}`);
+    state.data = response.data.data;
   } catch (error) {
     console.error('获取回测历史数据失败:', error);
     state.data = [];
@@ -208,7 +139,7 @@ const updateGridData = () => {
 };
 
 // 查看详情
-const handleView = (record: BacktestRecord) => {
+const handleView = (record: any) => {
   router.push({
     path: '/backtest/result',
     query: { resultId: record.id }
@@ -216,7 +147,7 @@ const handleView = (record: BacktestRecord) => {
 };
 
 // 删除记录
-const handleDelete = async (record: BacktestRecord) => {
+const handleDelete = async (record: any) => {
   Modal.confirm({
     title: '确认删除',
     content: `确定要删除ID为 ${record.id} 的回测记录吗？`,
@@ -233,32 +164,6 @@ const handleDelete = async (record: BacktestRecord) => {
       }
     }
   });
-};
-
-// 获取状态颜色
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    'inited': 'default',
-    'data_loading': 'processing',
-    'backtesting': 'processing',
-    'analysing': 'processing',
-    'finished': 'success',
-    'failed': 'error'
-  };
-  return colorMap[status] || 'default';
-};
-
-// 获取状态文本
-const getStatusText = (status: string) => {
-  const textMap: Record<string, string> = {
-    'inited': '已初始化',
-    'data_loading': '数据加载中',
-    'backtesting': '回测中',
-    'analysing': '分析中',
-    'finished': '已完成',
-    'failed': '失败'
-  };
-  return textMap[status] || status;
 };
 
 onMounted(() => {
@@ -336,27 +241,16 @@ onMounted(() => {
       
       <!-- 数据表格 -->
       <Grid table-title="回测历史数据">
-        <template #total_return="{ row }">
-          <span v-if="row.total_return == null || row.total_return === ''">--</span>
-          <Tag v-else :color="row.total_return >= 0 ? 'green' : 'red'">
-            {{ (row.total_return * 100).toFixed(2) }}%
+        <template #totalReturnPercent="{ row }">
+          <span v-if="row.totalReturnPercent == null || row.totalReturnPercent === ''">--</span>
+          <Tag v-else :color="row.totalReturnPercent >= 0 ? 'green' : 'red'">
+            {{ (row.totalReturnPercent * 100).toFixed(2) }}%
           </Tag>
         </template>
-        <template #annual_return="{ row }">
-          <span v-if="row.annual_return == null || row.annual_return === ''">--</span>
-          <Tag v-else :color="row.annual_return >= 0 ? 'green' : 'red'">
-            {{ (row.annual_return * 100).toFixed(2) }}%
-          </Tag>
-        </template>
-        <template #max_drawdown="{ row }">
-          <span v-if="row.max_drawdown == null || row.max_drawdown === ''">--</span>
+        <template #maxDrawdownPercent="{ row }">
+          <span v-if="row.maxDrawdownPercent == null || row.maxDrawdownPercent === ''">--</span>
           <Tag v-else color="red">
-            {{ (row.max_drawdown * 100).toFixed(2) }}%
-          </Tag>
-        </template>
-        <template #status="{ row }">
-          <Tag :color="getStatusColor(row.status)">
-            {{ getStatusText(row.status) }}
+            {{ (row.maxDrawdownPercent * 100).toFixed(2) }}%
           </Tag>
         </template>
         <template #actions="{ row }">

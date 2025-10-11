@@ -2,13 +2,21 @@ import { Offset, OrderStatus } from 'src/shared/types/common';
 import type { OrderData } from 'src/shared/types/common';
 import { BigNumber } from 'bignumber.js';
 
+export interface WalletProps {
+  total: number;
+  assetName: string;
+}
+
 export class Wallet {
+  _total: number;
+  _assetName: string;
+
   frozenMap: Record<string, number> = {};
 
-  constructor(
-    public _total: number = 0,
-    public _assetName: string = 'USDT',
-  ) {}
+  constructor(props: WalletProps) {
+    this._total = props.total;
+    this._assetName = props.assetName;
+  }
 
   get assetName(): string {
     return this._assetName;

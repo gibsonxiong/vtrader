@@ -3,13 +3,14 @@ import { Injectable } from '@nestjs/common';
 import { Direction, Interval, Offset } from 'src/shared/types/common';
 import type { BarData, OrderData, TradeData } from 'src/shared/types/common';
 import { MarketDataService } from './market-data/market-data.service';
-import { BacktestingService, BacktestingSetting } from './strategy/backtesting.service';
+import { BacktestingService } from './backtesting/backtesting.service';
 import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
-import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
-import { test2 } from './strategy/optimization/test';
+// import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
+import { test2 } from './optimization/test';
+import type { BacktestingSetting } from 'src/shared/types/backtesting';
 
 // test2();
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
@@ -58,27 +59,12 @@ export class AppService {
       interval: Interval.MINUTE_1,
       balance: 100_000,
       commissionRate: 0.0005,
-      priceTick: 0.01,
-      strategies: [
-        // {
-        //   strategyName: 'MyStrategy',
-        //   strategySetting: {
-        //     rsiWindow: 20,
-        //   },
-        // },
-        // {
-        //   strategyName: 'RSIStrategy',
-        //   strategySetting: {
-        //     rsiWindow: 20,
-        //   },
-        // },
-        {
-          strategyName: 'GridStrategy',
-          strategySetting: {
-            // rsiWindow: 20,
-          },
+      strategy: {
+        strategyName: 'GridStrategy',
+        strategySetting: {
+          // rsiWindow: 20,
         },
-      ],
+      },
     };
 
     this.backtestingService.backtesting(setting);
@@ -88,6 +74,8 @@ export class AppService {
     const strategy = await this.strategyService.createInstance('MyStrategy', {
       engine: {} as any,
       symbols: ['BTCUSDT:USDT'],
+      assetBalance: 1000,
+      assetName: 'USDT',
       setting: {
         fastWindow: 10,
         slowWindow: 20,
@@ -155,6 +143,6 @@ export class AppService {
   }
 
   async optimization(): Promise<void> {
-    await gridStrategyOptimizationExample();
+    // await gridStrategyOptimizationExample();
   }
 }

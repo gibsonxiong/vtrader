@@ -16,7 +16,19 @@ datasource db {
 
 model Backtesting {
   id    Int     @default(autoincrement()) @id
-  name String  @unique
+  strategyName String
+  symbol String
+  interval String
+  startDate String
+  endDate String
+  startBalance Decimal
+  endBalance Decimal
+  maxDrawdown Decimal
+  maxDrawdownPercent Decimal
+  totalNetPnl Decimal
+  totalReturnPercent Decimal
+  dailyResults Json
+  trades Json
 }
 
 model Bar {

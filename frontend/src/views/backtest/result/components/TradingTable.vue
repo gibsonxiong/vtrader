@@ -1,28 +1,13 @@
 <script lang="ts" setup>
 import { Card, Table, Tag } from 'ant-design-vue';
-import { reactive, onMounted } from 'vue';
-
-interface Trade {
-  id: number;
-  symbol: string;
-  side: 'buy' | 'sell';
-  price: number;
-  quantity: number;
-  time: string;
-  profit: number;
-  commission: number;
-}
+import dayjs from 'dayjs';
+import type { TradeData } from '#/shared/types/common';
 
 interface TradingTableProps {
-  backtestId?: number;
+  trades?: TradeData[];
 }
 
 const props = defineProps<TradingTableProps>();
-
-const state = reactive({
-  loading: false,
-  trades: [] as Trade[]
-});
 
 // 表格列定义
 const columns = [
@@ -30,156 +15,109 @@ const columns = [
     title: '时间',
     dataIndex: 'time',
     key: 'time',
-    width: 150,
+    width: 180,
   },
   {
-    title: '交易对',
+    title: '合约',
     dataIndex: 'symbol',
     key: 'symbol',
-    width: 120,
+    width: 160,
   },
   {
     title: '方向',
-    dataIndex: 'side',
-    key: 'side',
-    width: 80,
-  },
-  {
-    title: '价格',
-    dataIndex: 'price',
-    key: 'price',
-    width: 120,
-  },
-  {
-    title: '数量',
-    dataIndex: 'quantity',
-    key: 'quantity',
+    dataIndex: 'direction',
+    key: 'direction',
     width: 100,
   },
   {
-    title: '盈亏',
-    dataIndex: 'profit',
-    key: 'profit',
+    title: '开平',
+    dataIndex: 'offset',
+    key: 'offset',
+    width: 100,
+  },
+  {
+    title: '成交价',
+    dataIndex: 'price',
+    key: 'price',
+    width: 140,
+  },
+  {
+    title: '成交量',
+    dataIndex: 'volume',
+    key: 'volume',
     width: 120,
   },
   {
     title: '手续费',
     dataIndex: 'commission',
     key: 'commission',
-    width: 100,
+    width: 120,
   },
 ];
-
-// 获取交易数据
-const fetchTradingData = async () => {
-  state.loading = true;
-  try {
-    // 模拟交易数据
-    const mockTrades: Trade[] = [
-      {
-        id: 1,
-        symbol: 'BTCUSDT',
-        side: 'buy',
-        price: 45000,
-        quantity: 0.1,
-        time: '2024-01-15 09:30:00',
-        profit: 500,
-        commission: 4.5
-      },
-      {
-        id: 2,
-        symbol: 'BTCUSDT',
-        side: 'sell',
-        price: 46000,
-        quantity: 0.1,
-        time: '2024-01-15 14:20:00',
-        profit: 1000,
-        commission: 4.6
-      },
-      {
-        id: 3,
-        symbol: 'ETHUSDT',
-        side: 'buy',
-        price: 2800,
-        quantity: 1,
-        time: '2024-01-16 10:15:00',
-        profit: -200,
-        commission: 2.8
-      },
-      {
-        id: 4,
-        symbol: 'ETHUSDT',
-        side: 'sell',
-        price: 2750,
-        quantity: 1,
-        time: '2024-01-16 16:45:00',
-        profit: -50,
-        commission: 2.75
-      }
-    ];
-    
-    state.trades = mockTrades;
-  } catch (error) {
-    console.error('获取交易数据失败:', error);
-  } finally {
-    state.loading = false;
-  }
-};
 
 // 格式化数字
 const formatNumber = (value: number, decimals: number = 2) => {
   return value.toFixed(decimals);
 };
 
-// 获取盈亏颜色
-const getProfitColor = (profit: number) => {
-  return profit >= 0 ? '#52c41a' : '#ff4d4f';
+// 格式化时间
+const formatTime = (iso: string) => {
+  return dayjs(iso).format('YYYY-MM-DD HH:mm:ss');
 };
 
 // 获取方向标签颜色
-const getSideColor = (side: string) => {
-  return side === 'buy' ? 'green' : 'red';
+const getDirectionColor = (direction: 'long' | 'short') => {
+  return direction === 'long' ? 'green' : 'red';
 };
 
 // 获取方向文本
-const getSideText = (side: string) => {
-  return side === 'buy' ? '买入' : '卖出';
+const getDirectionText = (direction: 'long' | 'short') => {
+  return direction === 'long' ? '多' : '空';
 };
 
-onMounted(() => {
-  fetchTradingData();
-});
+// 获取开平标签颜色
+const getOffsetColor = (offset: 'open' | 'close') => {
+  return offset === 'open' ? 'blue' : 'orange';
+};
+
+// 获取开平文本
+const getOffsetText = (offset: 'open' | 'close') => {
+  return offset === 'open' ? '开仓' : '平仓';
+};
+
 </script>
 
 <template>
   <Card title="交易明细">
     <Table
       :columns="columns"
-      :data-source="state.trades"
-      :loading="state.loading"
+      :data-source="props.trades"
       :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }"
-      row-key="id"
+      row-key="tradeId"
       size="middle"
     >
       <template #bodyCell="{ column, record }">
-        <template v-if="column.key === 'side'">
-          <Tag :color="getSideColor(record.side)">
-            {{ getSideText(record.side) }}
+        <template v-if="column.key === 'direction'">
+          <Tag :color="getDirectionColor(record.direction)">
+            {{ getDirectionText(record.direction) }}
+          </Tag>
+        </template>
+        <template v-else-if="column.key === 'offset'">
+          <Tag :color="getOffsetColor(record.offset)">
+            {{ getOffsetText(record.offset) }}
           </Tag>
         </template>
         <template v-else-if="column.key === 'price'">
           <span>{{ formatNumber(record.price) }}</span>
         </template>
-        <template v-else-if="column.key === 'quantity'">
-          <span>{{ formatNumber(record.quantity, 4) }}</span>
-        </template>
-        <template v-else-if="column.key === 'profit'">
-          <span :style="{ color: getProfitColor(record.profit), fontWeight: 'bold' }">
-            {{ record.profit >= 0 ? '+' : '' }}{{ formatNumber(record.profit) }}
-          </span>
+        <template v-else-if="column.key === 'volume'">
+          <span>{{ formatNumber(record.volume, 6) }}</span>
         </template>
         <template v-else-if="column.key === 'commission'">
-          <span>{{ formatNumber(record.commission) }}</span>
+          <span>{{ formatNumber(record.commission, 6) }}</span>
+        </template>
+        <template v-else-if="column.key === 'time'">
+          <span>{{ formatTime(record.time) }}</span>
         </template>
       </template>
     </Table>

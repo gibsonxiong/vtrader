@@ -159,6 +159,15 @@ export interface AccountData {
 }
 
 /**
+ * 资产数据接口
+ */
+export interface AssetData {
+  assetName: string;
+  balance: number;
+  frozen: number;
+}
+
+/**
  * 产品类型枚举
  */
 export enum Product {

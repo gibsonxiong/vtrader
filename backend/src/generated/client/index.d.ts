@@ -958,50 +958,138 @@ export namespace Prisma {
 
   export type BacktestingAvgAggregateOutputType = {
     id: number | null
+    startBalance: Decimal | null
+    endBalance: Decimal | null
+    maxDrawdown: Decimal | null
+    maxDrawdownPercent: Decimal | null
+    totalNetPnl: Decimal | null
+    totalReturnPercent: Decimal | null
   }
 
   export type BacktestingSumAggregateOutputType = {
     id: number | null
+    startBalance: Decimal | null
+    endBalance: Decimal | null
+    maxDrawdown: Decimal | null
+    maxDrawdownPercent: Decimal | null
+    totalNetPnl: Decimal | null
+    totalReturnPercent: Decimal | null
   }
 
   export type BacktestingMinAggregateOutputType = {
     id: number | null
-    name: string | null
+    strategyName: string | null
+    symbol: string | null
+    interval: string | null
+    startDate: string | null
+    endDate: string | null
+    startBalance: Decimal | null
+    endBalance: Decimal | null
+    maxDrawdown: Decimal | null
+    maxDrawdownPercent: Decimal | null
+    totalNetPnl: Decimal | null
+    totalReturnPercent: Decimal | null
   }
 
   export type BacktestingMaxAggregateOutputType = {
     id: number | null
-    name: string | null
+    strategyName: string | null
+    symbol: string | null
+    interval: string | null
+    startDate: string | null
+    endDate: string | null
+    startBalance: Decimal | null
+    endBalance: Decimal | null
+    maxDrawdown: Decimal | null
+    maxDrawdownPercent: Decimal | null
+    totalNetPnl: Decimal | null
+    totalReturnPercent: Decimal | null
   }
 
   export type BacktestingCountAggregateOutputType = {
     id: number
-    name: number
+    strategyName: number
+    symbol: number
+    interval: number
+    startDate: number
+    endDate: number
+    startBalance: number
+    endBalance: number
+    maxDrawdown: number
+    maxDrawdownPercent: number
+    totalNetPnl: number
+    totalReturnPercent: number
+    dailyResults: number
+    trades: number
     _all: number
   }
 
 
   export type BacktestingAvgAggregateInputType = {
     id?: true
+    startBalance?: true
+    endBalance?: true
+    maxDrawdown?: true
+    maxDrawdownPercent?: true
+    totalNetPnl?: true
+    totalReturnPercent?: true
   }
 
   export type BacktestingSumAggregateInputType = {
     id?: true
+    startBalance?: true
+    endBalance?: true
+    maxDrawdown?: true
+    maxDrawdownPercent?: true
+    totalNetPnl?: true
+    totalReturnPercent?: true
   }
 
   export type BacktestingMinAggregateInputType = {
     id?: true
-    name?: true
+    strategyName?: true
+    symbol?: true
+    interval?: true
+    startDate?: true
+    endDate?: true
+    startBalance?: true
+    endBalance?: true
+    maxDrawdown?: true
+    maxDrawdownPercent?: true
+    totalNetPnl?: true
+    totalReturnPercent?: true
   }
 
   export type BacktestingMaxAggregateInputType = {
     id?: true
-    name?: true
+    strategyName?: true
+    symbol?: true
+    interval?: true
+    startDate?: true
+    endDate?: true
+    startBalance?: true
+    endBalance?: true
+    maxDrawdown?: true
+    maxDrawdownPercent?: true
+    totalNetPnl?: true
+    totalReturnPercent?: true
   }
 
   export type BacktestingCountAggregateInputType = {
     id?: true
-    name?: true
+    strategyName?: true
+    symbol?: true
+    interval?: true
+    startDate?: true
+    endDate?: true
+    startBalance?: true
+    endBalance?: true
+    maxDrawdown?: true
+    maxDrawdownPercent?: true
+    totalNetPnl?: true
+    totalReturnPercent?: true
+    dailyResults?: true
+    trades?: true
     _all?: true
   }
 
@@ -1093,7 +1181,19 @@ export namespace Prisma {
 
   export type BacktestingGroupByOutputType = {
     id: number
-    name: string
+    strategyName: string
+    symbol: string
+    interval: string
+    startDate: string
+    endDate: string
+    startBalance: Decimal
+    endBalance: Decimal
+    maxDrawdown: Decimal
+    maxDrawdownPercent: Decimal
+    totalNetPnl: Decimal
+    totalReturnPercent: Decimal
+    dailyResults: JsonValue
+    trades: JsonValue
     _count: BacktestingCountAggregateOutputType | null
     _avg: BacktestingAvgAggregateOutputType | null
     _sum: BacktestingSumAggregateOutputType | null
@@ -1117,24 +1217,60 @@ export namespace Prisma {
 
   export type BacktestingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
-    name?: boolean
+    strategyName?: boolean
+    symbol?: boolean
+    interval?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    startBalance?: boolean
+    endBalance?: boolean
+    maxDrawdown?: boolean
+    maxDrawdownPercent?: boolean
+    totalNetPnl?: boolean
+    totalReturnPercent?: boolean
+    dailyResults?: boolean
+    trades?: boolean
   }, ExtArgs["result"]["backtesting"]>
 
 
 
   export type BacktestingSelectScalar = {
     id?: boolean
-    name?: boolean
+    strategyName?: boolean
+    symbol?: boolean
+    interval?: boolean
+    startDate?: boolean
+    endDate?: boolean
+    startBalance?: boolean
+    endBalance?: boolean
+    maxDrawdown?: boolean
+    maxDrawdownPercent?: boolean
+    totalNetPnl?: boolean
+    totalReturnPercent?: boolean
+    dailyResults?: boolean
+    trades?: boolean
   }
 
-  export type BacktestingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name", ExtArgs["result"]["backtesting"]>
+  export type BacktestingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "strategyName" | "symbol" | "interval" | "startDate" | "endDate" | "startBalance" | "endBalance" | "maxDrawdown" | "maxDrawdownPercent" | "totalNetPnl" | "totalReturnPercent" | "dailyResults" | "trades", ExtArgs["result"]["backtesting"]>
 
   export type $BacktestingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Backtesting"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
       id: number
-      name: string
+      strategyName: string
+      symbol: string
+      interval: string
+      startDate: string
+      endDate: string
+      startBalance: Prisma.Decimal
+      endBalance: Prisma.Decimal
+      maxDrawdown: Prisma.Decimal
+      maxDrawdownPercent: Prisma.Decimal
+      totalNetPnl: Prisma.Decimal
+      totalReturnPercent: Prisma.Decimal
+      dailyResults: Prisma.JsonValue
+      trades: Prisma.JsonValue
     }, ExtArgs["result"]["backtesting"]>
     composites: {}
   }
@@ -1505,7 +1641,19 @@ export namespace Prisma {
    */
   interface BacktestingFieldRefs {
     readonly id: FieldRef<"Backtesting", 'Int'>
-    readonly name: FieldRef<"Backtesting", 'String'>
+    readonly strategyName: FieldRef<"Backtesting", 'String'>
+    readonly symbol: FieldRef<"Backtesting", 'String'>
+    readonly interval: FieldRef<"Backtesting", 'String'>
+    readonly startDate: FieldRef<"Backtesting", 'String'>
+    readonly endDate: FieldRef<"Backtesting", 'String'>
+    readonly startBalance: FieldRef<"Backtesting", 'Decimal'>
+    readonly endBalance: FieldRef<"Backtesting", 'Decimal'>
+    readonly maxDrawdown: FieldRef<"Backtesting", 'Decimal'>
+    readonly maxDrawdownPercent: FieldRef<"Backtesting", 'Decimal'>
+    readonly totalNetPnl: FieldRef<"Backtesting", 'Decimal'>
+    readonly totalReturnPercent: FieldRef<"Backtesting", 'Decimal'>
+    readonly dailyResults: FieldRef<"Backtesting", 'Json'>
+    readonly trades: FieldRef<"Backtesting", 'Json'>
   }
     
 
@@ -2842,7 +2990,19 @@ export namespace Prisma {
 
   export const BacktestingScalarFieldEnum: {
     id: 'id',
-    name: 'name'
+    strategyName: 'strategyName',
+    symbol: 'symbol',
+    interval: 'interval',
+    startDate: 'startDate',
+    endDate: 'endDate',
+    startBalance: 'startBalance',
+    endBalance: 'endBalance',
+    maxDrawdown: 'maxDrawdown',
+    maxDrawdownPercent: 'maxDrawdownPercent',
+    totalNetPnl: 'totalNetPnl',
+    totalReturnPercent: 'totalReturnPercent',
+    dailyResults: 'dailyResults',
+    trades: 'trades'
   };
 
   export type BacktestingScalarFieldEnum = (typeof BacktestingScalarFieldEnum)[keyof typeof BacktestingScalarFieldEnum]
@@ -2872,8 +3032,36 @@ export namespace Prisma {
   export type SortOrder = (typeof SortOrder)[keyof typeof SortOrder]
 
 
+  export const JsonNullValueInput: {
+    JsonNull: typeof JsonNull
+  };
+
+  export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const JsonNullValueFilter: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull,
+    AnyNull: typeof AnyNull
+  };
+
+  export type JsonNullValueFilter = (typeof JsonNullValueFilter)[keyof typeof JsonNullValueFilter]
+
+
+  export const QueryMode: {
+    default: 'default',
+    insensitive: 'insensitive'
+  };
+
+  export type QueryMode = (typeof QueryMode)[keyof typeof QueryMode]
+
+
   export const BacktestingOrderByRelevanceFieldEnum: {
-    name: 'name'
+    strategyName: 'strategyName',
+    symbol: 'symbol',
+    interval: 'interval',
+    startDate: 'startDate',
+    endDate: 'endDate'
   };
 
   export type BacktestingOrderByRelevanceFieldEnum = (typeof BacktestingOrderByRelevanceFieldEnum)[keyof typeof BacktestingOrderByRelevanceFieldEnum]
@@ -2915,16 +3103,30 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'BigInt'
+   * Reference to a field of type 'Decimal'
    */
-  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
     
 
 
   /**
-   * Reference to a field of type 'Decimal'
+   * Reference to a field of type 'Json'
    */
-  export type DecimalFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Decimal'>
+  export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
+    
+
+
+  /**
+   * Reference to a field of type 'QueryMode'
+   */
+  export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'BigInt'
+   */
+  export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
     
 
 
@@ -2943,26 +3145,74 @@ export namespace Prisma {
     OR?: BacktestingWhereInput[]
     NOT?: BacktestingWhereInput | BacktestingWhereInput[]
     id?: IntFilter<"Backtesting"> | number
-    name?: StringFilter<"Backtesting"> | string
+    strategyName?: StringFilter<"Backtesting"> | string
+    symbol?: StringFilter<"Backtesting"> | string
+    interval?: StringFilter<"Backtesting"> | string
+    startDate?: StringFilter<"Backtesting"> | string
+    endDate?: StringFilter<"Backtesting"> | string
+    startBalance?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonFilter<"Backtesting">
+    trades?: JsonFilter<"Backtesting">
   }
 
   export type BacktestingOrderByWithRelationInput = {
     id?: SortOrder
-    name?: SortOrder
+    strategyName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
+    dailyResults?: SortOrder
+    trades?: SortOrder
     _relevance?: BacktestingOrderByRelevanceInput
   }
 
   export type BacktestingWhereUniqueInput = Prisma.AtLeast<{
     id?: number
-    name?: string
     AND?: BacktestingWhereInput | BacktestingWhereInput[]
     OR?: BacktestingWhereInput[]
     NOT?: BacktestingWhereInput | BacktestingWhereInput[]
-  }, "id" | "name">
+    strategyName?: StringFilter<"Backtesting"> | string
+    symbol?: StringFilter<"Backtesting"> | string
+    interval?: StringFilter<"Backtesting"> | string
+    startDate?: StringFilter<"Backtesting"> | string
+    endDate?: StringFilter<"Backtesting"> | string
+    startBalance?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonFilter<"Backtesting">
+    trades?: JsonFilter<"Backtesting">
+  }, "id">
 
   export type BacktestingOrderByWithAggregationInput = {
     id?: SortOrder
-    name?: SortOrder
+    strategyName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
+    dailyResults?: SortOrder
+    trades?: SortOrder
     _count?: BacktestingCountOrderByAggregateInput
     _avg?: BacktestingAvgOrderByAggregateInput
     _max?: BacktestingMaxOrderByAggregateInput
@@ -2975,7 +3225,19 @@ export namespace Prisma {
     OR?: BacktestingScalarWhereWithAggregatesInput[]
     NOT?: BacktestingScalarWhereWithAggregatesInput | BacktestingScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Backtesting"> | number
-    name?: StringWithAggregatesFilter<"Backtesting"> | string
+    strategyName?: StringWithAggregatesFilter<"Backtesting"> | string
+    symbol?: StringWithAggregatesFilter<"Backtesting"> | string
+    interval?: StringWithAggregatesFilter<"Backtesting"> | string
+    startDate?: StringWithAggregatesFilter<"Backtesting"> | string
+    endDate?: StringWithAggregatesFilter<"Backtesting"> | string
+    startBalance?: DecimalWithAggregatesFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalWithAggregatesFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalWithAggregatesFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalWithAggregatesFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalWithAggregatesFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalWithAggregatesFilter<"Backtesting"> | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonWithAggregatesFilter<"Backtesting">
+    trades?: JsonWithAggregatesFilter<"Backtesting">
   }
 
   export type BarWhereInput = {
@@ -3060,35 +3322,119 @@ export namespace Prisma {
   }
 
   export type BacktestingCreateInput = {
-    name: string
+    strategyName: string
+    symbol: string
+    interval: string
+    startDate: string
+    endDate: string
+    startBalance: Decimal | DecimalJsLike | number | string
+    endBalance: Decimal | DecimalJsLike | number | string
+    maxDrawdown: Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent: Decimal | DecimalJsLike | number | string
+    totalNetPnl: Decimal | DecimalJsLike | number | string
+    totalReturnPercent: Decimal | DecimalJsLike | number | string
+    dailyResults: JsonNullValueInput | InputJsonValue
+    trades: JsonNullValueInput | InputJsonValue
   }
 
   export type BacktestingUncheckedCreateInput = {
     id?: number
-    name: string
+    strategyName: string
+    symbol: string
+    interval: string
+    startDate: string
+    endDate: string
+    startBalance: Decimal | DecimalJsLike | number | string
+    endBalance: Decimal | DecimalJsLike | number | string
+    maxDrawdown: Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent: Decimal | DecimalJsLike | number | string
+    totalNetPnl: Decimal | DecimalJsLike | number | string
+    totalReturnPercent: Decimal | DecimalJsLike | number | string
+    dailyResults: JsonNullValueInput | InputJsonValue
+    trades: JsonNullValueInput | InputJsonValue
   }
 
   export type BacktestingUpdateInput = {
-    name?: StringFieldUpdateOperationsInput | string
+    strategyName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    startDate?: StringFieldUpdateOperationsInput | string
+    endDate?: StringFieldUpdateOperationsInput | string
+    startBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonNullValueInput | InputJsonValue
+    trades?: JsonNullValueInput | InputJsonValue
   }
 
   export type BacktestingUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
+    strategyName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    startDate?: StringFieldUpdateOperationsInput | string
+    endDate?: StringFieldUpdateOperationsInput | string
+    startBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonNullValueInput | InputJsonValue
+    trades?: JsonNullValueInput | InputJsonValue
   }
 
   export type BacktestingCreateManyInput = {
     id?: number
-    name: string
+    strategyName: string
+    symbol: string
+    interval: string
+    startDate: string
+    endDate: string
+    startBalance: Decimal | DecimalJsLike | number | string
+    endBalance: Decimal | DecimalJsLike | number | string
+    maxDrawdown: Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent: Decimal | DecimalJsLike | number | string
+    totalNetPnl: Decimal | DecimalJsLike | number | string
+    totalReturnPercent: Decimal | DecimalJsLike | number | string
+    dailyResults: JsonNullValueInput | InputJsonValue
+    trades: JsonNullValueInput | InputJsonValue
   }
 
   export type BacktestingUpdateManyMutationInput = {
-    name?: StringFieldUpdateOperationsInput | string
+    strategyName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    startDate?: StringFieldUpdateOperationsInput | string
+    endDate?: StringFieldUpdateOperationsInput | string
+    startBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonNullValueInput | InputJsonValue
+    trades?: JsonNullValueInput | InputJsonValue
   }
 
   export type BacktestingUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
-    name?: StringFieldUpdateOperationsInput | string
+    strategyName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    startDate?: StringFieldUpdateOperationsInput | string
+    endDate?: StringFieldUpdateOperationsInput | string
+    startBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    endBalance?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdown?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    maxDrawdownPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalNetPnl?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    totalReturnPercent?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    dailyResults?: JsonNullValueInput | InputJsonValue
+    trades?: JsonNullValueInput | InputJsonValue
   }
 
   export type BarCreateInput = {
@@ -3205,6 +3551,40 @@ export namespace Prisma {
     not?: NestedStringFilter<$PrismaModel> | string
   }
 
+  export type DecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+  }
+  export type JsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
   export type BacktestingOrderByRelevanceInput = {
     fields: BacktestingOrderByRelevanceFieldEnum | BacktestingOrderByRelevanceFieldEnum[]
     sort: SortOrder
@@ -3213,25 +3593,69 @@ export namespace Prisma {
 
   export type BacktestingCountOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
+    strategyName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
+    dailyResults?: SortOrder
+    trades?: SortOrder
   }
 
   export type BacktestingAvgOrderByAggregateInput = {
     id?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
   }
 
   export type BacktestingMaxOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
+    strategyName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
   }
 
   export type BacktestingMinOrderByAggregateInput = {
     id?: SortOrder
-    name?: SortOrder
+    strategyName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    startDate?: SortOrder
+    endDate?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
   }
 
   export type BacktestingSumOrderByAggregateInput = {
     id?: SortOrder
+    startBalance?: SortOrder
+    endBalance?: SortOrder
+    maxDrawdown?: SortOrder
+    maxDrawdownPercent?: SortOrder
+    totalNetPnl?: SortOrder
+    totalReturnPercent?: SortOrder
   }
 
   export type IntWithAggregatesFilter<$PrismaModel = never> = {
@@ -3268,6 +3692,48 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+  export type JsonWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedJsonFilter<$PrismaModel>
+    _max?: NestedJsonFilter<$PrismaModel>
+  }
+
   export type BigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[]
@@ -3277,17 +3743,6 @@ export namespace Prisma {
     gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
-  }
-
-  export type DecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type DecimalNullableFilter<$PrismaModel = never> = {
@@ -3395,22 +3850,6 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
-  export type DecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
-  }
-
   export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
     in?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
@@ -3431,6 +3870,14 @@ export namespace Prisma {
     set?: string
   }
 
+  export type DecimalFieldUpdateOperationsInput = {
+    set?: Decimal | DecimalJsLike | number | string
+    increment?: Decimal | DecimalJsLike | number | string
+    decrement?: Decimal | DecimalJsLike | number | string
+    multiply?: Decimal | DecimalJsLike | number | string
+    divide?: Decimal | DecimalJsLike | number | string
+  }
+
   export type IntFieldUpdateOperationsInput = {
     set?: number
     increment?: number
@@ -3445,14 +3892,6 @@ export namespace Prisma {
     decrement?: bigint | number
     multiply?: bigint | number
     divide?: bigint | number
-  }
-
-  export type DecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type NullableDecimalFieldUpdateOperationsInput = {
@@ -3487,6 +3926,17 @@ export namespace Prisma {
     endsWith?: string | StringFieldRefInput<$PrismaModel>
     search?: string
     not?: NestedStringFilter<$PrismaModel> | string
+  }
+
+  export type NestedDecimalFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -3534,6 +3984,45 @@ export namespace Prisma {
     _max?: NestedStringFilter<$PrismaModel>
   }
 
+  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
+    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
+    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _avg?: NestedDecimalFilter<$PrismaModel>
+    _sum?: NestedDecimalFilter<$PrismaModel>
+    _min?: NestedDecimalFilter<$PrismaModel>
+    _max?: NestedDecimalFilter<$PrismaModel>
+  }
+  export type NestedJsonFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
   export type NestedBigIntFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[]
@@ -3543,17 +4032,6 @@ export namespace Prisma {
     gt?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     gte?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
-  }
-
-  export type NestedDecimalFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
   }
 
   export type NestedDecimalNullableFilter<$PrismaModel = never> = {
@@ -3581,22 +4059,6 @@ export namespace Prisma {
     _sum?: NestedBigIntFilter<$PrismaModel>
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[]
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string
-    _count?: NestedIntFilter<$PrismaModel>
-    _avg?: NestedDecimalFilter<$PrismaModel>
-    _sum?: NestedDecimalFilter<$PrismaModel>
-    _min?: NestedDecimalFilter<$PrismaModel>
-    _max?: NestedDecimalFilter<$PrismaModel>
   }
 
   export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {

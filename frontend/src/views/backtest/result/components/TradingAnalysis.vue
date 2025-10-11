@@ -1,9 +1,11 @@
 <script lang="ts" setup>
+import type { TradeData } from '#/shared/types/common';
 import TradingChart from './TradingChart.vue';
 import TradingTable from './TradingTable.vue';
 
 interface TradingAnalysisProps {
   backtestId?: number;
+  trades?: TradeData[];
 }
 
 const props = defineProps<TradingAnalysisProps>();
@@ -17,11 +19,8 @@ const props = defineProps<TradingAnalysisProps>();
   <div class="trading-analysis">
     <!-- K线图表组件 -->
     <TradingChart :backtest-id="props.backtestId" />
-
-
-
     <!-- 交易明细表格组件 -->
-    <TradingTable :backtest-id="props.backtestId" />
+    <TradingTable :trades="props.trades" />
   </div>
 </template>
 

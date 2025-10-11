@@ -7,34 +7,11 @@ import axios from 'axios';
 import dayjs from 'dayjs';
 import TradingAnalysis from './components/TradingAnalysis.vue';
 
-interface BacktestResult {
-  id: number;
-  class_name: string;
-  vt_symbol: string;
-  interval: string;
-  start: string;
-  end: string;
-  rate: number;
-  slippage: number;
-  size: number;
-  pricetick: number;
-  capital: number;
-  setting: string;
-  status: string;
-  total_return: number | null;
-  annual_return: number | null;
-  max_drawdown: number | null;
-  sharpe_ratio: number | null;
-  total_trades: number | null;
-  win_rate: number | null;
-  created_time: string;
-  updated_time: string;
-}
 
 const route = useRoute();
 
 const state = reactive({
-  data: null as BacktestResult | null,
+  data: null as any,
   loading: false,
   activeTab: '1', // 默认显示概况
 });
@@ -49,40 +26,14 @@ const fetchBacktestResult = async () => {
 
   state.loading = true;
   try {
-    const response = await axios.get(`http://127.0.0.1:8000/backtesting/results/${resultId}`);
-    state.data = response.data;
+    const response = await axios.get(`http://127.0.0.1:3000/backtesting/${resultId}`);
+    state.data = response.data.data;
   } catch (error) {
     console.error('获取回测结果失败:', error);
     message.error('获取回测结果失败');
   } finally {
     state.loading = false;
   }
-};
-
-// 获取状态颜色
-const getStatusColor = (status: string) => {
-  const colorMap: Record<string, string> = {
-    'inited': 'default',
-    'data_loading': 'processing',
-    'backtesting': 'processing',
-    'analysing': 'processing',
-    'finished': 'success',
-    'failed': 'error'
-  };
-  return colorMap[status] || 'default';
-};
-
-// 获取状态文本
-const getStatusText = (status: string) => {
-  const textMap: Record<string, string> = {
-    'inited': '已初始化',
-    'data_loading': '数据加载中',
-    'backtesting': '回测中',
-    'analysing': '分析中',
-    'finished': '已完成',
-    'failed': '失败'
-  };
-  return textMap[status] || status;
 };
 
 // 格式化百分比
@@ -115,25 +66,14 @@ onMounted(() => {
           <Card title="基本信息" class="shadow-sm">
             <Descriptions :column="3" bordered>
               <Descriptions.Item label="回测ID">{{ state.data.id }}</Descriptions.Item>
-              <Descriptions.Item label="策略名称">{{ state.data.class_name }}</Descriptions.Item>
-              <Descriptions.Item label="交易对">{{ state.data.vt_symbol }}</Descriptions.Item>
+              <Descriptions.Item label="策略名称">{{ state.data.strategyName }}</Descriptions.Item>
+              <Descriptions.Item label="交易对">{{ state.data.symbol }}</Descriptions.Item>
               <Descriptions.Item label="时间间隔">{{ state.data.interval }}</Descriptions.Item>
-              <Descriptions.Item label="回测状态">
-                <Tag :color="getStatusColor(state.data.status)">
-                  {{ getStatusText(state.data.status) }}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="创建时间">
-                {{ dayjs(state.data.created_time).format('YYYY-MM-DD HH:mm:ss') }}
-              </Descriptions.Item>
               <Descriptions.Item label="开始时间">
-                {{ dayjs(state.data.start).format('YYYY-MM-DD') }}
+                {{ dayjs(state.data.startDate).format('YYYY-MM-DD') }}
               </Descriptions.Item>
               <Descriptions.Item label="结束时间">
-                {{ dayjs(state.data.end).format('YYYY-MM-DD') }}
-              </Descriptions.Item>
-              <Descriptions.Item label="初始资金">
-                {{ state.data.capital.toLocaleString() }}
+                {{ dayjs(state.data.endDate).format('YYYY-MM-DD') }}
               </Descriptions.Item>
             </Descriptions>
           </Card>
@@ -147,7 +87,7 @@ onMounted(() => {
                 <Card class="text-center">
                   <Statistic
                     title="总收益率"
-                    :value="formatPercentage(state.data.total_return)"
+                    :value="formatPercentage(state.data.totalReturnPercent)"
                     :value-style="{ 
                       color: state.data.total_return && state.data.total_return >= 0 ? '#52c41a' : '#ff4d4f',
                       fontSize: '24px',
@@ -229,59 +169,9 @@ onMounted(() => {
 
             </Tabs.TabPane>
             
-            <Tabs.TabPane key="2" tab="配置">
-              <!-- 配置内容 -->
-              <div class="space-y-6">
-                <!-- 交易参数卡片 -->
-                <Card title="交易参数" class="shadow-sm">
-                  <Row :gutter="24">
-                    <Col :span="6">
-                      <Statistic
-                        title="手续费率"
-                        :value="(state.data.rate * 100).toFixed(3)"
-                        suffix="%"
-                        :value-style="{ color: '#1890ff' }"
-                      />
-                    </Col>
-                    <Col :span="6">
-                      <Statistic
-                        title="滑点"
-                        :value="state.data.slippage"
-                        :value-style="{ color: '#1890ff' }"
-                      />
-                    </Col>
-                    <Col :span="6">
-                      <Statistic
-                        title="合约大小"
-                        :value="state.data.size"
-                        :value-style="{ color: '#1890ff' }"
-                      />
-                    </Col>
-                    <Col :span="6">
-                      <Statistic
-                        title="最小价格变动"
-                        :value="state.data.pricetick"
-                        :value-style="{ color: '#1890ff' }"
-                      />
-                    </Col>
-                  </Row>
-                </Card>
-                
-                <!-- 策略设置卡片 -->
-                <Card title="策略设置" class="shadow-sm" v-if="state.data.setting">
-                  <JsonViewer
-                    :value="state.data.setting"
-                    copyable
-                    :expand-depth="3"
-                    boxed
-                  />
-                </Card>
-              </div>
-            </Tabs.TabPane>
-            
             <Tabs.TabPane key="3" tab="交易分析">
               <!-- 交易分析内容 -->
-              <TradingAnalysis :backtest-id="state.data?.id" />
+              <TradingAnalysis :backtest-id="state.data?.id" :trades="state.data?.trades" />
             </Tabs.TabPane>
           </Tabs>
         </div>

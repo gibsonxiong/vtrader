@@ -5,28 +5,37 @@ import { reactive, onMounted, ref } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { useRouter } from 'vue-router'; // 导入 useRouter
 import axios from 'axios';
+import type { BacktestingSetting } from '#/shared/types/backtesting';
+import { Interval } from '#/shared/types/common';
 
 const router = useRouter(); // 获取 router 实例
 
-const formState = reactive<{
-  strategyName: string | undefined;
-  symbols: string[];
-  interval: string;
-  startDate: Dayjs | undefined;
-  endDate: Dayjs | undefined;
-  commissionRate: number;
-  priceTick: number;
-  balance: number;
-}>({
-  strategyName: undefined,
+// 修改：表单状态使用 Dayjs 对象用于 DatePicker 绑定
+const formState = reactive({
+  strategyName: '',
   symbols: ['BTCUSDT:USDT'],
-  interval: '1m',
+  interval: Interval.MINUTE_1,
   startDate: dayjs(),
   endDate: dayjs().add(1, 'd'),
   commissionRate: 0.0005,
-  priceTick: 0.01,
   balance: 100_000,
 });
+
+// 新增：转换表单数据为 API 格式
+function convertFormStateToApiFormat(): BacktestingSetting {
+  return {
+    strategy: {
+      strategyName: formState.strategyName,
+      strategySetting: strategyParamsForm.value,
+    },
+    symbols: formState.symbols,
+    interval: formState.interval,
+    startDate: formState.startDate.format('YYYY-MM-DD'),
+    endDate: formState.endDate.format('YYYY-MM-DD'),
+    commissionRate: formState.commissionRate,
+    balance: formState.balance,
+  };
+}
 
 // 策略参数配置状态
 const strategyParamsVisible = ref(false);
@@ -102,42 +111,19 @@ const klinePeriodOptions = reactive([
   { value: '1d', label: '1d' },
 ]);
 
-const onFinish = async (values: any) => {
-  console.log('Success:', values);
-  // 获取策略参数配置
-  if (formState.strategyName) {
-    await fetchStrategyParams(formState.strategyName);
-  }
-  // 显示策略参数配置弹窗
-  strategyParamsVisible.value = true;
-};
 
 // 确认策略参数配置
 const handleStrategyParamsOk = async () => {
   
-  // 准备要传递给结果页面的参数
-  const queryParams = {
-    ...formState,
-    // 格式化日期
-    strategyName: undefined,
-    startDate: formState.startDate ? formState.startDate.format('YYYY-MM-DD') : undefined,
-    endDate: formState.endDate ? formState.endDate.format('YYYY-MM-DD') : undefined,
-    strategies: [
-      {
-        strategyName: formState.strategyName,
-        strategySetting: strategyParamsForm.value,
-      }
-    ]
-  };
+  // 修改：使用转换函数准备 API 参数
+  const queryParams: BacktestingSetting = convertFormStateToApiFormat();
 
   console.log(queryParams);
   
   try {
     // 发送POST请求到回测接口
-    const response = await axios.post('http://127.0.0.1:3000/backtesting/start', queryParams);
+    const response = await axios.post('http://127.0.0.1:3000/backtesting', queryParams);
     
-    // 显示响应结果
-    message.success(JSON.stringify(response.data));
     strategyParamsVisible.value = false;
 
   //   response.data = {
@@ -158,7 +144,7 @@ const handleStrategyParamsOk = async () => {
     console.log(response.data)
 
     // 提取回测结果ID
-    const resultId = response.data.data?.resultId;
+    const resultId = response.data.data;
     if (resultId) {
       // 导航到结果页面
       router.push({
@@ -179,6 +165,16 @@ const handleStrategyParamsOk = async () => {
 // 取消策略参数配置
 const handleStrategyParamsCancel = () => {
   strategyParamsVisible.value = false;
+};
+
+const onFinish = async (values: any) => {
+  console.log('Success:', values);
+  // 获取策略参数配置
+  if (formState.strategyName) {
+    await fetchStrategyParams(formState.strategyName);
+  }
+  // 显示策略参数配置弹窗
+  strategyParamsVisible.value = true;
 };
 
 const onFinishFailed = (errorInfo: any) => {
@@ -263,14 +259,6 @@ const onFinishFailed = (errorInfo: any) => {
         </Form.Item>
 
         <Form.Item
-          label="价格跳动"
-          name="priceTick"
-          :rules="[{ required: true, message: '请输入价格跳动!' }]"
-        >
-          <InputNumber v-model:value="formState.priceTick" :step="0.01" :precision="2" style="width: 100%" />
-        </Form.Item>
-
-        <Form.Item
           label="回测资金"
           name="balance"
           :rules="[{ required: true, message: '请输入回测资金!' }]"
@@ -287,7 +275,7 @@ const onFinishFailed = (errorInfo: any) => {
     <!-- 策略参数配置弹窗 -->
     <Modal
       v-model:open="strategyParamsVisible"
-      :title="`策略参数配置: ${formState.strategyName || ''}`"
+      :title="`策略参数配置: ${formState.strategyName}`"
       width="600px"
       @ok="handleStrategyParamsOk"
       @cancel="handleStrategyParamsCancel"

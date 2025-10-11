@@ -122,7 +122,19 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.BacktestingScalarFieldEnum = {
   id: 'id',
-  name: 'name'
+  strategyName: 'strategyName',
+  symbol: 'symbol',
+  interval: 'interval',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  startBalance: 'startBalance',
+  endBalance: 'endBalance',
+  maxDrawdown: 'maxDrawdown',
+  maxDrawdownPercent: 'maxDrawdownPercent',
+  totalNetPnl: 'totalNetPnl',
+  totalReturnPercent: 'totalReturnPercent',
+  dailyResults: 'dailyResults',
+  trades: 'trades'
 };
 
 exports.Prisma.BarScalarFieldEnum = {
@@ -143,8 +155,27 @@ exports.Prisma.SortOrder = {
   desc: 'desc'
 };
 
+exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.JsonNullValueFilter = {
+  DbNull: Prisma.DbNull,
+  JsonNull: Prisma.JsonNull,
+  AnyNull: Prisma.AnyNull
+};
+
+exports.Prisma.QueryMode = {
+  default: 'default',
+  insensitive: 'insensitive'
+};
+
 exports.Prisma.BacktestingOrderByRelevanceFieldEnum = {
-  name: 'name'
+  strategyName: 'strategyName',
+  symbol: 'symbol',
+  interval: 'interval',
+  startDate: 'startDate',
+  endDate: 'endDate'
 };
 
 exports.Prisma.NullsOrder = {

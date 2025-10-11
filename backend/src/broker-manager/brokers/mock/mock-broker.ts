@@ -1,4 +1,4 @@
-import { TradeData, OrderData, OrderType, BarData, ContractData, OrderStatus, Direction, Offset } from 'src/shared/types/common';
+import { TradeData, OrderData, OrderType, BarData, ContractData, AssetData, OrderStatus, Direction, Offset } from 'src/shared/types/common';
 import {
   CancelOrderRequest,
   GatewaySettings,
@@ -11,16 +11,26 @@ import { Broker } from 'src/broker-manager/broker';
 import BinanceLinearBroker from '../binance-linear/binance-linear-broker';
 let tradeCount: number = 0;
 
+interface MockBrokerProps {
+  commissionRate: number;
+  assetName?: string;
+  assetBalance: number;
+  assetFrozen?: number;
+}
+
 export class MockBroker extends Broker {
   private market: Broker;
   private activeLimitOrders: Map<string, OrderData> = new Map();
   private limitOrders: Map<string, OrderData> = new Map();
 
-  // TODO
-  commissionRate: number = 0.0005;
+  commissionRate: number;
+  assets: AssetData[] = [];
 
-  constructor() {
+  constructor(props: MockBrokerProps) {
     super();
+
+    this.commissionRate = props.commissionRate;
+    this.initAssets(props);
 
     // this.market = new BinanceLinearBroker();
     // this.market.connect({
@@ -29,6 +39,24 @@ export class MockBroker extends Broker {
     //   server: 'TESTNET',
     //   klineStream: true,
     // })
+  }
+
+  private initAssets(props: MockBrokerProps) {
+    this.assets = [
+      {
+        assetName: props.assetName || 'USDT',
+        frozen: props.assetFrozen || 0,
+        balance: props.assetBalance,
+      }
+    ]
+  }
+
+  getAssets(): AssetData[] {
+    return this.assets;
+  }
+
+  getAsset(assetName: string): AssetData | undefined {
+    return this.assets.find(asset => asset.assetName === assetName);
   }
 
   public connect(settings: GatewaySettings): Promise<void> {
