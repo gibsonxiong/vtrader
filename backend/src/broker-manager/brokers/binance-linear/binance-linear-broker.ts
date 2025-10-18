@@ -8,7 +8,7 @@ import {
   PositionData,
   TickData,
   TradeData,
-} from 'src/shared/types/common';
+} from '@vtrader/shared';
 import { MdApi } from './md-api';
 import { RestApi } from './rest-api';
 import { TradeApi } from './trade-api';
@@ -19,7 +19,7 @@ import {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from 'src/shared/types/broker';
+} from '@vtrader/shared';
 import { UserApi } from './user-api';
 import { Broker } from 'src/broker-manager/broker';
 

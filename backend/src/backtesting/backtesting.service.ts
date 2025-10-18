@@ -7,7 +7,7 @@ import {
   Interval,
   OrderStatus,
   OrderType,
-} from 'src/shared/types/common';
+} from '@vtrader/shared';
 import * as dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 

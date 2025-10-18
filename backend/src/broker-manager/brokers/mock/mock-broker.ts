@@ -6,7 +6,7 @@ import {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from 'src/shared/types/broker';
+} from '@vtrader/shared';
 import { Broker } from 'src/broker-manager/broker';
 import BinanceLinearBroker from '../binance-linear/binance-linear-broker';
 let tradeCount: number = 0;

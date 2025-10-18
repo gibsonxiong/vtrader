@@ -1,5 +1,5 @@
 // import { parentPort, workerData } from 'worker_threads';
-// import { Direction, Interval, Offset } from 'src/shared/types/common';
+// import { Direction, Interval, Offset } from '@vtrader/shared';
 // import { BacktestingService, BacktestingSetting } from '../backtesting.service';
 // import { MarketDataService } from '../../market-data/market-data.service';
 // import { StrategyService } from '../strategy.service';

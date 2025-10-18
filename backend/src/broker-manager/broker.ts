@@ -6,7 +6,7 @@ import type {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from 'src/shared/types/broker';
+} from '@vtrader/shared';
 import type {
   AccountData,
   BarData,
@@ -15,7 +15,7 @@ import type {
   PositionData,
   TickData,
   TradeData,
-} from 'src/shared/types/common';
+} from '@vtrader/shared';
 
 export abstract class Broker extends EventEmitter {
   constructor() {

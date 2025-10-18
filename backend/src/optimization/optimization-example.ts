@@ -10,7 +10,7 @@
 // import { StrategyService } from '../strategy.service';
 // import { PrismaService } from '../../prisma.service';
 // import { BrokerManagerService } from '../../broker-manager/broker-manager.service';
-// import { Interval } from 'src/shared/types/common';
+// import { Interval } from '@vtrader/shared';
 
 // /**
 //  * 手动实例化所有依赖服务
