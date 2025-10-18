@@ -27,6 +27,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.0",
     "@prisma/client": "^6.10.1",
+    "@vtrader/shared": "workspace:*",
     "axios": "catalog:",
     "dayjs": "catalog:",
     "reflect-metadata": "^0.2.2",

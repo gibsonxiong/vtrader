@@ -1,0 +1,32 @@
+{
+  "name": "@vtrader/shared",
+  "version": "1.0.0",
+  "description": "Shared types and utilities for VTrader frontend and backend",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "browser": "dist/index.js",
+  "scripts": {
+    "build": "npm run clean && npm run build:umd",
+    "build:umd": "tsc -p tsconfig.umd.json",
+    "dev": "tsc -p tsconfig.umd.json --watch",
+    "clean": "rimraf dist"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "devDependencies": {
+    "typescript": "catalog:",
+    "rimraf": "catalog:"
+  },
+  "peerDependencies": {
+    "typescript": ">=4.5.0"
+  }
+}

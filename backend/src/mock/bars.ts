@@ -1,5 +1,5 @@
-import { Interval } from 'src/shared/types/common';
-import type { BarData } from 'src/shared/types/common';
+import { Interval } from '@vtrader/shared';
+import type { BarData } from '@vtrader/shared';
 
 export const mockBars: BarData[] = [];
 

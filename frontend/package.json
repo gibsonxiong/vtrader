@@ -41,6 +41,7 @@
     "@vtrader/plugins": "workspace:*",
     "@vtrader/preferences": "workspace:*",
     "@vtrader/request": "workspace:*",
+    "@vtrader/shared": "workspace:*",
     "@vtrader/stores": "workspace:*",
     "@vtrader/styles": "workspace:*",
     "@vtrader/types": "workspace:*",

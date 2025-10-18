@@ -1,7 +1,7 @@
 import type dayjs from 'dayjs';
 
-import { Direction, Interval, OrderStatus, Product } from 'src/shared/types/common';
-import { OrderType } from 'src/shared/types/common';
+import { Direction, Interval, OrderStatus, Product } from '@vtrader/shared';
+import { OrderType } from '@vtrader/shared';
 
 // 服务器地址常量
 export const REAL_REST_HOST = 'https://fapi.binance.com';

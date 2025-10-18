@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Broker } from './broker';
-import type { GatewaySettings } from 'src/shared/types/broker';
+import type { GatewaySettings } from '@vtrader/shared';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear/binance-linear-broker';
 
 export interface BrokerConfig {

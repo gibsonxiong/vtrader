@@ -1,4 +1,4 @@
-import type { BarData } from 'src/shared/types/common';
+import type { BarData } from '@vtrader/shared';
 
 export class ArrayManger {
   length: number;

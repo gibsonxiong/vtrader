@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { Card, Table, Tag } from 'ant-design-vue';
 import dayjs from 'dayjs';
-import type { TradeData } from '#/shared/types/common';
+import type { TradeData } from '@vtrader/shared';
 
 interface TradingTableProps {
   trades?: TradeData[];

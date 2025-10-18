@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 
 import { Get, Query, Post, Body } from '@nestjs/common';
 import { MarketDataService } from './market-data.service';
-import { Interval } from 'src/shared/types/common';
+import { Interval } from '@vtrader/shared';
 
 @Controller('market-data')
 export class MarketDataController {

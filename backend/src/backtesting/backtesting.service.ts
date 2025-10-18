@@ -14,13 +14,14 @@ import { Injectable } from '@nestjs/common';
 import { Strategy, DailyResultItem, RecordData } from '../strategy/strategy';
 import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
-import { SendOrderParams, CancelOrderParams, StrategyEngine } from 'src/shared/types/strategy';
-import { BacktestingSetting, BacktestingResult } from 'src/shared/types/backtesting';
-import { SendOrderRequest, CancelOrderRequest, HistoryRequest } from 'src/shared/types/broker';
+import { SendOrderParams, CancelOrderParams, StrategyEngine } from '@vtrader/shared';
+import { BacktestingSetting, BacktestingResult } from '@vtrader/shared';
+import { SendOrderRequest, CancelOrderRequest, HistoryRequest } from '@vtrader/shared';
 import { MockBroker } from '../broker-manager/brokers/mock/mock-broker';
 
 import { Broker } from '../broker-manager/broker';
 import { PrismaService } from '../prisma.service';
+import type { Backtesting, Prisma } from 'src/generated/client/index';
 
 /**
  * CTA回测引擎
@@ -395,7 +396,7 @@ export class BacktestingService implements StrategyEngine {
   //   this.output(`收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`);
   // }
 
-  getBacktestingResult(id: number) {
+  getBacktestingResult(id: number): Promise<Backtesting | null> {
     return this.prisma.backtesting.findUnique({
       where: {
         id,
@@ -403,8 +404,17 @@ export class BacktestingService implements StrategyEngine {
     });
   }
 
-  getBacktestingResults() {
-    return this.prisma.backtesting.findMany();
+  getBacktestingResults(params: Prisma.BacktestingFindManyArgs): Promise<Backtesting[]> {
+    const { where, skip, take, orderBy } = params;
+
+    return this.prisma.backtesting.findMany({
+      where,
+      skip,
+      take,
+      orderBy: orderBy || {
+        id: 'desc'
+      }
+    });
   }
 
   /**

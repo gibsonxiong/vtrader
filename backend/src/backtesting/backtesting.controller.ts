@@ -1,7 +1,12 @@
-import { Controller, Get, Param, Post, Body, ParseIntPipe } from '@nestjs/common';
+import { Controller, Post, Body, Query } from '@nestjs/common';
+import { Response } from '@vtrader/shared';
+import { CreateRequest, CreateResponse, QueryRequest, QueryResponse, QueryManyRequest, QueryManyResponse } from '@vtrader/shared';
 
 import { BacktestingService } from './backtesting.service';
-import { BacktestingSetting, BacktestingResult } from 'src/shared/types/backtesting';
+
+import { response } from 'src/utils';
+
+
 
 @Controller('backtesting')
 export class BacktestingController {
@@ -12,42 +17,30 @@ export class BacktestingController {
   /**
    * 开始回测
    */
-  @Post()
-  async startBacktest(@Body() backtestData: BacktestingSetting): Promise<any> {
-    const backtestingResult = await this.backtestingService.backtesting(backtestData);
+  @Post('create')
+  async create(@Body() request: CreateRequest): Promise<Response<CreateResponse>> {
+    const id = await this.backtestingService.backtesting(request);
 
-    return { 
-      code: 0, 
-      msg: '成功',
-      data: backtestingResult
-    }
+    return response({ id });
   }
 
   /**
    * 获取回测结果
    */
-  @Get(':id')
-  async getBacktestResult(@Param('id', ParseIntPipe) id: number): Promise<any> {
-    const backtestingResult = await this.backtestingService.getBacktestingResult(id);
+  @Post('query')
+  async query(@Body() request: QueryRequest): Promise<Response<QueryResponse>> {
+    const backtestingResult = await this.backtestingService.getBacktestingResult(request.id);
 
-    return { 
-      code: 0, 
-      msg: '成功',
-      data: backtestingResult
-    }
+    return response({ model: backtestingResult });
   }
 
   /**
-   * 获取所有回测结果
+   * 获取回测历史列表
    */
-  @Get()
-  async getAllBacktestResults(): Promise<any> {
-    const backtestingResults = await this.backtestingService.getBacktestingResults();
+  @Post('queryMany')
+  async queryMany(@Body() request: QueryManyRequest): Promise<Response<QueryManyResponse>> {
+    const backtestingResults = await this.backtestingService.getBacktestingResults(request);
 
-    return { 
-      code: 0, 
-      msg: '成功',
-      data: backtestingResults
-    }
+    return response({ models: backtestingResults });
   }
 }

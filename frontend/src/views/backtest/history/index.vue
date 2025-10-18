@@ -5,7 +5,8 @@ import { Page } from '@vtrader/common-ui';
 import { Tag, Form, Input, Select, Button, Row, Col, message, Modal } from 'ant-design-vue';
 import { reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import axios from 'axios';
+import { getBacktestHistoryApi, type BacktestingApi } from '#/api';
+import type { BacktestingSetting } from '@vtrader/shared';
 import dayjs from 'dayjs';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -92,20 +93,20 @@ const fetchData = async (params?: Partial<typeof queryParams>) => {
   
   try {
     // 构建查询参数
-    const searchParams = new URLSearchParams();
+    const finalParams: BacktestingApi.BacktestQueryParams = {
+      ...queryParams,
+      ...params
+    };
     
-    // 合并传入的参数
-    const finalParams = { ...queryParams, ...params };
+    // 过滤掉空值
+    const filteredParams = Object.fromEntries(
+      Object.entries(finalParams).filter(([_, value]) => 
+        value !== '' && value !== null && value !== undefined
+      )
+    ) as BacktestingApi.BacktestQueryParams;
     
-    // 只添加非空的查询参数
-    Object.entries(finalParams).forEach(([key, value]) => {
-      if (value !== '' && value !== null && value !== undefined) {
-        searchParams.append(key, String(value));
-      }
-    });
-    
-    const response = await axios.get(`http://127.0.0.1:3000/backtesting?${searchParams.toString()}`);
-    state.data = response.data.data;
+    const response = await getBacktestHistoryApi(filteredParams);
+    state.data = response.data?.data || [];
   } catch (error) {
     console.error('获取回测历史数据失败:', error);
     state.data = [];
@@ -155,7 +156,7 @@ const handleDelete = async (record: any) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        await axios.delete(`http://127.0.0.1:8000/backtesting/results/${record.id}`);
+        // await axios.delete(`http://127.0.0.1:8000/backtesting/results/${record.id}`);
         message.success('删除成功');
         fetchData(); // 刷新表格数据
       } catch (error) {

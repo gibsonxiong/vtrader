@@ -9,8 +9,8 @@ export interface BacktestingSetting {
   symbols: string | string[];
   interval: Interval;
   balance: number;
-  assetName?: string;
   commissionRate: number;
+  assetName?: string;
   strategy: {
     strategyName: string;
     strategySetting?: Record<string, any>;

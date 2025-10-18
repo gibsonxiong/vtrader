@@ -651,6 +651,9 @@ importers:
       '@prisma/client':
         specifier: ^6.10.1
         version: 6.10.1(prisma@6.10.1(typescript@5.8.3))(typescript@5.8.3)
+      '@vtrader/shared':
+        specifier: workspace:*
+        version: link:../shared
       axios:
         specifier: 'catalog:'
         version: 1.10.0
@@ -787,6 +790,9 @@ importers:
       '@vtrader/request':
         specifier: workspace:*
         version: link:../packages/effects/request
+      '@vtrader/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@vtrader/stores':
         specifier: workspace:*
         version: link:../packages/stores
@@ -1794,6 +1800,15 @@ importers:
       publint:
         specifier: 'catalog:'
         version: 0.3.12
+
+  shared:
+    devDependencies:
+      rimraf:
+        specifier: 'catalog:'
+        version: 6.0.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.8.3
 
 packages:
 

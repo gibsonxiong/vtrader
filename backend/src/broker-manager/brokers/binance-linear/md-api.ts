@@ -2,9 +2,9 @@ import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as WebSocket from 'ws';
 
-import { BarData, Interval, TickData } from 'src/shared/types/common';
+import { BarData, Interval, TickData } from '@vtrader/shared';
 import { REAL_DATA_HOST, TESTNET_DATA_HOST } from './constants';
-import { SubscribeRequest } from 'src/shared/types/broker';
+import { SubscribeRequest } from '@vtrader/shared';
 
 /**
  * 市场数据API客户端

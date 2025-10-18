@@ -1,6 +1,6 @@
 import * as dayjs from 'dayjs';
-import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from 'src/shared/types/common';
-import { StrategyEngine, SendOrderParams, CancelOrderParams } from 'src/shared/types/strategy';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from '@vtrader/shared';
+import { StrategyEngine, SendOrderParams, CancelOrderParams } from '@vtrader/shared';
 import { Context } from './context';
 import { LongHolding, ShortHolding } from './holding';
 import { Wallet } from './wallet';

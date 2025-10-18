@@ -1,4 +1,5 @@
-import { OrderData, OrderStatus } from 'src/shared/types/common';
+import { OrderData, OrderStatus } from '@vtrader/shared';
+import { Response } from '@vtrader/shared';
 import { BigNumber } from 'bignumber.js';
 
 let orderCount: number = 0;
@@ -40,4 +41,12 @@ export function calculateStd(values: number[]): number {
   const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
   const variance = values.reduce((sum, val) => sum + (val - mean) ** 2, 0) / values.length;
   return Math.sqrt(variance);
+}
+
+export function response<T>(data?: T, code: number = 0, msg: string = '成功'): Response<T> {
+  return {
+    code,
+    msg,
+    data: data as T,
+  };
 }

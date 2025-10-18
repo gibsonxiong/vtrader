@@ -1,4 +1,4 @@
-import { BarData, Interval } from 'src/shared/types/common';
+import { BarData, Interval } from '@vtrader/shared';
 
 export interface Params {
   interval: Interval;

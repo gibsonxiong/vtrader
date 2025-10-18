@@ -1,8 +1,8 @@
-import type { BarData, ContractData } from 'src/shared/types/common';
+import type { BarData, ContractData } from '@vtrader/shared';
 
 import { Injectable } from '@nestjs/common';
 import * as dayjs from 'dayjs';
-import { Interval } from 'src/shared/types/common';
+import { Interval } from '@vtrader/shared';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';

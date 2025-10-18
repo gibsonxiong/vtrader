@@ -4,9 +4,9 @@ import { Form, Input, Button, DatePicker, Select, InputNumber, Modal, Checkbox, 
 import { reactive, onMounted, ref } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { useRouter } from 'vue-router'; // 导入 useRouter
-import axios from 'axios';
-import type { BacktestingSetting } from '#/shared/types/backtesting';
-import { Interval } from '#/shared/types/common';
+import type { BacktestingSetting } from '@vtrader/shared';
+import { Interval } from '@vtrader/shared';
+import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi, type StrategyApi, type BacktestingApi } from '#/api';
 
 const router = useRouter(); // 获取 router 实例
 
@@ -15,7 +15,7 @@ const formState = reactive({
   strategyName: '',
   symbols: ['BTCUSDT:USDT'],
   interval: Interval.MINUTE_1,
-  startDate: dayjs(),
+  startDate: dayjs().subtract(4, 'day'),
   endDate: dayjs().add(1, 'd'),
   commissionRate: 0.0005,
   balance: 100_000,
@@ -45,24 +45,24 @@ const strategyParamsConfig = ref<Record<string, { value: any; type: string }>>({
 // 获取策略参数配置
 const fetchStrategyParams = async (strategyName: string) => {
   try {
-    const response = await axios.get(`http://127.0.0.1:3000/strategy/strategy_class/${strategyName}`);
+    const {data} = await getStrategyClassByNameApi(strategyName);
     
     // 检查返回的数据是否为空对象
-    if (!response.data || Object.keys(response.data).length === 0) {
+    if (!data || Object.keys(data).length === 0) {
       strategyParamsConfig.value = {};
       strategyParamsForm.value = {};
       return;
     }
     
-    strategyParamsConfig.value = response.data;
+    strategyParamsConfig.value = data;
     
     // 初始化表单数据
     const formData: Record<string, any> = {};
-    Object.keys(response.data).forEach(key => {
-      formData[key] = response.data[key].value;
+    Object.keys(data).forEach(key => {
+      formData[key] = data[key].value;
     });
     strategyParamsForm.value = formData;
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取策略参数失败:', error);
     // 如果请求失败，使用默认数据
     strategyParamsConfig.value = {};
@@ -80,17 +80,16 @@ const strategyOptions = ref<Array<{ value: string; label: string }>>([]);
 // 获取策略列表
 const fetchStrategyList = async () => {
   try {
-    const response = await axios.get('http://127.0.0.1:3000/strategy/strategy_class');
-    const strategies = response.data;
+    const {data: strategies} = await getStrategyClassesApi();
     strategyOptions.value = strategies.map((strategy: string) => ({
       value: strategy,
       label: strategy,
     }));
     // 设置默认值为第一个策略
-    if (strategies.length > 0) {
+    if (strategies[0]) {
       formState.strategyName = strategies[0];
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('获取策略列表失败:', error);
     // 如果请求失败，使用默认数据
     strategyOptions.value = [];
@@ -103,12 +102,12 @@ onMounted(() => {
 });
 
 const klinePeriodOptions = reactive([
-  { value: '1m', label: '1m' },
-  { value: '5m', label: '5m' },
-  { value: '15m', label: '15m' },
-  { value: '1h', label: '1h' },
-  { value: '4h', label: '4h' },
-  { value: '1d', label: '1d' },
+  { value: Interval.MINUTE_1, label: '1m' },
+  { value: Interval.MINUTE_5, label: '5m' },
+  { value: Interval.MINUTE_15, label: '15m' },
+  { value: Interval.HOUR_1, label: '1h' },
+  { value: Interval.HOUR_4, label: '4h' },
+  { value: Interval.DAILY_1, label: '1d' },
 ]);
 
 
@@ -116,35 +115,20 @@ const klinePeriodOptions = reactive([
 const handleStrategyParamsOk = async () => {
   
   // 修改：使用转换函数准备 API 参数
-  const queryParams: BacktestingSetting = convertFormStateToApiFormat();
+  const queryParams = convertFormStateToApiFormat();
 
   console.log(queryParams);
   
   try {
     // 发送POST请求到回测接口
-    const response = await axios.post('http://127.0.0.1:3000/backtesting', queryParams);
+    const response = await createBacktestApi(queryParams);
     
     strategyParamsVisible.value = false;
-
-  //   response.data = {
-  //     "code": 0,
-  //     "msg": "成功",
-  //     "data": {
-  //         "startDate": "2025-10-05",
-  //         "endDate": "2025-10-06",
-  //         "startBalance": 100000,
-  //         "endBalance": 96274.89870590006,
-  //         "maxDrawdown": 856.7811022499809,
-  //         "maxDrawdownPercent": 0.00856781102249981,
-  //         "totalNetPnl": -3725.1012940999403,
-  //         "totalReturnPercent": -0.0372510129409994
-  //     }
-  // }
 
     console.log(response.data)
 
     // 提取回测结果ID
-    const resultId = response.data.data;
+    const resultId = response.data?.data?.id;
     if (resultId) {
       // 导航到结果页面
       router.push({
@@ -156,9 +140,10 @@ const handleStrategyParamsOk = async () => {
     }
     
     // 关闭弹窗
-  } catch (error) {
+  } catch (error: any) {
     // 显示错误信息
-    message.error('请求失败: ' + (error.response?.data?.message || error.message));
+    const errorMessage = error?.response?.data?.message || error?.message || '未知错误';
+    message.error('请求失败: ' + errorMessage);
   }
 };
 

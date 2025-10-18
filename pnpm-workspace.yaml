@@ -13,6 +13,7 @@ packages:
   - docs
   - frontend
   - backend
+  - shared
 catalog:
   '@ast-grep/napi': ^0.37.0
   '@changesets/changelog-github': ^0.5.1

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
-import { Direction, Interval, Offset } from 'src/shared/types/common';
-import type { BarData, OrderData, TradeData } from 'src/shared/types/common';
+import { Direction, Interval, Offset } from '@vtrader/shared';
+import type { BarData, OrderData, TradeData } from '@vtrader/shared';
 import { MarketDataService } from './market-data/market-data.service';
 import { BacktestingService } from './backtesting/backtesting.service';
 import { StrategyService } from './strategy/strategy.service';
@@ -10,7 +10,7 @@ import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
 import { test2 } from './optimization/test';
-import type { BacktestingSetting } from 'src/shared/types/backtesting';
+import type { BacktestingSetting } from '@vtrader/shared';
 
 // test2();
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));

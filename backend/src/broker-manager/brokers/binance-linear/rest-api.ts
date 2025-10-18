@@ -1,4 +1,4 @@
-import type { ContractData } from 'src/shared/types/common';
+import type { ContractData } from '@vtrader/shared';
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
 import * as crypto from 'node:crypto';
@@ -6,7 +6,7 @@ import * as crypto from 'node:crypto';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import * as dayjs from 'dayjs';
 
-import { BarData, Interval, Product } from 'src/shared/types/common';
+import { BarData, Interval, Product } from '@vtrader/shared';
 import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
@@ -14,7 +14,7 @@ import {
   REAL_REST_HOST,
   TESTNET_REST_HOST,
 } from './constants';
-import { HistoryRequest } from 'src/shared/types/broker';
+import { HistoryRequest } from '@vtrader/shared';
 
 /**
  * REST API客户端

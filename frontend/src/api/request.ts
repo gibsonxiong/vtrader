@@ -20,6 +20,7 @@ import JSONBigInt from 'json-bigint';
 import { useAuthStore } from '#/store';
 
 import { refreshTokenApi } from './core';
+import axios from 'axios';
 
 const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
 
@@ -121,6 +122,11 @@ export const requestClient = createRequestClient(apiURL, {
 });
 
 export const baseRequestClient = new RequestClient({ baseURL: apiURL });
+
+export const tradeRequestClient = axios.create({
+  baseURL: 'http://127.0.0.1:3000',
+  responseType: 'json',
+});
 
 export interface PageFetchParams {
   [key: string]: any;

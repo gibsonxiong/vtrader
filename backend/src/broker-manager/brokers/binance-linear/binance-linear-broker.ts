@@ -1,4 +1,4 @@
-import type { ContractData } from 'src/shared/types/common';
+import type { ContractData } from '@vtrader/shared';
 
 import {
   AccountData,

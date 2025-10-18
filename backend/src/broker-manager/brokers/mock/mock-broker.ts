@@ -1,4 +1,4 @@
-import { TradeData, OrderData, OrderType, BarData, ContractData, AssetData, OrderStatus, Direction, Offset } from 'src/shared/types/common';
+import { TradeData, OrderData, OrderType, BarData, ContractData, AssetData, OrderStatus, Direction, Offset } from '@vtrader/shared';
 import {
   CancelOrderRequest,
   GatewaySettings,

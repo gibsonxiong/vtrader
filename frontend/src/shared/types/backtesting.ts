@@ -10,6 +10,7 @@ export interface BacktestingSetting {
   interval: Interval;
   balance: number;
   commissionRate: number;
+  assetName?: string;
   strategy: {
     strategyName: string;
     strategySetting?: Record<string, any>;
