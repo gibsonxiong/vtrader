@@ -43,4 +43,12 @@ export class BacktestingController {
     console.log(backtestingResults)
     return response({ models: backtestingResults });
   }
+
+  /** 删除回测历史 */
+  @Post('remove')
+  async remove(@Body() request: BacktestingApi.RemoveRequest): Promise<Response<BacktestingApi.RemoveResponse>> {
+    await this.backtestingService.removeBacktesting(request.id);
+
+    return response();
+  }
 }

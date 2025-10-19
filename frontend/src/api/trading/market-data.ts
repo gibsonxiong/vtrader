@@ -1,4 +1,5 @@
 import { tradeRequestClient } from '#/api/request';
+import type { BarData } from '@vtrader/shared';
 
 export namespace MarketDataApi {
   /** 合约数据 */
@@ -13,22 +14,6 @@ export namespace MarketDataApi {
     stop_supported: boolean;
     net_position: boolean;
     history_data: boolean;
-    [key: string]: any;
-  }
-
-  /** K线数据 */
-  export interface BarData {
-    symbol: string;
-    exchange: string;
-    datetime: string;
-    interval: string;
-    volume: number;
-    turnover: number;
-    open_interest: number;
-    open_price: number;
-    high_price: number;
-    low_price: number;
-    close_price: number;
     [key: string]: any;
   }
 
@@ -68,7 +53,7 @@ export async function getContractsApi() {
  * 获取K线数据
  */
 export async function getBarsApi(params: MarketDataApi.BarQueryParams) {
-  return tradeRequestClient.get<MarketDataApi.BarData[]>('/market-data/bars', { params });
+  return tradeRequestClient.get<BarData[]>('/market-data/bars', { params });
 }
 
 /**

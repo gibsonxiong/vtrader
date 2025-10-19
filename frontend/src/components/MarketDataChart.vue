@@ -1,66 +1,41 @@
 <script lang="ts" setup>
 import { Loading } from '@vtrader/common-ui';
 import { Form, Input, Button, DatePicker, Select, Space, message } from 'ant-design-vue';
-import { reactive, ref, onMounted, onBeforeUnmount, watch } from 'vue';
+import { reactive, ref, onMounted, onBeforeUnmount, watch, defineExpose } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { init, dispose } from 'klinecharts';
 import type { Chart } from 'klinecharts';
 import { getContractsApi, getBarsApi, downloadBarsApi, type MarketDataApi } from '#/api';
+import { Interval, type BarData, type TradeData } from '@vtrader/shared';
 
-type Interval = '1m' | '5m' | '15m' | '1h' | '4h' | '1d';
 type ContractData = MarketDataApi.ContractData;
-type BarData = MarketDataApi.BarData;
 
 interface Props {
-  defaultSymbol?: string;
-  defaultInterval?: Interval;
-  defaultStart?: Dayjs;
-  defaultEnd?: Dayjs;
-  showDownloadButton?: boolean;
+  symbol: string;
+  interval: Interval;
+  start: Dayjs;
+  end: Dayjs;
+  trades?: TradeData[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  defaultSymbol: 'BTCUSDT:USDT',
-  defaultInterval: '1m',
-  defaultStart: () => dayjs().subtract(4, 'day'),
-  defaultEnd: () => dayjs().add(1, 'day'),
-  showDownloadButton: true,
+  trades: () => [],
 });
+
 
 const emit = defineEmits<{
   barsUpdated: [bars: BarData[]];
   symbolChanged: [symbol: string];
 }>();
 
-const formState = reactive<{
-  symbol: string;
-  interval: Interval;
-  start: Dayjs | undefined;
-  end: Dayjs | undefined;
-}>({
-  symbol: props.defaultSymbol,
-  interval: props.defaultInterval,
-  start: props.defaultStart,
-  end: props.defaultEnd,
-});
-
-const intervalOptions = [
-  { label: '1m', value: '1m' },
-  { label: '5m', value: '5m' },
-  { label: '15m', value: '15m' },
-  { label: '1h', value: '1h' },
-  { label: '4h', value: '4h' },
-  { label: '1d', value: '1d' },
-];
-
 const loading = ref(false);
-const downloading = ref(false);
 const bars = ref<BarData[]>([]);
 const contracts = ref<ContractData[]>([]);
 const contractsLoading = ref(false);
 
 const chartDivRef = ref<HTMLDivElement | null>(null);
 let klineChart: Chart | null = null;
+let resizeObserver: ResizeObserver | null = null;
 
 // 获取合约列表
 async function fetchContracts() {
@@ -79,9 +54,7 @@ async function fetchContracts() {
 // 选择合约后切换 symbol 并刷新K线
 function selectSymbol(c: ContractData) {
   if (!c?.symbol) return;
-  formState.symbol = c.symbol;
   emit('symbolChanged', c.symbol);
-  fetchBars();
 }
 
 function mapBarsToKLineData(list: BarData[]) {
@@ -97,19 +70,49 @@ function mapBarsToKLineData(list: BarData[]) {
 
 function intervalToPeriod(interval: Interval): { span: number; type: 'minute' | 'hour' | 'day' } {
   switch (interval) {
-    case '1m':
+    case Interval.MINUTE_1:
       return { span: 1, type: 'minute' };
-    case '5m':
+    case Interval.MINUTE_5:
       return { span: 5, type: 'minute' };
-    case '15m':
+    case Interval.MINUTE_15:
       return { span: 15, type: 'minute' };
-    case '1h':
+    case Interval.HOUR_1:
       return { span: 1, type: 'hour' };
-    case '4h':
+    case Interval.HOUR_4:
       return { span: 4, type: 'hour' };
-    case '1d':
+    case Interval.DAILY_1:
     default:
       return { span: 1, type: 'day' };
+  }
+}
+
+// 图表自适应调整大小
+function resizeChart() {
+  if (klineChart && chartDivRef.value) {
+    // 使用 klinecharts 的 resize 方法来调整图表大小
+    klineChart.resize();
+  }
+}
+
+// 设置 ResizeObserver 监听容器大小变化
+function setupResizeObserver() {
+  if (!chartDivRef.value) return;
+  
+  resizeObserver = new ResizeObserver(() => {
+    // 使用 requestAnimationFrame 来优化性能，避免频繁调用
+    requestAnimationFrame(() => {
+      resizeChart();
+    });
+  });
+  
+  resizeObserver.observe(chartDivRef.value);
+}
+
+// 清理 ResizeObserver
+function cleanupResizeObserver() {
+  if (resizeObserver) {
+    resizeObserver.disconnect();
+    resizeObserver = null;
   }
 }
 
@@ -120,20 +123,20 @@ async function fetchBars() {
   }
   try {
     loading.value = true;
-    const period = intervalToPeriod(formState.interval);
+    const period = intervalToPeriod(props.interval);
     // 设置交易对与周期，v10 推荐通过 setDataLoader 提供数据
-    klineChart.setSymbol({ ticker: formState.symbol });
+    klineChart.setSymbol({ ticker: props.symbol });
     klineChart.setPeriod(period);
 
     klineChart.setDataLoader({
       getBars: async ({ callback }: any) => {
         try {
           const params: MarketDataApi.BarQueryParams = {
-            symbol: formState.symbol,
-            interval: formState.interval,
-            start: formState.start?.format('YYYY-MM-DD'),
+            symbol: props.symbol,
+            interval: props.interval,
+            start: props.start?.format('YYYY-MM-DD'),
           };
-          if (formState.end) params.end = formState.end.format('YYYY-MM-DD');
+          if (props.end) params.end = props.end.format('YYYY-MM-DD');
           
           const {data} = await getBarsApi(params);
           callback(mapBarsToKLineData(data));
@@ -155,39 +158,13 @@ async function fetchBars() {
   }
 }
 
-async function downloadBars() {
-  try {
-    downloading.value = true;
-    const params: MarketDataApi.DownloadParams = {
-      symbol: formState.symbol,
-      interval: formState.interval,
-      start: formState.start?.format('YYYY-MM-DD') || '',
-    };
-    if (formState.end) params.end = formState.end.format('YYYY-MM-DD');
 
-    const {data} = await downloadBarsApi(params);
-    message.success(`下载完成，新增 ${data.count} 条记录`);
-    fetchBars();
-  } catch (err: any) {
-    message.error('下载失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
-  } finally {
-    downloading.value = false;
-  }
-}
 
 // 监听props变化
-watch(() => props.defaultSymbol, (newSymbol) => {
-  if (newSymbol && newSymbol !== formState.symbol) {
-    formState.symbol = newSymbol;
-    fetchBars();
-  }
-});
-
-watch(() => props.defaultInterval, (newInterval) => {
-  if (newInterval && newInterval !== formState.interval) {
-    formState.interval = newInterval;
-    fetchBars();
-  }
+watch(() => props, () => {
+  fetchBars();
+}, {
+  deep: true,
 });
 
 onMounted(() => {
@@ -215,54 +192,32 @@ onMounted(() => {
       console.warn('Create VOL indicator failed:', e);
     }
 
+    // 设置 ResizeObserver 监听容器大小变化
+    setupResizeObserver();
+
     // 首次加载
     fetchBars();
   }
 });
 
 onBeforeUnmount(() => {
+  // 清理 ResizeObserver
+  cleanupResizeObserver();
+  
   if (klineChart) {
     dispose(klineChart);
     klineChart = null;
   }
 });
 
-// 暴露方法给父组件
 defineExpose({
   fetchBars,
-  downloadBars,
-  getBars: () => bars.value,
-  getFormState: () => formState,
 });
+
 </script>
 
 <template>
   <div class="market-data-chart">
-    <Form :model="formState" layout="inline" autocomplete="off" @submit.prevent>
-      <Form.Item label="Symbol" name="symbol" :rules="[{ required: true, message: '请输入标的!' }]">
-        <Input v-model:value="formState.symbol" style="width: 200px" placeholder="如 BTCUSDT:USDT" />
-      </Form.Item>
-
-      <Form.Item label="Interval" name="interval" :rules="[{ required: true, message: '请选择周期!' }]">
-        <Select v-model:value="formState.interval" :options="intervalOptions" style="width: 120px" />
-      </Form.Item>
-
-      <Form.Item label="开始日期" name="start" :rules="[{ required: true, message: '请选择开始日期!' }]">
-        <DatePicker v-model:value="formState.start" style="width: 160px" />
-      </Form.Item>
-
-      <Form.Item label="结束日期" name="end">
-        <DatePicker v-model:value="formState.end" style="width: 160px" />
-      </Form.Item>
-
-      <Form.Item>
-        <Space>
-          <Button type="primary" @click="fetchBars" :loading="loading">查询</Button>
-          <Button v-if="showDownloadButton" @click="downloadBars" :loading="downloading">下载并入库</Button>
-        </Space>
-      </Form.Item>
-    </Form>
-
     <div class="chart-container">
       <div class="symbol-list">
         <Loading :spinning="contractsLoading">
@@ -271,7 +226,7 @@ defineExpose({
               v-for="c in contracts"
               :key="c.symbol"
               class="symbol-item"
-              :class="{ active: c.symbol === formState.symbol }"
+              :class="{ active: c.symbol === props.symbol }"
               :title="c.symbol"
               @click="selectSymbol(c)"
             >
@@ -307,7 +262,7 @@ defineExpose({
 }
 
 .symbol-list {
-  width: 240px;
+  min-width: 240px;
   height: 600px;
   border: 1px solid #999;
   border-radius: 4px;

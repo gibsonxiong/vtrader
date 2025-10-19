@@ -3,7 +3,7 @@ import { JsonViewer, Page } from '@vtrader/common-ui';
 import { Card, Statistic, Row, Col, Tag, Descriptions, Spin, message, Tabs, Table, Input, Button } from 'ant-design-vue';
 import { reactive, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
-import { getBacktestResultApi, type BacktestingApi } from '#/api';
+import { getBacktestResultApi } from '#/api';
 import dayjs from 'dayjs';
 import TradingAnalysis from './components/TradingAnalysis/index.vue';
 import DailyProfitChart from './components/DailyProfitChart.vue';
@@ -38,7 +38,7 @@ const fetchBacktestResult = async () => {
     const response = await getBacktestResultApi({
       id: Number(resultId)
     });
-    state.data = response.data?.data;
+    state.data = response.data?.data.model;
   } catch (error) {
     console.error('获取回测结果失败:', error);
     message.error('获取回测结果失败');
@@ -292,7 +292,15 @@ const diffColor = (current: number | null, compare: number | null): string | und
             
             <Tabs.TabPane key="3" tab="交易分析">
               <!-- 交易分析内容 -->
-              <TradingAnalysis :backtest-id="state.data?.id" :trades="state.data?.trades" />
+              <TradingAnalysis
+                v-if="state.data"
+                :backtest-id="state.data?.id" 
+                :symbol="state.data?.symbol"
+                :interval="state.data?.interval"
+                :start="dayjs(state.data?.startDate)"
+                :end="dayjs(state.data?.endDate)"
+                :trades="state.data?.trades" 
+              />
             </Tabs.TabPane>
           </Tabs>
         </div>

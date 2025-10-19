@@ -418,6 +418,17 @@ export class BacktestingService implements StrategyEngine {
   }
 
   /**
+   * 删除回测历史
+   */
+  async removeBacktesting(id: number): Promise<void> {
+    await this.prisma.backtesting.delete({
+      where: {
+        id,
+      }
+    });
+  }
+
+  /**
    * 输出信息
    */
   private writeLog(msg: string): void {

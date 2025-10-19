@@ -1,26 +1,32 @@
 <script lang="ts" setup>
-import type { TradeData } from '@vtrader/shared';
-import TradingChart from './TradingChart.vue';
+import type { Interval, TradeData } from '@vtrader/shared';
+import MarketDataChart from '#/components/MarketDataChart.vue';
 import TradingTable from './TradingTable.vue';
+import type { Dayjs } from 'dayjs';
 
 interface TradingAnalysisProps {
   backtestId?: number;
+  symbol: string;
+  interval: Interval;
+  start: Dayjs;
+  end: Dayjs;
   trades?: TradeData[];
 }
 
 const props = defineProps<TradingAnalysisProps>();
-
-
-
-
 </script>
 
 <template>
   <div class="trading-analysis">
     <!-- K线图表组件 -->
-    <TradingChart :backtest-id="props.backtestId" />
+    <MarketDataChart 
+    :symbol="props.symbol" 
+    :interval="props.interval" 
+    :start="props.start" 
+    :end="props.end"
+    :trades="props.trades || []" />
     <!-- 交易明细表格组件 -->
-    <TradingTable :trades="props.trades" />
+    <TradingTable :trades="props.trades || []" />
   </div>
 </template>
 

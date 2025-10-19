@@ -5,7 +5,7 @@ import { Page } from '@vtrader/common-ui';
 import { Tag, Form, Input, Select, Button, Row, Col, message, Modal } from 'ant-design-vue';
 import { reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getBacktestHistoryApi } from '#/api';
+import { getBacktestHistoryApi, removeBacktestHistoryApi } from '#/api';
 import type { BacktestingApi } from '@vtrader/shared';
 import dayjs from 'dayjs';
 
@@ -152,7 +152,7 @@ const handleDelete = async (record: any) => {
     cancelText: '取消',
     onOk: async () => {
       try {
-        // await axios.delete(`http://127.0.0.1:8000/backtesting/results/${record.id}`);
+        await removeBacktestHistoryApi({ id: record.id });
         message.success('删除成功');
         fetchData(); // 刷新表格数据
       } catch (error) {

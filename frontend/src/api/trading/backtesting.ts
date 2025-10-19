@@ -61,3 +61,10 @@ export async function getBacktestResultApi(params: BacktestingApi.QueryRequest) 
 export async function getBacktestHistoryApi(params: BacktestingApi.QueryManyRequest) {
   return tradeRequestClient.post<Response<BacktestingApi.QueryManyResponse>>('/backtesting/queryMany', params);
 }
+
+/**
+ * 删除回测历史
+ */
+export async function removeBacktestHistoryApi(params: BacktestingApi.RemoveRequest) {
+  return tradeRequestClient.post<Response<BacktestingApi.RemoveResponse>>('/backtesting/remove', params);
+}
