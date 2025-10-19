@@ -21,7 +21,7 @@ import { MockBroker } from '../broker-manager/brokers/mock/mock-broker';
 
 import { Broker } from '../broker-manager/broker';
 import { PrismaService } from '../prisma.service';
-import type { Backtesting, Prisma } from 'src/generated/client/index';
+import type { Backtesting, Prisma } from '@vtrader/shared/prismaClient';
 
 /**
  * CTA回测引擎

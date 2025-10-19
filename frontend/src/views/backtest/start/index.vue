@@ -6,7 +6,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import { useRouter } from 'vue-router'; // 导入 useRouter
 import type { BacktestingSetting } from '@vtrader/shared';
 import { Interval } from '@vtrader/shared';
-import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi, type StrategyApi, type BacktestingApi } from '#/api';
+import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi } from '#/api';
 
 const router = useRouter(); // 获取 router 实例
 

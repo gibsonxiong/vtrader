@@ -1803,6 +1803,12 @@ importers:
 
   shared:
     devDependencies:
+      '@prisma/client':
+        specifier: ^6.10.1
+        version: 6.10.1(prisma@6.10.1(typescript@5.8.3))(typescript@5.8.3)
+      prisma:
+        specifier: ^6.10.1
+        version: 6.10.1(typescript@5.8.3)
       rimraf:
         specifier: 'catalog:'
         version: 6.0.1

@@ -4,7 +4,7 @@ import type { BinanceLinearBroker } from './binance-linear-broker';
 import * as crypto from 'node:crypto';
 
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 
 import { BarData, Interval, Product } from '@vtrader/shared';
 import {

@@ -1,5 +1,6 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { Injectable } from '@nestjs/common';
 import { Strategy, StrategyProps, ParamConfig } from './strategy';
 
@@ -26,10 +27,11 @@ export default async function loadStrategyClasses() {
         await traverse(itemPath); // 递归遍历子目录
       } else if (stats.isFile() && item.endsWith('.js')) {
         try {
-          const module = await import(itemPath);
-          if (typeof module.default === 'function') {
-            const className = module.default.name;
-            strategyClassMap[className] = module.default; // 保存默认导出
+          const fileUrl = pathToFileURL(itemPath).href;
+          const module = await import(fileUrl);
+          if (typeof module?.default?.default === 'function') {
+            const className = module.default.default.name;
+            strategyClassMap[className] = module.default.default; // 保存默认导出
           }
         } catch (error) {
           console.error(`导入失败: ${itemPath}`, error);

@@ -1,11 +1,13 @@
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
-import * as WebSocket from 'ws';
+import WebSocket from 'ws';
 import * as crypto from 'node:crypto';
 
 import { OrderStatus, Direction, Offset, OrderType, OrderData } from '@vtrader/shared';
 import { CancelOrderRequest, SendOrderRequest } from '@vtrader/shared';
 import { REAL_TRADE_HOST, TESTNET_TRADE_HOST, DIRECTION_OFFSET2BINANCE, ORDERTYPE_VT2BINANCE, formatFloat } from './constants';
+
+console.log('111', crypto)
 
 /**
  * 交易API客户端

@@ -35,7 +35,9 @@ const fetchBacktestResult = async () => {
 
   state.loading = true;
   try {
-    const response = await getBacktestResultApi(resultId as string);
+    const response = await getBacktestResultApi({
+      id: Number(resultId)
+    });
     state.data = response.data?.data;
   } catch (error) {
     console.error('获取回测结果失败:', error);
@@ -69,7 +71,9 @@ const addCompare = async () => {
   }
   compare.loading = true;
   try {
-    const response = await getBacktestResultApi(compare.id);
+    const response = await getBacktestResultApi({
+      id: Number(compare.id)
+    });
     compares.push({ id: compare.id, data: response.data?.data });
     message.success('已添加对比');
     compare.id = '';

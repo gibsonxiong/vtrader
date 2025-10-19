@@ -1,27 +1,26 @@
-import { BacktestingSetting, BacktestingResult } from '../modules/backtesting';
+import { BacktestingSetting } from '../modules/backtesting';
+import { Backtesting, Prisma } from '../../generated/client';
 
-export interface CreateRequest extends BacktestingSetting {
+export namespace BacktestingApi {
+  export interface CreateRequest extends BacktestingSetting {
+  }
+  
+  export interface CreateResponse {
+    id: number;
+  }
+  
+  export interface QueryRequest {
+    id: number;
+  }
+  
+  export interface QueryResponse {
+    model: Backtesting | null;
+  }
+  
+  export interface QueryManyRequest extends Prisma.BacktestingFindManyArgs {}
+  
+  export interface QueryManyResponse {
+    models: Backtesting[];
+  }
 }
 
-export interface CreateResponse {
-  id: number;
-}
-
-export interface QueryRequest {
-  id: number;
-}
-
-export interface QueryResponse {
-  model: any | null;
-}
-
-export interface QueryManyRequest {
-  skip?: number;
-  take?: number;
-  where?: any;
-  orderBy?: any;
-}
-
-export interface QueryManyResponse {
-  models: any[];
-}

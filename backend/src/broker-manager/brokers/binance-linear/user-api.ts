@@ -1,7 +1,7 @@
 import type { AccountData, OrderData, PositionData, TradeData } from '@vtrader/shared';
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
-import * as WebSocket from 'ws';
+import WebSocket from 'ws';
 
 import { Direction, Offset, OrderType } from '@vtrader/shared';
 import { REAL_USER_HOST, STATUS_BINANCE2VT, TESTNET_USER_HOST } from './constants';

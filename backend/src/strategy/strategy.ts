@@ -1,4 +1,4 @@
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from '@vtrader/shared';
 import { StrategyEngine, SendOrderParams, CancelOrderParams } from '@vtrader/shared';
 import { Context } from './context';

@@ -1,6 +1,6 @@
 import type { BinanceLinearBroker } from './binance-linear-broker';
 
-import * as WebSocket from 'ws';
+import WebSocket from 'ws';
 
 import { BarData, Interval, TickData } from '@vtrader/shared';
 import { REAL_DATA_HOST, TESTNET_DATA_HOST } from './constants';

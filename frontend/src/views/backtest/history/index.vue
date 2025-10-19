@@ -5,8 +5,8 @@ import { Page } from '@vtrader/common-ui';
 import { Tag, Form, Input, Select, Button, Row, Col, message, Modal } from 'ant-design-vue';
 import { reactive, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { getBacktestHistoryApi, type BacktestingApi } from '#/api';
-import type { BacktestingSetting } from '@vtrader/shared';
+import { getBacktestHistoryApi } from '#/api';
+import type { BacktestingApi } from '@vtrader/shared';
 import dayjs from 'dayjs';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
@@ -63,9 +63,9 @@ const gridOptions: VxeGridProps<any> = {
   data: state.data,
   loading: state.loading,
   pagerConfig: {
-    enabled: true,
-    pageSize: 20,
-    pageSizes: [10, 20, 50, 100],
+    enabled: false,
+    // pageSize: 10,
+    // pageSizes: [10, 20, 50, 100],
   },
   sortConfig: {
     multiple: true,
@@ -79,34 +79,30 @@ const [Grid, gridApi] = useVbenVxeGrid({ gridEvents, gridOptions });
 const router = useRouter();
 
 // 查询参数状态
-const queryParams = reactive({
-  class_name: '',
-  vt_symbol: '',
-  interval: '',
-  limit: 100,
-  offset: 0,
-});
+const defaultQuery = {
+  strategyName: '',
+  symbol: '',
+  interval: undefined,
+  currentPage: 1,
+  pageSize: 10,
+};
+const queryParams = reactive({...defaultQuery});
 
-const fetchData = async (params?: Partial<typeof queryParams>) => {
+const fetchData = async () => {
   state.loading = true;
   updateGridData(); // 更新loading状态
   
   try {
-    // 构建查询参数
-    const finalParams: BacktestingApi.BacktestQueryParams = {
-      ...queryParams,
-      ...params
-    };
-    
-    // 过滤掉空值
-    const filteredParams = Object.fromEntries(
-      Object.entries(finalParams).filter(([_, value]) => 
-        value !== '' && value !== null && value !== undefined
-      )
-    ) as BacktestingApi.BacktestQueryParams;
-    
-    const response = await getBacktestHistoryApi(filteredParams);
-    state.data = response.data?.data || [];
+    const response = await getBacktestHistoryApi({
+      where: {
+        // strategyName: queryParams.strategyName,
+        // symbol: queryParams.symbol,
+        interval: queryParams.interval,
+      },
+      take: queryParams.pageSize,
+      skip: (queryParams.currentPage - 1) * queryParams.pageSize,
+    });
+    state.data = response.data?.data.models || [];
   } catch (error) {
     console.error('获取回测历史数据失败:', error);
     state.data = [];
@@ -123,11 +119,11 @@ const handleSearch = () => {
 
 // 重置按钮处理
 const handleReset = () => {
-  queryParams.class_name = '';
-  queryParams.vt_symbol = '';
-  queryParams.interval = '';
-  queryParams.limit = 100;
-  queryParams.offset = 0;
+    Object.keys(queryParams).forEach(key => {
+      (queryParams as any)[key] = (defaultQuery as any)[key];
+    });
+    // queryParams.currentPage = defaultQuery.currentPage;
+    // queryParams.currentPage = defaultQuery.currentPage;
   fetchData();
 };
 
@@ -182,7 +178,7 @@ onMounted(() => {
             <Col :span="6">
               <Form.Item label="策略类名">
                 <Input
-                  v-model:value="queryParams.class_name"
+                  v-model:value="queryParams.strategyName"
                   placeholder="请输入策略类名"
                   allow-clear
                 />
@@ -191,7 +187,7 @@ onMounted(() => {
             <Col :span="6">
               <Form.Item label="交易品种">
                 <Input
-                  v-model:value="queryParams.vt_symbol"
+                  v-model:value="queryParams.symbol"
                   placeholder="请输入交易品种"
                   allow-clear
                 />
@@ -207,10 +203,10 @@ onMounted(() => {
               </Form.Item>
             </Col>
             <Col :span="6">
-              <Form.Item label="返回记录数限制">
+              <Form.Item label="每页记录数">
                 <Input
-                  v-model:value="queryParams.limit"
-                  placeholder="请输入限制数量"
+                  v-model:value.number="queryParams.pageSize"
+                  placeholder="请输入每页记录数"
                   type="number"
                 />
               </Form.Item>
@@ -218,10 +214,10 @@ onMounted(() => {
           </Row>
           <Row :gutter="16" class="w-full mt-2">
             <Col :span="6">
-              <Form.Item label="偏移量">
+              <Form.Item label="当前页">
                 <Input
-                  v-model:value="queryParams.offset"
-                  placeholder="请输入偏移量"
+                  v-model:value.number="queryParams.currentPage"
+                  placeholder="请输入当前页"
                   type="number"
                 />
               </Form.Item>

@@ -1,6 +1,6 @@
 import { Controller, Post, Body, Query } from '@nestjs/common';
 import { Response } from '@vtrader/shared';
-import { CreateRequest, CreateResponse, QueryRequest, QueryResponse, QueryManyRequest, QueryManyResponse } from '@vtrader/shared';
+import { BacktestingApi } from '@vtrader/shared';
 
 import { BacktestingService } from './backtesting.service';
 
@@ -18,7 +18,7 @@ export class BacktestingController {
    * 开始回测
    */
   @Post('create')
-  async create(@Body() request: CreateRequest): Promise<Response<CreateResponse>> {
+  async create(@Body() request: BacktestingApi.CreateRequest): Promise<Response<BacktestingApi.CreateResponse>> {
     const id = await this.backtestingService.backtesting(request);
 
     return response({ id });
@@ -28,7 +28,7 @@ export class BacktestingController {
    * 获取回测结果
    */
   @Post('query')
-  async query(@Body() request: QueryRequest): Promise<Response<QueryResponse>> {
+  async query(@Body() request: BacktestingApi.QueryRequest): Promise<Response<BacktestingApi.QueryResponse>> {
     const backtestingResult = await this.backtestingService.getBacktestingResult(request.id);
 
     return response({ model: backtestingResult });
@@ -38,9 +38,9 @@ export class BacktestingController {
    * 获取回测历史列表
    */
   @Post('queryMany')
-  async queryMany(@Body() request: QueryManyRequest): Promise<Response<QueryManyResponse>> {
+  async queryMany(@Body() request: BacktestingApi.QueryManyRequest): Promise<Response<BacktestingApi.QueryManyResponse>> {
     const backtestingResults = await this.backtestingService.getBacktestingResults(request);
-
+    console.log(backtestingResults)
     return response({ models: backtestingResults });
   }
 }
