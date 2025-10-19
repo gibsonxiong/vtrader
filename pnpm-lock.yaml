@@ -609,25 +609,6 @@ importers:
         specifier: 'catalog:'
         version: 2.2.10(typescript@5.8.3)
 
-  apps/backend-mock:
-    dependencies:
-      '@faker-js/faker':
-        specifier: 'catalog:'
-        version: 9.9.0
-      jsonwebtoken:
-        specifier: 'catalog:'
-        version: 9.0.2
-      nitropack:
-        specifier: 'catalog:'
-        version: 2.11.13(encoding@0.1.13)
-    devDependencies:
-      '@types/jsonwebtoken':
-        specifier: 'catalog:'
-        version: 9.0.10
-      h3:
-        specifier: 'catalog:'
-        version: 1.15.3
-
   backend:
     dependencies:
       '@nestjs/common':
@@ -751,6 +732,25 @@ importers:
       typescript-eslint:
         specifier: ^8.20.0
         version: 8.35.0(eslint@9.30.0(jiti@2.4.2))(typescript@5.8.3)
+
+  backend-mock:
+    dependencies:
+      '@faker-js/faker':
+        specifier: 'catalog:'
+        version: 9.9.0
+      jsonwebtoken:
+        specifier: 'catalog:'
+        version: 9.0.2
+      nitropack:
+        specifier: 'catalog:'
+        version: 2.11.13(encoding@0.1.13)
+    devDependencies:
+      '@types/jsonwebtoken':
+        specifier: 'catalog:'
+        version: 9.0.10
+      h3:
+        specifier: 'catalog:'
+        version: 1.15.3
 
   frontend:
     dependencies:

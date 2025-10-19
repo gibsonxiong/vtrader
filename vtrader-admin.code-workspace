@@ -2,7 +2,7 @@
   "folders": [
     {
       "name": "@vtrader/backend-mock",
-      "path": "apps/backend-mock",
+      "path": "backend-mock",
     },
     {
       "name": "@vtrader/backend",
