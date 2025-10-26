@@ -128,7 +128,7 @@ export class BacktestingService implements StrategyEngine {
 
     // 从数据库加载K线数据
     for (let symbol of this.symbols) {
-      const bars = await this.marketDataService.getBars({
+      const bars = await this.marketDataService.getBarsFromDb({
         symbol: symbol,
         interval: this.interval,
         start: this.startDate,

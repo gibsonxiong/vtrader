@@ -31,6 +31,31 @@ registerStyles('custom', {
         noChangeColor: '#F6465D',
       },
     },
+    tooltip: {
+      showType: 'rect',
+      rect: {
+        // 'fixed' | 'pointer'
+        position: 'fixed',
+        paddingLeft: 4,
+        paddingRight: 4,
+        paddingTop: 4,
+        paddingBottom: 4,
+        offsetLeft: 10,
+        offsetTop: 10,
+        offsetRight: 10,
+        offsetBottom: 10,
+        borderRadius: 4,
+        borderSize: 1,
+        borderColor: '#f2f3f5',
+        color: '#FEFEFE'
+      },
+      legend: {
+        size: 14,
+        marginTop: 6,
+        marginBottom: 6,
+        color: '#666',
+      }
+    },
   },
   indicator: {
     bars: [

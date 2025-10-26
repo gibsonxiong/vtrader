@@ -23,7 +23,7 @@ export namespace MarketDataApi {
     interval: string;
     start?: string;
     end?: string;
-    [key: string]: any;
+    source: 'broker' | 'db';
   }
 
   /** 数据下载参数 */
@@ -46,14 +46,14 @@ export namespace MarketDataApi {
  * 获取所有合约列表
  */
 export async function getContractsApi() {
-  return tradeRequestClient.get<MarketDataApi.ContractData[]>('/market-data/contracts');
+  return tradeRequestClient.post<MarketDataApi.ContractData[]>('/market-data/getContracts');
 }
 
 /**
  * 获取K线数据
  */
 export async function getBarsApi(params: MarketDataApi.BarQueryParams) {
-  return tradeRequestClient.get<BarData[]>('/market-data/bars', { params });
+  return tradeRequestClient.post<BarData[]>('/market-data/getBars', params);
 }
 
 /**

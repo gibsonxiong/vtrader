@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 
 import { Get, Query, Post, Body } from '@nestjs/common';
-import { MarketDataService } from './market-data.service';
+import { MarketDataService, type GetBarsParams } from './market-data.service';
 import { Interval } from '@vtrader/shared';
 
 @Controller('market-data')
@@ -12,7 +12,7 @@ export class MarketDataController {
    * 获取所有合约
    * GET /market-data/contracts
    */
-  @Get('contracts')
+  @Post('getContracts')
   async getAllContracts() {
     return this.marketDataService.getAllContracts();
   }
@@ -21,33 +21,12 @@ export class MarketDataController {
    * 获取K线数据
    * GET /market-data/bars?symbol=BTCUSDT:USDT&interval=1m&start=2024-01-01&end=2024-02-01&preload=100
    */
-  @Get('bars')
+  @Post('getBars')
   async getBars(
-    @Query()
-    query: {
-      symbol: string;
-      interval: string; // 将在运行时转换为 Interval
-      start: string;
-      end?: string;
-      preload?: string | number;
-    },
+    @Body()
+    body: GetBarsParams,
   ) {
-    const { symbol, interval, start, end, preload } = query;
-
-    if (!symbol || !interval || !start) {
-      throw new Error('symbol, interval, start 为必填参数');
-    }
-
-    const intervalTyped = interval as Interval;
-    const preloadNum = preload !== undefined ? Number(preload) : undefined;
-
-    return this.marketDataService.getBars({
-      symbol,
-      interval: intervalTyped,
-      start,
-      end,
-      preload: preloadNum,
-    });
+    return this.marketDataService.getBars(body);
   }
 
   /**

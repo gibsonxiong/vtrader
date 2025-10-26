@@ -27,7 +27,7 @@ export class AppService {
 
   // 获取K线
   async getBars(): Promise<void> {
-    const bars = await this.marketDataService.getBars({
+    const bars = await this.marketDataService.getBarsFromDb({
       start: '2022-01-01',
       end: '2025-01-02',
       interval: Interval.MINUTE_15,

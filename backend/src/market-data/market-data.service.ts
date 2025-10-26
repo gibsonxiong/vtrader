@@ -13,6 +13,7 @@ export interface GetBarsParams {
   start: string;
   symbol: string;
   preload?: number;
+  source: 'broker' | 'db';
 }
 
 export interface DownloadParams {
@@ -35,7 +36,33 @@ export class MarketDataService {
     return broker.getAllContracts();
   }
 
-  async getBars(params: GetBarsParams): Promise<BarData[]> {
+  getBars(params: GetBarsParams): Promise<BarData[]> {
+    if (params.source === 'broker') {
+      return this.getBarsFromBroker(params);
+    }
+    return this.getBarsFromDb(params);
+  }
+
+  async getBarsFromBroker(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
+    let start = params.start;
+    const { end, interval, symbol, preload } = params;
+
+    const broker = await this.brokerMgr.getBroker();
+
+    if (preload) {
+      const [n, unit] = INTERVAL_VT2DAYJS[interval];
+      start = dayjs(start).subtract(preload * n, unit).format('YYYY-MM-DD HH:mm:ss');
+    }
+
+    return broker.queryHistory({
+      start,
+      end,
+      interval,
+      symbol,
+    });
+  }
+
+  async getBarsFromDb(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
     const { start, end, interval, symbol, preload } = params;
     let startTime = dayjs(start).valueOf();
 
@@ -78,9 +105,9 @@ export class MarketDataService {
   async downloadBars(params: DownloadParams): Promise<number> {
     const { start, end, interval, symbol } = params;
 
-    const broker = await this.brokerMgr.getBroker();
+    // const broker = await this.brokerMgr.getBroker();
 
-    const bars = await broker.queryHistory({
+    const bars = await this.getBarsFromBroker({
       start,
       end,
       interval,

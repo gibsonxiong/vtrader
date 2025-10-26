@@ -3,7 +3,7 @@ import { Page } from '@vtrader/common-ui';
 import { Form, Input, Button, DatePicker, Select, Space, message, Table } from 'ant-design-vue';
 import { reactive, ref } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
-import KlineChart from '#/components/KlineChart.vue';
+import KlineChart from '#/components/KlineChart/index.vue';
 import { getContractsApi, getBarsApi, downloadBarsApi, type MarketDataApi } from '#/api';
 import { Interval, type BarData } from '@vtrader/shared';
 

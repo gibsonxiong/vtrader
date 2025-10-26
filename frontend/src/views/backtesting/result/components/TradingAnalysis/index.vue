@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { Interval, TradeData } from '@vtrader/shared';
-import KlineChart from '#/components/KlineChart.vue';
+import KlineChart from '#/components/KlineChart/index.vue';
 import TradingTable from './TradingTable.vue';
 import type { Dayjs } from 'dayjs';
 
