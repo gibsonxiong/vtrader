@@ -3,7 +3,7 @@ import { Page } from '@vtrader/common-ui';
 import { Form, Input, Button, DatePicker, Select, Space, message, Table } from 'ant-design-vue';
 import { reactive, ref } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
-import MarketDataChart from '#/components/MarketDataChart.vue';
+import KlineChart from '#/components/KlineChart.vue';
 import { getContractsApi, getBarsApi, downloadBarsApi, type MarketDataApi } from '#/api';
 import { Interval, type BarData } from '@vtrader/shared';
 
@@ -15,7 +15,7 @@ const defaultState = {
 }
 
 
-const chartRef = ref<typeof MarketDataChart>();
+const chartRef = ref<typeof KlineChart>();
 
 const formState = reactive<{
   symbol: string;
@@ -117,7 +117,7 @@ function handleSymbolChanged(symbol: string) {
         </Form.Item>
       </Form>
 
-      <MarketDataChart
+      <KlineChart
         ref="chartRef"
         :symbol="formState.symbol"
         :interval="formState.interval"

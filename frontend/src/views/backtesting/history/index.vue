@@ -46,11 +46,17 @@ const gridOptions: VxeGridProps<any> = {
       width: 120,
       slots: { default: 'totalReturnPercent' }
     },
+    // { 
+    //   field: 'maxDrawdown', 
+    //   title: '最大回撤', 
+    //   width: 120,
+    //   formatter: ({ cellValue }) => Number(cellValue).toLocaleString()
+    // },
     { 
       field: 'maxDrawdownPercent', 
-      title: '最大回撤', 
+      title: '最大回撤率', 
       width: 120,
-      formatter: ({ cellValue }) => Number(cellValue).toFixed(2) + '%'
+      formatter: ({ cellValue }) => Number(cellValue * 100).toFixed(2) + '%'
     },
     {
       field: 'actions',

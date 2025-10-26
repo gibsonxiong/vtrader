@@ -74,7 +74,7 @@ const addCompare = async () => {
     const response = await getBacktestResultApi({
       id: Number(compare.id)
     });
-    compares.push({ id: compare.id, data: response.data?.data });
+    compares.push({ id: compare.id, data: response.data?.data.model });
     message.success('已添加对比');
     compare.id = '';
   } catch (error) {
@@ -119,8 +119,10 @@ const buildBasicInfoRows = () => {
     { key: 'strategyName', label: '策略名称', type: 'text', currentRaw: null, current: state.data.strategyName },
     { key: 'symbol', label: '交易对', type: 'text', currentRaw: null, current: state.data.symbol },
     { key: 'interval', label: '时间间隔', type: 'text', currentRaw: null, current: state.data.interval },
-    { key: 'startDate', label: '开始时间', type: 'text', currentRaw: null, current: dayjs(state.data.startDate).format('YYYY-MM-DD') },
-    { key: 'endDate', label: '结束时间', type: 'text', currentRaw: null, current: dayjs(state.data.endDate).format('YYYY-MM-DD') },
+    { key: 'startDate', label: '开始时间', type: 'text', currentRaw: null, current: state.data.startDate ? dayjs(state.data.startDate).format('YYYY-MM-DD') : '--' },
+    { key: 'endDate', label: '结束时间', type: 'text', currentRaw: null, current: state.data.endDate ? dayjs(state.data.endDate).format('YYYY-MM-DD') : '--' },
+    { key: 'totalReturnPercent', label: '总收益率', type: 'percentage', currentRaw: state.data.totalReturnPercent ?? null, current: formatPercentage(state.data.totalReturnPercent) },
+     { key: 'maxDrawdownPercent', label: '最大回撤率', type: 'percentage', currentRaw: state.data.maxDrawdownPercent ?? null, current: formatPercentage(state.data.maxDrawdownPercent) },
   ];
   compares.forEach((c) => {
     rows.forEach((row) => {
@@ -130,8 +132,10 @@ const buildBasicInfoRows = () => {
         case 'strategyName': v = c.data?.strategyName ?? '--'; break;
         case 'symbol': v = c.data?.symbol ?? '--'; break;
         case 'interval': v = c.data?.interval ?? '--'; break;
-        case 'startDate': v = c.data ? dayjs(c.data.startDate).format('YYYY-MM-DD') : '--'; break;
-        case 'endDate': v = c.data ? dayjs(c.data.endDate).format('YYYY-MM-DD') : '--'; break;
+        case 'startDate': v = c.data?.startDate ? dayjs(c.data.startDate).format('YYYY-MM-DD') : '--'; break;
+        case 'endDate': v = c.data?.endDate ? dayjs(c.data.endDate).format('YYYY-MM-DD') : '--'; break;
+        case 'totalReturnPercent': v = c.data?.totalReturnPercent ?? null; v = c.data ? formatPercentage(c.data.totalReturnPercent) : '--'; break;
+        case 'maxDrawdownPercent': v = c.data?.maxDrawdownPercent ?? null; v = c.data ? formatPercentage(c.data.maxDrawdownPercent) : '--'; break;
       }
       row[`compare_${c.id}`] = v;
       row[`compareRaw_${c.id}`] = null;
@@ -141,38 +145,38 @@ const buildBasicInfoRows = () => {
 };
 
 // 新增：构建回测结果比较行（为每个对比填充动态列）
-const buildResultRows = () => {
-  if (!state.data) return [] as any[];
-  const rows: any[] = [
-    { key: 'totalReturnPercent', label: '总收益率', type: 'percentage', currentRaw: state.data.totalReturnPercent ?? null, current: formatPercentage(state.data.totalReturnPercent) },
-    { key: 'annual_return', label: '年化收益率', type: 'percentage', currentRaw: state.data.annual_return ?? null, current: formatPercentage(state.data.annual_return) },
-    { key: 'max_drawdown', label: '最大回撤', type: 'percentage', currentRaw: state.data.max_drawdown ?? null, current: formatPercentage(state.data.max_drawdown) },
-    { key: 'sharpe_ratio', label: '夏普比率', type: 'number', currentRaw: state.data.sharpe_ratio ?? null, current: formatNumber(state.data.sharpe_ratio, 3) },
-    { key: 'total_trades', label: '总交易次数', type: 'number', currentRaw: state.data.total_trades ?? null, current: state.data.total_trades ?? '--' },
-    { key: 'win_rate', label: '胜率', type: 'percentage', currentRaw: state.data.win_rate ?? null, current: formatPercentage(state.data.win_rate) },
-  ];
-  compares.forEach((c) => {
-    rows.forEach((row) => {
-      let v: any = '--';
-      let vr: number | null = null;
-      switch (row.key) {
-        case 'totalReturnPercent': vr = c.data?.totalReturnPercent ?? null; v = c.data ? formatPercentage(c.data.totalReturnPercent) : '--'; break;
-        case 'annual_return': vr = c.data?.annual_return ?? null; v = c.data ? formatPercentage(c.data.annual_return) : '--'; break;
-        case 'max_drawdown': vr = c.data?.max_drawdown ?? null; v = c.data ? formatPercentage(c.data.max_drawdown) : '--'; break;
-        case 'sharpe_ratio': vr = c.data?.sharpe_ratio ?? null; v = c.data ? formatNumber(c.data.sharpe_ratio, 3) : '--'; break;
-        case 'total_trades': vr = c.data?.total_trades ?? null; v = c.data ? (c.data.total_trades ?? '--') : '--'; break;
-        case 'win_rate': vr = c.data?.win_rate ?? null; v = c.data ? formatPercentage(c.data.win_rate) : '--'; break;
-      }
-      row[`compare_${c.id}`] = v;
-      row[`compareRaw_${c.id}`] = vr;
-    });
-  });
-  return rows;
-};
+// const buildResultRows = () => {
+//   if (!state.data) return [] as any[];
+//   const rows: any[] = [
+    
+//     { key: 'annual_return', label: '年化收益率', type: 'percentage', currentRaw: state.data.annual_return ?? null, current: formatPercentage(state.data.annual_return) },
+//     { key: 'max_drawdown', label: '最大回撤', type: 'percentage', currentRaw: state.data.max_drawdown ?? null, current: formatPercentage(state.data.max_drawdown) },
+//     { key: 'sharpe_ratio', label: '夏普比率', type: 'number', currentRaw: state.data.sharpe_ratio ?? null, current: formatNumber(state.data.sharpe_ratio, 3) },
+//     { key: 'total_trades', label: '总交易次数', type: 'number', currentRaw: state.data.total_trades ?? null, current: state.data.total_trades ?? '--' },
+//     { key: 'win_rate', label: '胜率', type: 'percentage', currentRaw: state.data.win_rate ?? null, current: formatPercentage(state.data.win_rate) },
+//   ];
+//   compares.forEach((c) => {
+//     rows.forEach((row) => {
+//       let v: any = '--';
+//       let vr: number | null = null;
+//       switch (row.key) {
+//         case 'totalReturnPercent': vr = c.data?.totalReturnPercent ?? null; v = c.data ? formatPercentage(c.data.totalReturnPercent) : '--'; break;
+//         case 'annual_return': vr = c.data?.annual_return ?? null; v = c.data ? formatPercentage(c.data.annual_return) : '--'; break;
+//         case 'max_drawdown': vr = c.data?.max_drawdown ?? null; v = c.data ? formatPercentage(c.data.max_drawdown) : '--'; break;
+//         case 'sharpe_ratio': vr = c.data?.sharpe_ratio ?? null; v = c.data ? formatNumber(c.data.sharpe_ratio, 3) : '--'; break;
+//         case 'total_trades': vr = c.data?.total_trades ?? null; v = c.data ? (c.data.total_trades ?? '--') : '--'; break;
+//         case 'win_rate': vr = c.data?.win_rate ?? null; v = c.data ? formatPercentage(c.data.win_rate) : '--'; break;
+//       }
+//       row[`compare_${c.id}`] = v;
+//       row[`compareRaw_${c.id}`] = vr;
+//     });
+//   });
+//   return rows;
+// };
 const combinedRows = computed(() => {
   const basic = buildBasicInfoRows();
-  const result = buildResultRows();
-  return [...basic, ...result];
+  // const result = buildResultRows();
+  return [...basic];
 });
 onMounted(() => {
   fetchBacktestResult();
@@ -227,11 +231,6 @@ const diffColor = (current: number | null, compare: number | null): string | und
                     <Button danger @click="clearAllCompares" :disabled="compare.loading">清空全部对比</Button>
                   </Col>
                 </Row>
-              </Card>
-              
-              <!-- 每日收益图表 -->
-              <Card title="每日收益" class="shadow-sm mt-4">
-                <DailyProfitChart :daily-results="state.data?.dailyResults || []" />
               </Card>
               
               <!-- 综合对比表格 -->
@@ -291,6 +290,10 @@ const diffColor = (current: number | null, compare: number | null): string | und
             </Tabs.TabPane>
             
             <Tabs.TabPane key="3" tab="交易分析">
+              <!-- 每日收益图表 -->
+              <Card title="每日收益" class="shadow-sm mt-4">
+                <DailyProfitChart :daily-results="state.data?.dailyResults || []" />
+              </Card>
               <!-- 交易分析内容 -->
               <TradingAnalysis
                 v-if="state.data"

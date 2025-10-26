@@ -6,7 +6,8 @@ import dayjs, { Dayjs } from 'dayjs';
 import { init, dispose } from 'klinecharts';
 import type { Chart } from 'klinecharts';
 import { getContractsApi, getBarsApi, downloadBarsApi, type MarketDataApi } from '#/api';
-import { Interval, type BarData, type TradeData } from '@vtrader/shared';
+import { Direction, Interval, Offset, type BarData, type TradeData } from '@vtrader/shared';
+import './signal-overlay';
 
 type ContractData = MarketDataApi.ContractData;
 
@@ -36,6 +37,14 @@ const contractsLoading = ref(false);
 const chartDivRef = ref<HTMLDivElement | null>(null);
 let klineChart: Chart | null = null;
 let resizeObserver: ResizeObserver | null = null;
+
+// 交易信号类型
+interface TradeSignal {
+  timestamp: number;
+  price: number;
+  type: 'buy' | 'sell';
+  trade: TradeData;
+}
 
 // 获取合约列表
 async function fetchContracts() {
@@ -116,6 +125,85 @@ function cleanupResizeObserver() {
   }
 }
 
+// 将 TradeData 转换为交易信号
+function mapTradesToSignals(trades: TradeData[]): TradeSignal[] {
+  return trades.map(trade => {
+    // 根据 direction 和 offset 判断买卖信号
+    // 开多(LONG + OPEN) 和 平空(SHORT + CLOSE) 为买信号
+    // 开空(SHORT + OPEN) 和 平多(LONG + CLOSE) 为卖信号
+    let signalType: 'buy' | 'sell';
+    
+    if ((trade.direction === Direction.LONG && trade.offset === Offset.OPEN) || 
+        (trade.direction === Direction.SHORT && trade.offset === Offset.CLOSE)) {
+      signalType = 'buy';
+    } else {
+      signalType = 'sell';
+    }
+
+    return {
+      timestamp: new Date(trade.time).getTime(),
+      price: Number(trade.price),
+      type: signalType,
+      trade
+    };
+  });
+}
+
+// 添加交易信号到图表
+function addTradeSignalsToChart(signals: TradeSignal[]) {
+  if (!klineChart) return;
+
+  // 清除之前的交易信号覆盖层
+  klineChart.removeOverlay();
+
+  // 为每个信号创建覆盖层
+  signals.forEach((signal, index) => {
+    const overlayId = `trade-signal-${index}`;
+    const isBuy = signal.type === 'buy';
+    
+    klineChart?.createOverlay({
+      name: 'signal',
+      id: overlayId,
+      points: [
+        {
+          timestamp: signal.timestamp,
+          value: signal.price
+        }
+      ],
+      styles: {
+        line: {
+          color: '#666',
+        },
+        polygon: {
+          color: isBuy ? '#ff4d4f' : '#52c41a',
+        },
+        text: {
+          backgroundColor: isBuy ? '#ff4d4f' : '#52c41a',
+          color: isBuy ? '#fff' : '#fff',
+        },
+      },
+      extendData: {
+        isBuy,
+        text: isBuy ? 'B' : 'S'
+      }
+    });
+  });
+}
+
+// 更新交易信号显示
+function updateTradeSignals() {
+  if (!props.trades || props.trades.length === 0) {
+    // 如果没有交易数据，清除所有信号
+    if (klineChart) {
+      klineChart.removeOverlay();
+    }
+    return;
+  }
+
+  const signals = mapTradesToSignals(props.trades);
+  addTradeSignalsToChart(signals);
+}
+
 async function fetchBars() {
   if (!klineChart) {
     message.error('图表未初始化');
@@ -142,6 +230,11 @@ async function fetchBars() {
           callback(mapBarsToKLineData(data));
           bars.value = data.reverse();
           emit('barsUpdated', bars.value);
+          
+          // 在K线数据加载完成后更新交易信号
+          setTimeout(() => {
+            updateTradeSignals();
+          }, 100);
         } catch (err: any) {
           message.error('获取K线失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
           bars.value = [];
@@ -165,6 +258,14 @@ watch(() => props, () => {
   fetchBars();
 }, {
   deep: true,
+});
+
+// 监听 trades 属性变化
+watch(() => props.trades, () => {
+  updateTradeSignals();
+}, {
+  deep: true,
+  immediate: true,
 });
 
 onMounted(() => {
@@ -197,6 +298,9 @@ onMounted(() => {
 
     // 首次加载
     fetchBars();
+    
+    // 初始化交易信号显示
+    updateTradeSignals();
   }
 });
 

@@ -470,16 +470,18 @@ export abstract class Strategy {
       //   ? record.turnover - prevRecord.turnover
       //   : record.turnover;
 
-      // const netPnl = tradingPnl + holdingPnl - commission;
+      const netPnl = prevRecord 
+        ? record.netPnl - prevRecord.netPnl
+        : record.netPnl;
 
       // 累计总盈亏
-      accumNetPnl += record.netPnl;
+      // accumNetPnl += record.netPnl;
 
       this.dailyResults.set(date, {
         date,
         trades: dayTrades,
-        netPnl: record.netPnl,
-        accumNetPnl,
+        netPnl,
+        accumNetPnl: record.netPnl,
       });
 
       prevRecord = record;

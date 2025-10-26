@@ -8,7 +8,7 @@ import {
   OrderStatus,
   OrderType,
 } from '@vtrader/shared';
-import * as dayjs from 'dayjs';
+import dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
 
 import { Strategy, DailyResultItem, RecordData } from '../strategy/strategy';
@@ -280,7 +280,13 @@ export class BacktestingService implements StrategyEngine {
     this.datetime = new Date(bar.timestamp);
 
     await this.strategy.handleBar(bar);
+
+    // 如果时间小于开始时间则不记录
+    if (dayjs(bar.timestamp).isBefore(this.startDate)) {
+      return;
+    }
     this.strategy.doRecord(bar.timestamp, bar.close);
+    
   }
   
   /**
