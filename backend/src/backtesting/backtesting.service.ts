@@ -30,7 +30,6 @@ import type { Backtesting, Prisma } from '@vtrader/shared/prismaClient';
 export class BacktestingService implements StrategyEngine {
   private symbols: string[];
   private interval: Interval;
-  private commissionRate: number;
   private strategyName: string;
   private startDate: string;
   private endDate: string;
@@ -68,16 +67,15 @@ export class BacktestingService implements StrategyEngine {
     this.interval = setting.interval;
     this.balance = setting.balance;
     this.assetName = setting.assetName || 'USDT';
-    this.commissionRate = setting.commissionRate;
 
-    await this.initBroker();
+    await this.initBroker(setting);
     await this.initStrategy(strategyName, strategySetting);
   }
 
-  async initBroker(): Promise<void> {
+  async initBroker(setting: BacktestingSetting): Promise<void> {
     this.broker = new MockBroker({
-      commissionRate: this.commissionRate,
-      assetBalance: this.balance,
+      commissionRate: setting.commissionRate,
+      assetBalance: setting.balance,
     });
     // await this.broker.connect({
     //   apiKey: string;
@@ -410,17 +408,34 @@ export class BacktestingService implements StrategyEngine {
     });
   }
 
-  getBacktestingResults(params: Prisma.BacktestingFindManyArgs): Promise<Backtesting[]> {
+  async getBacktestingResults(params: Prisma.BacktestingFindManyArgs): Promise<{ data: Backtesting[], total: number }> {
     const { where, skip, take, orderBy } = params;
 
-    return this.prisma.backtesting.findMany({
-      where,
-      skip,
-      take,
-      orderBy: orderBy || {
-        id: 'desc'
-      }
-    });
+    console.log(where)
+    // 过滤掉空字符串的where查询
+    if (where) {
+      Object.keys(where).forEach(key => {
+        if (where[key] === '') {
+          delete where[key];
+        }
+      });
+    }
+
+    const [data, total] = await Promise.all([
+      this.prisma.backtesting.findMany({
+        where,
+        skip,
+        take,
+        orderBy: orderBy || {
+          id: 'desc'
+        }
+      }),
+      this.prisma.backtesting.count({
+        where
+      })
+    ]);
+
+    return { data, total };
   }
 
   /**

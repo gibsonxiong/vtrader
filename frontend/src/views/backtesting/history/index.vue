@@ -11,10 +11,22 @@ import dayjs from 'dayjs';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
 import BacktestStartModal from '#/components/BacktestStartModal/index.vue';
+import { globalTableConfig } from '#/config/table';
+
+// 查询参数状态
+const defaultQuery = {
+  strategyName: '',
+  symbol: '',
+  interval: '',
+  currentPage: globalTableConfig.pagination.defaultCurrentPage,
+  pageSize: globalTableConfig.pagination.defaultPageSize,
+};
+const queryParams = reactive({...defaultQuery});
 
 const state = reactive({
   data: [] as any[],
   loading: false,
+  total: 0,
 });
 
 const gridOptions: VxeGridProps<any> = {
@@ -71,15 +83,21 @@ const gridOptions: VxeGridProps<any> = {
   loading: state.loading,
   pagerConfig: {
     enabled: true,
-    pageSize: 10,
-    pageSizes: [10, 20, 50, 100],
+    currentPage: queryParams.currentPage,
+    pageSize: queryParams.pageSize,
+    pageSizes: globalTableConfig.pagination.pageSizes,
+    total: state.total,
   },
-  sortConfig: {
-    multiple: true,
-  },
+  sortConfig: globalTableConfig.table.sortConfig,
 };
 
-const gridEvents: VxeGridListeners<any> = {};
+const gridEvents: VxeGridListeners<any> = {
+  pageChange: ({ currentPage, pageSize }) => {
+    queryParams.currentPage = currentPage;
+    queryParams.pageSize = pageSize;
+    fetchData();
+  },
+};
 
 const [Grid, gridApi] = useVbenVxeGrid({ gridEvents, gridOptions });
 
@@ -105,15 +123,6 @@ const handleBacktestSuccess = (resultId: string) => {
   });
 };
 
-// 查询参数状态
-const defaultQuery = {
-  strategyName: '',
-  symbol: '',
-  interval: undefined,
-  currentPage: 1,
-  pageSize: 10,
-};
-const queryParams = reactive({...defaultQuery});
 
 const fetchData = async () => {
   state.loading = true;
@@ -122,17 +131,19 @@ const fetchData = async () => {
   try {
     const response = await getBacktestHistoryApi({
       where: {
-        // strategyName: queryParams.strategyName,
-        // symbol: queryParams.symbol,
+        strategyName: queryParams.strategyName,
+        symbol: queryParams.symbol,
         interval: queryParams.interval,
       },
       take: queryParams.pageSize,
       skip: (queryParams.currentPage - 1) * queryParams.pageSize,
     });
     state.data = response.data?.data.models || [];
+    state.total = response.data?.data.total || 0;
   } catch (error) {
     console.error('获取回测历史数据失败:', error);
     state.data = [];
+    state.total = 0;
   } finally {
     state.loading = false;
     updateGridData(); // 更新数据和loading状态
@@ -141,6 +152,7 @@ const fetchData = async () => {
 
 // 查询按钮处理
 const handleSearch = () => {
+  queryParams.currentPage = 1; // 重置当前页
   fetchData();
 };
 
@@ -157,6 +169,12 @@ const updateGridData = () => {
   gridApi.setGridOptions({
     data: state.data,
     loading: state.loading,
+    pagerConfig: {
+      currentPage: queryParams.currentPage,
+      pageSize: queryParams.pageSize,
+      pageSizes: globalTableConfig.pagination.pageSizes,
+      total: state.total,
+    },
   });
 };
 
@@ -226,27 +244,9 @@ onMounted(() => {
               />
             </Form.Item>
           </Col>
-          <Col :span="6">
-            <Form.Item label="每页记录数">
-              <Input
-                v-model:value.number="queryParams.pageSize"
-                placeholder="请输入每页记录数"
-                type="number"
-              />
-            </Form.Item>
-          </Col>
         </Row>
         <Row :gutter="16" class="w-full mt-2">
-          <Col :span="6">
-            <Form.Item label="当前页">
-              <Input
-                v-model:value.number="queryParams.currentPage"
-                placeholder="请输入当前页"
-                type="number"
-              />
-            </Form.Item>
-          </Col>
-          <Col :span="18" class="text-right">
+          <Col class="text-right">
             <Form.Item>
               <Button type="primary" @click="handleSearch" :loading="state.loading">
                 查询
@@ -271,12 +271,6 @@ onMounted(() => {
         <span v-if="row.totalReturnPercent == null || row.totalReturnPercent === ''">--</span>
         <Tag v-else :color="row.totalReturnPercent >= 0 ? 'green' : 'red'">
           {{ (row.totalReturnPercent * 100).toFixed(2) }}%
-        </Tag>
-      </template>
-      <template #maxDrawdownPercent="{ row }">
-        <span v-if="row.maxDrawdownPercent == null || row.maxDrawdownPercent === ''">--</span>
-        <Tag v-else color="red">
-          {{ (row.maxDrawdownPercent * 100).toFixed(2) }}%
         </Tag>
       </template>
       <template #actions="{ row }">

@@ -2,6 +2,7 @@
 import { Card, Table, Tag } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import type { TradeData } from '@vtrader/shared';
+import { globalTableConfig } from '#/config/table';
 
 interface TradingTableProps {
   trades?: TradeData[];
@@ -92,7 +93,13 @@ const getOffsetText = (offset: 'open' | 'close') => {
     <Table
       :columns="columns"
       :data-source="props.trades"
-      :pagination="{ pageSize: 10, showSizeChanger: true, showQuickJumper: true }"
+      :pagination="{
+        pageSize: globalTableConfig.pagination.defaultPageSize,
+        showSizeChanger: true,
+        pageSizeOptions: globalTableConfig.pagination.pageSizes.map(String),
+        showQuickJumper: true,
+        showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
+      }"
       row-key="tradeId"
       size="middle"
     >

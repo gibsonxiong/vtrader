@@ -6,6 +6,7 @@ import dayjs, { Dayjs } from 'dayjs';
 import KlineChart from '#/components/KlineChart/index.vue';
 import { getContractsApi, getBarsApi, downloadBarsApi, type MarketDataApi } from '#/api';
 import { Interval, type BarData } from '@vtrader/shared';
+import { globalTableConfig } from '#/config/table';
 
 const defaultState = {
   symbol: 'BTCUSDT:USDT', 
@@ -134,7 +135,11 @@ function handleSymbolChanged(symbol: string) {
         rowKey="timestamp"
         size="small"
         :loading="loading"
-        :pagination="{ pageSize: 20 }"
+        :pagination="{
+          pageSize: globalTableConfig.pagination.defaultPageSize,
+          showSizeChanger: true,
+          pageSizeOptions: globalTableConfig.pagination.pageSizes.map(String),
+        }"
         bordered
       />
     </div>

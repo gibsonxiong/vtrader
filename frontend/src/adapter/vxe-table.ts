@@ -18,7 +18,7 @@ setupVbenVxeTable({
   configVxeTable: (vxeUI) => {
     vxeUI.setConfig({
       grid: {
-        align: 'center',
+        // align: 'center',
         border: false,
         columnConfig: {
           resizable: true,
@@ -28,7 +28,7 @@ setupVbenVxeTable({
           // 全局禁用vxe-table的表单配置，使用formOptions
           enabled: false,
         },
-        minHeight: 180,
+        minHeight: 500,
         proxyConfig: {
           autoLoad: true,
           response: {
@@ -41,7 +41,7 @@ setupVbenVxeTable({
         },
         round: true,
         showOverflow: true,
-        size: 'small',
+        size: 'medium',
       },
     });
 

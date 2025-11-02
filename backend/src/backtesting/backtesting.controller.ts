@@ -39,9 +39,9 @@ export class BacktestingController {
    */
   @Post('queryMany')
   async queryMany(@Body() request: BacktestingApi.QueryManyRequest): Promise<Response<BacktestingApi.QueryManyResponse>> {
-    const backtestingResults = await this.backtestingService.getBacktestingResults(request);
-    console.log(backtestingResults)
-    return response({ models: backtestingResults });
+    const { data, total } = await this.backtestingService.getBacktestingResults(request);
+    console.log({ data, total });
+    return response({ models: data, total });
   }
 
   /** 删除回测历史 */

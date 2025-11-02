@@ -21,6 +21,7 @@ export namespace BacktestingApi {
   
   export interface QueryManyResponse {
     models: Backtesting[];
+    total: number;
   }
   
   export interface RemoveRequest {
