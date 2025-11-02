@@ -3,13 +3,14 @@ import type { VxeGridListeners, VxeGridProps } from '#/adapter/vxe-table';
 
 import { Page } from '@vtrader/common-ui';
 import { Tag, Form, Input, Select, Button, Row, Col, message, Modal } from 'ant-design-vue';
-import { reactive, onMounted } from 'vue';
+import { reactive, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { getBacktestHistoryApi, removeBacktestHistoryApi } from '#/api';
 import type { BacktestingApi } from '@vtrader/shared';
 import dayjs from 'dayjs';
 
 import { useVbenVxeGrid } from '#/adapter/vxe-table';
+import BacktestStartModal from '#/components/BacktestStartModal/index.vue';
 
 const state = reactive({
   data: [] as any[],
@@ -61,17 +62,17 @@ const gridOptions: VxeGridProps<any> = {
     {
       field: 'actions',
       title: '操作',
-      width: 120,
       fixed: 'right',
+      minWidth: 200,
       slots: { default: 'actions' }
     },
   ],
   data: state.data,
   loading: state.loading,
   pagerConfig: {
-    enabled: false,
-    // pageSize: 10,
-    // pageSizes: [10, 20, 50, 100],
+    enabled: true,
+    pageSize: 10,
+    pageSizes: [10, 20, 50, 100],
   },
   sortConfig: {
     multiple: true,
@@ -83,6 +84,26 @@ const gridEvents: VxeGridListeners<any> = {};
 const [Grid, gridApi] = useVbenVxeGrid({ gridEvents, gridOptions });
 
 const router = useRouter();
+
+// 回测开始弹窗状态
+const backtestModalVisible = ref(false);
+
+// 打开回测弹窗
+const handleStartBacktest = () => {
+  backtestModalVisible.value = true;
+};
+
+// 回测成功回调
+const handleBacktestSuccess = (resultId: string) => {
+  message.success('回测启动成功！');
+  // 刷新历史数据
+  fetchData();
+  // 导航到结果页面
+  router.push({
+    path: '/backtesting/result',
+    query: { resultId },
+  });
+};
 
 // 查询参数状态
 const defaultQuery = {
@@ -125,11 +146,9 @@ const handleSearch = () => {
 
 // 重置按钮处理
 const handleReset = () => {
-    Object.keys(queryParams).forEach(key => {
-      (queryParams as any)[key] = (defaultQuery as any)[key];
-    });
-    // queryParams.currentPage = defaultQuery.currentPage;
-    // queryParams.currentPage = defaultQuery.currentPage;
+  Object.keys(queryParams).forEach(key => {
+    (queryParams as any)[key] = (defaultQuery as any)[key];
+  });
   fetchData();
 };
 
@@ -175,96 +194,105 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="回测历史">
-    <div class="p-4">
-      <!-- 查询表单 -->
-      <div class="mb-4 p-4 bg-gray-50 rounded">
-        <Form layout="inline" :model="queryParams">
-          <Row :gutter="16" class="w-full">
-            <Col :span="6">
-              <Form.Item label="策略类名">
-                <Input
-                  v-model:value="queryParams.strategyName"
-                  placeholder="请输入策略类名"
-                  allow-clear
-                />
-              </Form.Item>
-            </Col>
-            <Col :span="6">
-              <Form.Item label="交易品种">
-                <Input
-                  v-model:value="queryParams.symbol"
-                  placeholder="请输入交易品种"
-                  allow-clear
-                />
-              </Form.Item>
-            </Col>
-            <Col :span="6">
-              <Form.Item label="时间周期">
-                <Input
-                  v-model:value="queryParams.interval"
-                  placeholder="请输入时间周期"
-                  allow-clear
-                />
-              </Form.Item>
-            </Col>
-            <Col :span="6">
-              <Form.Item label="每页记录数">
-                <Input
-                  v-model:value.number="queryParams.pageSize"
-                  placeholder="请输入每页记录数"
-                  type="number"
-                />
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row :gutter="16" class="w-full mt-2">
-            <Col :span="6">
-              <Form.Item label="当前页">
-                <Input
-                  v-model:value.number="queryParams.currentPage"
-                  placeholder="请输入当前页"
-                  type="number"
-                />
-              </Form.Item>
-            </Col>
-            <Col :span="18" class="text-right">
-              <Form.Item>
-                <Button type="primary" @click="handleSearch" :loading="state.loading">
-                  查询
-                </Button>
-                <Button @click="handleReset" class="ml-2">
-                  重置
-                </Button>
-              </Form.Item>
-            </Col>
-          </Row>
-        </Form>
-      </div>
-      
-      <!-- 数据表格 -->
-      <Grid table-title="回测历史数据">
-        <template #totalReturnPercent="{ row }">
-          <span v-if="row.totalReturnPercent == null || row.totalReturnPercent === ''">--</span>
-          <Tag v-else :color="row.totalReturnPercent >= 0 ? 'green' : 'red'">
-            {{ (row.totalReturnPercent * 100).toFixed(2) }}%
-          </Tag>
-        </template>
-        <template #maxDrawdownPercent="{ row }">
-          <span v-if="row.maxDrawdownPercent == null || row.maxDrawdownPercent === ''">--</span>
-          <Tag v-else color="red">
-            {{ (row.maxDrawdownPercent * 100).toFixed(2) }}%
-          </Tag>
-        </template>
-        <template #actions="{ row }">
-          <Button type="link" size="small" @click="handleView(row)">
-            查看
-          </Button>
-          <Button type="link" size="small" danger @click="handleDelete(row)">
-            删除
-          </Button>
-        </template>
-      </Grid>
+  <Page>
+    <!-- 查询表单 -->
+    <div class="mb-4 p-4 bg-card rounded">
+      <Form layout="inline" :model="queryParams">
+        <Row :gutter="16" class="w-full">
+          <Col :span="6">
+            <Form.Item label="策略类名">
+              <Input
+                v-model:value="queryParams.strategyName"
+                placeholder="请输入策略类名"
+                allow-clear
+              />
+            </Form.Item>
+          </Col>
+          <Col :span="6">
+            <Form.Item label="交易品种">
+              <Input
+                v-model:value="queryParams.symbol"
+                placeholder="请输入交易品种"
+                allow-clear
+              />
+            </Form.Item>
+          </Col>
+          <Col :span="6">
+            <Form.Item label="时间周期">
+              <Input
+                v-model:value="queryParams.interval"
+                placeholder="请输入时间周期"
+                allow-clear
+              />
+            </Form.Item>
+          </Col>
+          <Col :span="6">
+            <Form.Item label="每页记录数">
+              <Input
+                v-model:value.number="queryParams.pageSize"
+                placeholder="请输入每页记录数"
+                type="number"
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+        <Row :gutter="16" class="w-full mt-2">
+          <Col :span="6">
+            <Form.Item label="当前页">
+              <Input
+                v-model:value.number="queryParams.currentPage"
+                placeholder="请输入当前页"
+                type="number"
+              />
+            </Form.Item>
+          </Col>
+          <Col :span="18" class="text-right">
+            <Form.Item>
+              <Button type="primary" @click="handleSearch" :loading="state.loading">
+                查询
+              </Button>
+              <Button @click="handleReset" class="ml-2">
+                重置
+              </Button>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
     </div>
+    
+    <!-- 数据表格 -->
+    <Grid table-title="回测历史数据">
+      <template #toolbar-tools>
+        <Button type="primary" @click="handleStartBacktest">
+          开始回测
+        </Button>
+      </template>
+      <template #totalReturnPercent="{ row }">
+        <span v-if="row.totalReturnPercent == null || row.totalReturnPercent === ''">--</span>
+        <Tag v-else :color="row.totalReturnPercent >= 0 ? 'green' : 'red'">
+          {{ (row.totalReturnPercent * 100).toFixed(2) }}%
+        </Tag>
+      </template>
+      <template #maxDrawdownPercent="{ row }">
+        <span v-if="row.maxDrawdownPercent == null || row.maxDrawdownPercent === ''">--</span>
+        <Tag v-else color="red">
+          {{ (row.maxDrawdownPercent * 100).toFixed(2) }}%
+        </Tag>
+      </template>
+      <template #actions="{ row }">
+        <Button type="link" size="small" @click="handleView(row)">
+          查看
+        </Button>
+        <Button type="link" size="small" danger @click="handleDelete(row)">
+          删除
+        </Button>
+      </template>
+    </Grid>
+
+    <!-- 回测开始弹窗 -->
+    <BacktestStartModal
+      v-model:open="backtestModalVisible"
+      @success="handleBacktestSuccess"
+    />
   </Page>
 </template>

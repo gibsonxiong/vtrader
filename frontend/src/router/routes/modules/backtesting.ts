@@ -13,14 +13,6 @@ const routes: RouteRecordRaw[] = [
     path: '/backtesting',
     children: [
       {
-        name: 'StartBacktest',
-        path: 'start',
-        component: () => import('#/views/backtesting/start/index.vue'),
-        meta: {
-          title: $t('开始回测'),
-        },
-      },
-      {
         name: 'BacktestHistory',
         path: 'history',
         component: () => import('#/views/backtesting/history/index.vue'),

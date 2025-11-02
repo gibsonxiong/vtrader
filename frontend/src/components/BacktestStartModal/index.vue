@@ -1,14 +1,25 @@
 <script lang="ts" setup>
-import { Page } from '@vtrader/common-ui';
 import { Form, Input, Button, DatePicker, Select, InputNumber, Modal, Checkbox, message, Tag } from 'ant-design-vue';
-import { reactive, onMounted, ref } from 'vue';
+import { reactive, onMounted, ref, watch } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
-import { useRouter } from 'vue-router'; // 导入 useRouter
+import { useRouter } from 'vue-router';
 import type { BacktestingSetting } from '@vtrader/shared';
 import { Interval } from '@vtrader/shared';
 import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi } from '#/api';
 
-const router = useRouter(); // 获取 router 实例
+interface Props {
+  open: boolean;
+}
+
+interface Emits {
+  (e: 'update:open', value: boolean): void;
+  (e: 'success', resultId: string): void;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
+
+const router = useRouter();
 
 // 修改：表单状态使用 Dayjs 对象用于 DatePicker 绑定
 const formState = reactive({
@@ -96,9 +107,11 @@ const fetchStrategyList = async () => {
   }
 };
 
-// 组件挂载时获取策略列表
-onMounted(() => {
-  fetchStrategyList();
+// 监听弹窗打开状态，初始化数据
+watch(() => props.open, (newVal) => {
+  if (newVal) {
+    fetchStrategyList();
+  }
 });
 
 const klinePeriodOptions = reactive([
@@ -110,10 +123,8 @@ const klinePeriodOptions = reactive([
   { value: Interval.DAILY_1, label: '1d' },
 ]);
 
-
 // 确认策略参数配置
 const handleStrategyParamsOk = async () => {
-  
   // 修改：使用转换函数准备 API 参数
   const queryParams = convertFormStateToApiFormat();
 
@@ -128,18 +139,16 @@ const handleStrategyParamsOk = async () => {
     console.log(response.data)
 
     // 提取回测结果ID
-    const resultId = response.data?.data?.id;
+    const resultId = String(response.data?.data?.id ?? '');
     if (resultId) {
-      // 导航到结果页面
-      router.push({
-        path: '/backtesting/result',
-        query: { resultId },
-      });
+      // 关闭主弹窗
+      emit('update:open', false);
+      // 触发成功事件，传递结果ID
+      emit('success', resultId);
     } else {
       message.error('回测结果ID不存在');
     }
     
-    // 关闭弹窗
   } catch (error: any) {
     // 显示错误信息
     const errorMessage = error?.response?.data?.message || error?.message || '未知错误';
@@ -165,10 +174,21 @@ const onFinish = async (values: any) => {
 const onFinishFailed = (errorInfo: any) => {
   console.log('Failed:', errorInfo);
 };
+
+// 关闭主弹窗
+const handleCancel = () => {
+  emit('update:open', false);
+};
 </script>
 
 <template>
-  <Page title="开始回测">
+  <Modal
+    :open="props.open"
+    title="开始回测"
+    width="800px"
+    :footer="null"
+    @cancel="handleCancel"
+  >
     <div class="p-4">
       <Form
         :model="formState"
@@ -251,8 +271,9 @@ const onFinishFailed = (errorInfo: any) => {
           <InputNumber v-model:value="formState.balance" :step="1000" :precision="1" style="width: 100%" />
         </Form.Item>
 
-        <Form.Item>
+        <Form.Item class="text-center">
           <Button type="primary" html-type="submit">开始回测</Button>
+          <Button @click="handleCancel" class="ml-2">取消</Button>
         </Form.Item>
       </Form>
     </div>
@@ -299,21 +320,11 @@ const onFinishFailed = (errorInfo: any) => {
               <Checkbox v-else-if="config.type === 'boolean'" v-model:checked="strategyParamsForm[key]"></Checkbox>
               <Input v-else v-model:value="strategyParamsForm[key]" style="width: 100%" />
             </Form.Item>
-            
-            <!-- 浮点数类型 -->
-            <!-- <Form.Item v-else-if="config.type === 'float'" :label="`${key} <class '${config.type}'>`">
-              <InputNumber 
-                v-model:value="strategyParamsForm[key]" 
-                :step="0.001" 
-                :precision="3" 
-                style="width: 100%" 
-              />
-            </Form.Item> -->
           </template>
         </div>
       </Form>
     </Modal>
-  </Page>
+  </Modal>
 </template>
 
 <style scoped>
