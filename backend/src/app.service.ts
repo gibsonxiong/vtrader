@@ -9,10 +9,10 @@ import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 import { mockBars } from './mock/bars';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
-import { test2 } from './optimization/test';
+import { test } from './optimization/index';
 import type { BacktestingSetting } from '@vtrader/shared';
 
-// test2();
+test();
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
 @Injectable()
