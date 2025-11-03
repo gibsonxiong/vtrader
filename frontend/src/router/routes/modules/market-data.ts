@@ -5,7 +5,7 @@ import { $t } from '#/locales';
 const routes: RouteRecordRaw[] = [
   {
     meta: {
-      icon: 'ant-design:history-outlined',
+      icon: 'ri:article-line',
       order: 10,
       title: $t('行情数据'),
     },

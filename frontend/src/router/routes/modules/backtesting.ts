@@ -26,6 +26,9 @@ const routes: RouteRecordRaw[] = [
         component: () => import('#/views/backtesting/result/index.vue'),
         meta: {
           title: $t('回测结果'),
+          hideInTab: true,
+          hideInBreadcrumb: true,
+          hideInMenu: true,
         },
       },
     ],

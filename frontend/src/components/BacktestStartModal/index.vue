@@ -53,6 +53,65 @@ const strategyParamsVisible = ref(false);
 const strategyParamsForm = ref<Record<string, any>>({});
 const strategyParamsConfig = ref<Record<string, { value: any; type: string }>>({});
 
+// 记住参数功能
+const rememberParams = ref(true);
+const isUsingCache = ref(false); // 标记是否使用了缓存
+
+// localStorage 操作函数
+const getStorageKey = (strategyName: string) => `backtest_params_${strategyName}`;
+
+const saveParamsToStorage = (strategyName: string, params: Record<string, any>) => {
+  try {
+    const key = getStorageKey(strategyName);
+    localStorage.setItem(key, JSON.stringify(params));
+  } catch (error) {
+    console.error('保存参数到 localStorage 失败:', error);
+  }
+};
+
+const loadParamsFromStorage = (strategyName: string): Record<string, any> | null => {
+  try {
+    const key = getStorageKey(strategyName);
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : null;
+  } catch (error) {
+    console.error('从 localStorage 加载参数失败:', error);
+    return null;
+  }
+};
+
+// 清除缓存并重置参数
+const clearCacheAndReset = () => {
+  if (!formState.strategyName) {
+    return;
+  }
+  
+  // 清除localStorage中的缓存
+  try {
+    const key = getStorageKey(formState.strategyName);
+    localStorage.removeItem(key);
+  } catch (error) {
+    console.error('清除缓存失败:', error);
+  }
+  
+  // 重置为默认参数
+  if (!strategyParamsConfig.value || Object.keys(strategyParamsConfig.value).length === 0) {
+    return;
+  }
+  
+  const defaultFormData: Record<string, any> = {};
+  Object.keys(strategyParamsConfig.value).forEach(key => {
+    defaultFormData[key] = strategyParamsConfig.value[key].value;
+  });
+  
+  strategyParamsForm.value = defaultFormData;
+  
+  // 更新缓存状态
+  isUsingCache.value = false;
+  
+  message.success('缓存已清除');
+};
+
 // 获取策略参数配置
 const fetchStrategyParams = async (strategyName: string) => {
   try {
@@ -72,6 +131,21 @@ const fetchStrategyParams = async (strategyName: string) => {
     Object.keys(data).forEach(key => {
       formData[key] = data[key].value;
     });
+    
+    // 尝试加载保存的参数
+    const savedParams = loadParamsFromStorage(strategyName);
+    if (savedParams) {
+      // 合并保存的参数，只覆盖存在的字段
+      Object.keys(savedParams).forEach(key => {
+        if (key in formData) {
+          formData[key] = savedParams[key];
+        }
+      });
+      isUsingCache.value = true; // 标记使用了缓存
+    } else {
+      isUsingCache.value = false; // 没有使用缓存
+    }
+    
     strategyParamsForm.value = formData;
   } catch (error: any) {
     console.error('获取策略参数失败:', error);
@@ -83,6 +157,8 @@ const fetchStrategyParams = async (strategyName: string) => {
       formData[key] = strategyParamsConfig.value[key]?.value;
     });
     strategyParamsForm.value = formData;
+    // 错误时没有使用缓存
+    isUsingCache.value = false;
   }
 };
 
@@ -125,6 +201,12 @@ const klinePeriodOptions = reactive([
 
 // 确认策略参数配置
 const handleStrategyParamsOk = async () => {
+  // 如果勾选了记住参数，保存到 localStorage
+  if (rememberParams.value && formState.strategyName) {
+    saveParamsToStorage(formState.strategyName, strategyParamsForm.value);
+    message.success('参数已保存，下次打开将自动使用');
+  }
+  
   // 修改：使用转换函数准备 API 参数
   const queryParams = convertFormStateToApiFormat();
 
@@ -281,11 +363,24 @@ const handleCancel = () => {
     <!-- 策略参数配置弹窗 -->
     <Modal
       v-model:open="strategyParamsVisible"
-      :title="`策略参数配置: ${formState.strategyName}`"
       width="600px"
       @ok="handleStrategyParamsOk"
       @cancel="handleStrategyParamsCancel"
     >
+      <template #title>
+        <div class="flex items-center">
+          <span>策略参数配置: {{ formState.strategyName }}</span>
+          <div v-if="isUsingCache" class="flex items-center ml-2">
+            <Tag 
+              color="blue" 
+              closable 
+              @close="clearCacheAndReset"
+            >
+              已加载缓存
+            </Tag>
+          </div>
+        </div>
+      </template>
       <!-- 当策略参数为空时显示提示 -->
       <div v-if="Object.keys(strategyParamsConfig).length === 0" class="empty-params-tip">
         <div class="text-center py-8">
@@ -322,6 +417,17 @@ const handleCancel = () => {
             </Form.Item>
           </template>
         </div>
+        
+        <!-- 记住参数选项和重置按钮 -->
+        <div class="remember-params-section">
+          <Form.Item :wrapper-col="{ span: 24 }">
+            <div class="params-actions">
+              <Checkbox v-model:checked="rememberParams">
+                记住参数
+              </Checkbox>
+            </div>
+          </Form.Item>
+        </div>
       </Form>
     </Modal>
   </Modal>
@@ -338,5 +444,57 @@ const handleCancel = () => {
 
 .compact-form :deep(.ant-form-item-control) {
   line-height: 1.2;
+}
+
+.remember-params-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.remember-params-section :deep(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.remember-params-section :deep(.ant-checkbox-wrapper) {
+  color: #666;
+  font-size: 13px;
+}
+
+.params-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.params-actions :deep(.ant-btn) {
+  font-size: 12px;
+  height: 28px;
+  padding: 0 12px;
+}
+
+/* 弹窗标题样式 */
+.flex {
+  display: flex;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-2 {
+  gap: 8px;
+}
+
+.text-red-500 {
+  color: #ef4444;
+}
+
+.text-red-500:hover {
+  color: #dc2626;
 }
 </style>

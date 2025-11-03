@@ -197,11 +197,11 @@ const diffColor = (current: number | null, compare: number | null): string | und
 
 <template>
   <Page title="回测结果">
-    <div class="p-6">
+    <div>
       <Spin :spinning="state.loading || compare.loading">
         <div v-if="state.data" class="space-y-6">
           <!-- Tab导航 -->
-          <Tabs v-model:activeKey="state.activeTab" type="card" class="mb-6">
+          <Tabs v-model:activeKey="state.activeTab" type="card" class="mb-4">
             <Tabs.TabPane key="1" tab="概况">
               <!-- 概况内容 -->
               <!-- 已按你的要求移除：基本信息卡片 和 回测结果卡片 -->
@@ -291,7 +291,7 @@ const diffColor = (current: number | null, compare: number | null): string | und
             
             <Tabs.TabPane key="3" tab="交易分析">
               <!-- 每日收益图表 -->
-              <Card title="每日收益" class="shadow-sm mt-4">
+              <Card title="每日收益" class="shadow-sm">
                 <DailyProfitChart :daily-results="state.data?.dailyResults || []" />
               </Card>
               <!-- 交易分析内容 -->

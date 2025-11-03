@@ -75,7 +75,7 @@ const gridOptions: VxeGridProps<any> = {
       field: 'actions',
       title: '操作',
       fixed: 'right',
-      minWidth: 200,
+      minWidth: 150,
       slots: { default: 'actions' }
     },
   ],
