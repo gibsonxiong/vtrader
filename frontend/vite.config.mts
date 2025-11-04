@@ -3,7 +3,7 @@ import { defineConfig } from '@vtrader/vite-config';
 export default defineConfig(async () => {
   return {
     application: {
-      nestBackend: true,
+      nestBackend: false,
       nestBackendOptions: {
         port: 3000,
         backendPackage: '@vtrader/backend',

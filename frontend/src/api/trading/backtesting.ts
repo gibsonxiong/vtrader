@@ -68,3 +68,10 @@ export async function getBacktestHistoryApi(params: BacktestingApi.QueryManyRequ
 export async function removeBacktestHistoryApi(params: BacktestingApi.RemoveRequest) {
   return tradeRequestClient.post<Response<BacktestingApi.RemoveResponse>>('/backtesting/remove', params);
 }
+
+/**
+ * 获取任务状态
+ */
+export async function getJobStatusApi(params: BacktestingApi.JobStatusRequest) {
+  return tradeRequestClient.get<Response<BacktestingApi.JobStatusResponse>>(`/backtesting/job/${params.jobId}/status`);
+}

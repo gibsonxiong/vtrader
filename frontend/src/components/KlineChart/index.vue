@@ -265,7 +265,7 @@ async function fetchBars() {
             symbol: innerProps.symbol,
             interval: innerProps.interval,
             start: innerProps.start?.format('YYYY-MM-DD'),
-            source: 'broker',
+            source: 'db',
           };
           if (innerProps.end) params.end = innerProps.end.format('YYYY-MM-DD');
           

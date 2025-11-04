@@ -10,6 +10,8 @@ import {
 } from '@vtrader/shared';
 import dayjs from 'dayjs';
 import { Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 
 import { Strategy, DailyResultItem, RecordData } from '../strategy/strategy';
 import { MarketDataService } from '../market-data/market-data.service';
@@ -52,6 +54,7 @@ export class BacktestingService implements StrategyEngine {
     private readonly marketDataService: MarketDataService,
     private readonly strategyService: StrategyService,
     private readonly prisma: PrismaService,
+    @InjectQueue('backtesting') private readonly backtestingQueue: Queue,
   ) {}
 
   /**
@@ -155,7 +158,7 @@ export class BacktestingService implements StrategyEngine {
   /**
    * 运行回测
    */
-  private async runBacktesting(): Promise<void> {
+  async runBacktesting(): Promise<void> {
     this.writeLog('开始运行回测');
 
     if (this.strategy === undefined) {
@@ -224,7 +227,8 @@ export class BacktestingService implements StrategyEngine {
     // this.doRecord(lastBar.close);
   }
 
-  async backtesting(setting: BacktestingSetting): Promise<number> {
+  // 原有的同步回测方法，重命名为内部方法
+  async backtestingSync(setting: BacktestingSetting): Promise<number> {
     await this.setSetting(setting);
 
     await this.loadData();
@@ -232,6 +236,41 @@ export class BacktestingService implements StrategyEngine {
     await this.runBacktesting();
 
     return this.calculateResult();
+  }
+
+  // 新的异步回测方法，使用队列
+  async backtesting(setting: BacktestingSetting): Promise<{ jobId: string; message: string }> {
+    const job = await this.backtestingQueue.add('run-backtest', setting, {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 2000,
+      },
+    });
+
+    return {
+      jobId: job.id.toString(),
+      message: '回测任务已提交，正在后台处理...',
+    };
+  }
+
+  // 获取任务状态
+  async getJobStatus(jobId: string) {
+    const job = await this.backtestingQueue.getJob(jobId);
+    
+    if (!job) {
+      return { status: 'not_found', message: '任务不存在' };
+    }
+
+    const state = await job.getState();
+    const progress = job.progress();
+    
+    return {
+      status: state,
+      progress,
+      data: job.returnvalue,
+      failedReason: job.failedReason,
+    };
   }
 
   handleOrder(order: OrderData): void {

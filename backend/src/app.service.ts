@@ -12,7 +12,7 @@ import { mockBars } from './mock/bars';
 import { test } from './optimization/index';
 import type { BacktestingSetting } from '@vtrader/shared';
 
-test();
+// test();
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
 @Injectable()

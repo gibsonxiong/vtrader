@@ -1,11 +1,11 @@
 <script lang="ts" setup>
-import { Form, Input, Button, DatePicker, Select, InputNumber, Modal, Checkbox, message, Tag } from 'ant-design-vue';
-import { reactive, onMounted, ref, watch } from 'vue';
+import { Form, Input, Button, DatePicker, Select, InputNumber, Modal, Checkbox, message, Tag, Progress } from 'ant-design-vue';
+import { reactive, onMounted, ref, watch, onUnmounted } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { useRouter } from 'vue-router';
 import type { BacktestingSetting } from '@vtrader/shared';
 import { Interval } from '@vtrader/shared';
-import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi } from '#/api';
+import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi, getJobStatusApi } from '#/api';
 
 interface Props {
   open: boolean;
@@ -56,6 +56,17 @@ const strategyParamsConfig = ref<Record<string, { value: any; type: string }>>({
 // 记住参数功能
 const rememberParams = ref(true);
 const isUsingCache = ref(false); // 标记是否使用了缓存
+
+// 任务状态管理
+const taskState = reactive({
+  isRunning: false,
+  jobId: '',
+  progress: 0,
+  status: '' as 'waiting' | 'active' | 'completed' | 'failed' | '',
+  error: '',
+});
+
+let statusCheckInterval: NodeJS.Timeout | null = null;
 
 // localStorage 操作函数
 const getStorageKey = (strategyName: string) => `backtest_params_${strategyName}`;
@@ -110,6 +121,75 @@ const clearCacheAndReset = () => {
   isUsingCache.value = false;
   
   message.success('缓存已清除');
+};
+
+// 任务状态检查函数
+const checkJobStatus = async () => {
+  if (!taskState.jobId) return;
+  
+  try {
+    const response = await getJobStatusApi({ jobId: taskState.jobId });
+    const statusData = response.data?.data;
+    
+    if (statusData) {
+      taskState.status = statusData.status;
+      taskState.progress = statusData.progress || 0;
+      
+      if (statusData.status === 'completed') {
+        // 任务完成
+        clearStatusCheck();
+        taskState.isRunning = false;
+        
+        if (statusData.result?.id) {
+          message.success('回测完成！');
+          // 关闭弹窗
+          emit('update:open', false);
+          // 触发成功事件
+          emit('success', String(statusData.result.id));
+        }
+      } else if (statusData.status === 'failed') {
+        // 任务失败
+        clearStatusCheck();
+        taskState.isRunning = false;
+        taskState.error = statusData.error || '回测任务失败';
+        message.error(taskState.error);
+      }
+    }
+  } catch (error: any) {
+    console.error('检查任务状态失败:', error);
+    // 如果是网络错误，继续检查；如果是其他错误，停止检查
+    if (error?.response?.status === 404) {
+      clearStatusCheck();
+      taskState.isRunning = false;
+      message.error('任务不存在或已过期');
+    }
+  }
+};
+
+// 开始状态检查
+const startStatusCheck = () => {
+  if (statusCheckInterval) {
+    clearInterval(statusCheckInterval);
+  }
+  statusCheckInterval = setInterval(checkJobStatus, 2000); // 每2秒检查一次
+};
+
+// 清除状态检查
+const clearStatusCheck = () => {
+  if (statusCheckInterval) {
+    clearInterval(statusCheckInterval);
+    statusCheckInterval = null;
+  }
+};
+
+// 重置任务状态
+const resetTaskState = () => {
+  taskState.isRunning = false;
+  taskState.jobId = '';
+  taskState.progress = 0;
+  taskState.status = '';
+  taskState.error = '';
+  clearStatusCheck();
 };
 
 // 获取策略参数配置
@@ -213,28 +293,37 @@ const handleStrategyParamsOk = async () => {
   console.log(queryParams);
   
   try {
+    // 重置任务状态
+    resetTaskState();
+    
     // 发送POST请求到回测接口
     const response = await createBacktestApi(queryParams);
     
     strategyParamsVisible.value = false;
 
-    console.log(response.data)
+    console.log(response.data);
 
-    // 提取回测结果ID
-    const resultId = String(response.data?.data?.id ?? '');
-    if (resultId) {
-      // 关闭主弹窗
-      emit('update:open', false);
-      // 触发成功事件，传递结果ID
-      emit('success', resultId);
+    // 检查响应格式 - 现在返回的是 jobId 而不是 id
+    const jobId = response.data?.data?.jobId;
+    if (jobId) {
+      // 设置任务状态
+      taskState.isRunning = true;
+      taskState.jobId = jobId;
+      taskState.status = 'waiting';
+      
+      message.success('回测任务已提交，正在处理中...');
+      
+      // 开始状态检查
+      startStatusCheck();
     } else {
-      message.error('回测结果ID不存在');
+      message.error('回测任务提交失败：未获取到任务ID');
     }
     
   } catch (error: any) {
     // 显示错误信息
     const errorMessage = error?.response?.data?.message || error?.message || '未知错误';
     message.error('请求失败: ' + errorMessage);
+    resetTaskState();
   }
 };
 
@@ -259,8 +348,25 @@ const onFinishFailed = (errorInfo: any) => {
 
 // 关闭主弹窗
 const handleCancel = () => {
-  emit('update:open', false);
+  // 如果有正在运行的任务，询问用户是否确认关闭
+  if (taskState.isRunning) {
+    Modal.confirm({
+      title: '确认关闭',
+      content: '回测任务正在进行中，关闭弹窗将停止监控任务进度。任务会继续在后台运行，您可以稍后在回测历史中查看结果。',
+      onOk() {
+        resetTaskState();
+        emit('update:open', false);
+      },
+    });
+  } else {
+    emit('update:open', false);
+  }
 };
+
+// 组件卸载时清理
+onUnmounted(() => {
+  clearStatusCheck();
+});
 </script>
 
 <template>
@@ -272,6 +378,22 @@ const handleCancel = () => {
     @cancel="handleCancel"
   >
     <div class="p-4">
+      <!-- 任务进度显示 -->
+      <div v-if="taskState.isRunning" class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm font-medium text-blue-800">回测任务进行中</span>
+          <span class="text-xs text-blue-600">{{ taskState.status === 'waiting' ? '等待中' : taskState.status === 'active' ? '执行中' : taskState.status }}</span>
+        </div>
+        <Progress 
+          :percent="taskState.progress" 
+          :status="taskState.status === 'failed' ? 'exception' : 'active'"
+          :show-info="true"
+        />
+        <div v-if="taskState.error" class="mt-2 text-xs text-red-600">
+          {{ taskState.error }}
+        </div>
+      </div>
+
       <Form
         :model="formState"
         name="backtestForm"
@@ -281,6 +403,7 @@ const handleCancel = () => {
         class="compact-form"
         @finish="onFinish"
         @finishFailed="onFinishFailed"
+        :disabled="taskState.isRunning"
       >
         <Form.Item
           label="交易策略"
@@ -354,8 +477,17 @@ const handleCancel = () => {
         </Form.Item>
 
         <Form.Item class="text-center">
-          <Button type="primary" html-type="submit">开始回测</Button>
-          <Button @click="handleCancel" class="ml-2">取消</Button>
+          <Button 
+            type="primary" 
+            html-type="submit" 
+            :loading="taskState.isRunning"
+            :disabled="taskState.isRunning"
+          >
+            {{ taskState.isRunning ? '回测进行中...' : '开始回测' }}
+          </Button>
+          <Button @click="handleCancel" class="ml-2">
+            {{ taskState.isRunning ? '最小化' : '取消' }}
+          </Button>
         </Form.Item>
       </Form>
     </div>
@@ -364,6 +496,7 @@ const handleCancel = () => {
     <Modal
       v-model:open="strategyParamsVisible"
       width="600px"
+      :confirm-loading="taskState.isRunning"
       @ok="handleStrategyParamsOk"
       @cancel="handleStrategyParamsCancel"
     >

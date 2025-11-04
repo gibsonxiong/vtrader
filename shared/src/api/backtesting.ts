@@ -6,7 +6,8 @@ export namespace BacktestingApi {
   }
   
   export interface CreateResponse {
-    id: number;
+    jobId: string;
+    message: string;
   }
   
   export interface QueryRequest {
@@ -29,6 +30,20 @@ export namespace BacktestingApi {
   }
   
   export interface RemoveResponse {
+  }
+
+  // 新增：任务状态查询相关类型
+  export interface JobStatusRequest {
+    jobId: string;
+  }
+
+  export interface JobStatusResponse {
+    status: 'waiting' | 'active' | 'completed' | 'failed';
+    progress?: number;
+    result?: {
+      id: number;
+    };
+    error?: string;
   }
 }
 
