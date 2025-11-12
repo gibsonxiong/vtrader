@@ -21,8 +21,8 @@ export namespace MarketDataApi {
   export interface BarQueryParams {
     symbol: string;
     interval: string;
-    start?: string;
-    end?: string;
+    startDate?: string;
+    endDate?: string;
     source: 'broker' | 'db';
   }
 
@@ -30,9 +30,8 @@ export namespace MarketDataApi {
   export interface DownloadParams {
     symbol: string;
     interval: string;
-    start: string;
-    end?: string;
-    [key: string]: any;
+    startDate: string;
+    endDate?: string;
   }
 
   /** 下载响应 */

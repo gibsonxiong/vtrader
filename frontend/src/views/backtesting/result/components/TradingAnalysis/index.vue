@@ -20,18 +20,20 @@ const props = defineProps<TradingAnalysisProps>();
   <div class="trading-analysis">
     <!-- K线图表组件 -->
     <KlineChart 
-    :symbol="props.symbol" 
-    :interval="props.interval" 
-    :start="props.start" 
-    :end="props.end"
-    :trades="props.trades || []" />
+      :symbol="props.symbol" 
+      :interval="props.interval" 
+      :startDate="props.start" 
+      :endDate="props.end"
+      :trades="props.trades || []"
+    />
     <!-- 交易明细表格组件 -->
-    <TradingTable :trades="props.trades || []" />
+    <TradingTable class="mt-2" :trades="props.trades || []" />
   </div>
 </template>
 
 <style scoped>
 .trading-analysis {
+  margin-top: 10px;
   padding: 0;
 }
 

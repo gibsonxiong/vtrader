@@ -11,8 +11,8 @@ import { globalTableConfig } from '#/config/table';
 const defaultState = {
   symbol: 'BTCUSDT:USDT', 
   interval: Interval.MINUTE_1,
-  start: dayjs().subtract(4, 'day'),
-  end: dayjs().add(1, 'day'),
+  startDate: dayjs().subtract(4, 'day'),
+  endDate: dayjs(),
 }
 
 
@@ -21,8 +21,8 @@ const chartRef = ref<typeof KlineChart>();
 const formState = reactive<{
   symbol: string;
   interval: Interval;
-  start: Dayjs;
-  end: Dayjs;
+  startDate: Dayjs;
+  endDate: Dayjs;
 }>({
   ...defaultState,
 });
@@ -64,9 +64,9 @@ async function downloadBars() {
     const params: MarketDataApi.DownloadParams = {
       symbol: formState.symbol,
       interval: formState.interval,
-      start: formState.start?.format('YYYY-MM-DD') || '',
+      startDate: formState.startDate?.format('YYYY-MM-DD') || '',
     };
-    if (formState.end) params.end = formState.end.format('YYYY-MM-DD');
+    if (formState.endDate) params.endDate = formState.endDate.format('YYYY-MM-DD');
 
     const {data} = await downloadBarsApi(params);
     message.success(`下载完成，新增 ${data.count} 条记录`);
@@ -91,23 +91,23 @@ function handleSymbolChanged(symbol: string) {
 </script>
 
 <template>
-  <Page title="行情数据">
-    <div class="p-4">
-      <Form :model="formState" layout="inline" autocomplete="off" @submit.prevent>
-        <!-- <Form.Item label="Symbol" name="symbol" :rules="[{ required: true, message: '请输入标的!' }]">
+  <Page>
+    <div>
+      <Form :model="formState" layout="inline" autocomplete="off" @submit.prevent class="mb-4">
+        <Form.Item label="Symbol" name="symbol" :rules="[{ required: true, message: '请输入标的!' }]">
           <Input v-model:value="formState.symbol" style="width: 200px" placeholder="如 BTCUSDT:USDT" />
-        </Form.Item> -->
+        </Form.Item>
 
         <Form.Item label="Interval" name="interval" :rules="[{ required: true, message: '请选择周期!' }]">
           <Select v-model:value="formState.interval" :options="intervalOptions" style="width: 120px" />
         </Form.Item>
 
-        <Form.Item label="开始日期" name="start" :rules="[{ required: true, message: '请选择开始日期!' }]">
-          <DatePicker v-model:value="formState.start" style="width: 160px" />
+        <Form.Item label="开始日期" name="startDate" :rules="[{ required: true, message: '请选择开始日期!' }]">
+          <DatePicker v-model:value="formState.startDate" style="width: 160px" />
         </Form.Item>
 
-        <Form.Item label="结束日期" name="end">
-          <DatePicker v-model:value="formState.end" style="width: 160px" />
+        <Form.Item label="结束日期" name="endDate">
+          <DatePicker v-model:value="formState.endDate" style="width: 160px" />
         </Form.Item>
 
         <Form.Item>
@@ -122,8 +122,8 @@ function handleSymbolChanged(symbol: string) {
         ref="chartRef"
         :symbol="formState.symbol"
         :interval="formState.interval"
-        :start="formState.start"
-        :end="formState.end"
+        :startDate="formState.startDate"
+        :endDate="formState.endDate"
         @symbol-changed="handleSymbolChanged"
         @bars-updated="handleBarsUpdated"
       />

@@ -8,19 +8,19 @@ import { BrokerManagerService } from 'src/broker-manager/broker-manager.service'
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';
 
 export interface GetBarsParams {
-  end?: string;
   interval: Interval;
-  start: string;
+  startDate: string;
+  endDate?: string;
   symbol: string;
   preload?: number;
   source: 'broker' | 'db';
 }
 
 export interface DownloadParams {
-  end?: string;
-  interval: Interval;
-  start: string;
+  startDate: string;
+  endDate?: string;
   symbol: string;
+  interval: Interval;
 }
 
 @Injectable()
@@ -44,27 +44,29 @@ export class MarketDataService {
   }
 
   async getBarsFromBroker(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
-    let start = params.start;
-    const { end, interval, symbol, preload } = params;
+    const { startDate, endDate, interval, symbol, preload } = params;
+    let startTime = dayjs(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss');
+    const endTime = dayjs(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
     const broker = await this.brokerMgr.getBroker();
 
     if (preload) {
       const [n, unit] = INTERVAL_VT2DAYJS[interval];
-      start = dayjs(start).subtract(preload * n, unit).format('YYYY-MM-DD HH:mm:ss');
+      startTime = dayjs(startDate).subtract(preload * n, unit).format('YYYY-MM-DD HH:mm:ss');
     }
 
     return broker.queryHistory({
-      start,
-      end,
+      startDate: startTime,
+      endDate: endTime,
       interval,
       symbol,
     });
   }
 
   async getBarsFromDb(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
-    const { start, end, interval, symbol, preload } = params;
-    let startTime = dayjs(start).valueOf();
+    const { startDate, endDate, interval, symbol, preload } = params;
+    let startTime = dayjs(startDate).startOf('day').valueOf();
+    const endTime = dayjs(endDate).endOf('day').valueOf();
 
     if (!interval) {
       throw new Error(`${interval}周期不能为空！`);
@@ -79,7 +81,7 @@ export class MarketDataService {
       where: {
         timestamp: {
           gte: startTime,
-          lte: end ? dayjs(end).valueOf() : undefined,
+          lte: endTime,
         },
         interval,
         symbol,
@@ -103,13 +105,11 @@ export class MarketDataService {
   }
 
   async downloadBars(params: DownloadParams): Promise<number> {
-    const { start, end, interval, symbol } = params;
-
-    // const broker = await this.brokerMgr.getBroker();
+    const { startDate, endDate, interval, symbol } = params;
 
     const bars = await this.getBarsFromBroker({
-      start,
-      end,
+      startDate,
+      endDate,
       interval,
       symbol,
     });

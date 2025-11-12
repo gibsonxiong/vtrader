@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { VxeGridListeners, VxeGridProps } from '#/adapter/vxe-table';
+import type { VxeGridListeners, VxeGridProps, VxeTablePropTypes } from '#/adapter/vxe-table';
 
 import { Page } from '@vtrader/common-ui';
 import { Tag, Form, Input, Select, Button, Row, Col, message, Modal } from 'ant-design-vue';
@@ -23,6 +23,11 @@ const defaultQuery = {
 };
 const queryParams = reactive({...defaultQuery});
 
+const sortObj = reactive({
+  field: 'startDate',
+  order: 'desc' as VxeTablePropTypes.SortOrder,
+});
+
 const state = reactive({
   data: [] as any[],
   loading: false,
@@ -34,7 +39,7 @@ const gridOptions: VxeGridProps<any> = {
     { field: 'id', title: 'ID', width: 60 },
     { field: 'strategyName', title: '策略名称', width: 150 },
     { field: 'symbol', title: '交易对', width: 180 },
-    { field: 'interval', title: '时间间隔', width: 80 },
+    { field: 'interval', title: '时间间隔', width: 120 },
     { 
       field: 'startDate', 
       title: '开始时间', 
@@ -57,7 +62,9 @@ const gridOptions: VxeGridProps<any> = {
       field: 'totalReturnPercent', 
       title: '总收益率', 
       width: 120,
-      slots: { default: 'totalReturnPercent' }
+      sortable: true,
+      className: ({ row }) => row.totalReturnPercent > 0 ? 'text-red-500' : 'text-green-500',
+      formatter: ({ cellValue }) => Number(cellValue * 100).toFixed(2) + '%'
     },
     // { 
     //   field: 'maxDrawdown', 
@@ -69,6 +76,8 @@ const gridOptions: VxeGridProps<any> = {
       field: 'maxDrawdownPercent', 
       title: '最大回撤率', 
       width: 120,
+      sortable: true,
+      className: ({ row }) => row.maxDrawdownPercent > 0 ? 'text-red-500' : 'text-green-500',
       formatter: ({ cellValue }) => Number(cellValue * 100).toFixed(2) + '%'
     },
     {
@@ -88,13 +97,21 @@ const gridOptions: VxeGridProps<any> = {
     pageSizes: globalTableConfig.pagination.pageSizes,
     total: state.total,
   },
-  sortConfig: globalTableConfig.table.sortConfig,
+  sortConfig: {
+    defaultSort: { field: sortObj.field, order: sortObj.order },
+    remote: true,
+  },
 };
 
 const gridEvents: VxeGridListeners<any> = {
   pageChange: ({ currentPage, pageSize }) => {
     queryParams.currentPage = currentPage;
     queryParams.pageSize = pageSize;
+    fetchData();
+  },
+  sortChange: ({ field, order }) => {
+    sortObj.field = field;
+    sortObj.order = order;
     fetchData();
   },
 };
@@ -135,6 +152,9 @@ const fetchData = async () => {
         symbol: queryParams.symbol,
         interval: queryParams.interval,
       },
+      // orderBy: {
+      //   [sortObj.field]: sortObj.order,
+      // },
       take: queryParams.pageSize,
       skip: (queryParams.currentPage - 1) * queryParams.pageSize,
     });

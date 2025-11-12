@@ -109,7 +109,8 @@ export class RestApi {
     // Prepare history list
     const history: BarData[] = [];
     const limit = 1500;
-    let startTime = dayjs(req.start).valueOf();
+    let startTime = dayjs(req.startDate).valueOf();
+    let endTime = dayjs(req.endDate).valueOf();
 
     while (true) {
       // Create query parameters
@@ -118,11 +119,12 @@ export class RestApi {
         interval: INTERVAL_VT2BINANCE[req.interval],
         limit,
         startTime,
+        endTime,
       };
 
-      if (req.end) {
-        params.endTime = dayjs(req.end).valueOf();
-      }
+      // if (req.endDate) {
+      //   params.endTime = dayjs(req.endDate).valueOf();
+      // }
 
       try {
         const response = await this.client.get('/fapi/v1/klines', { params });
@@ -159,19 +161,19 @@ export class RestApi {
           callback(buf);
         }
 
-        const msg = `K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`;
-        this.broker.writeLog(msg);
+        this.broker.writeLog(`K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`);
 
+        const lastTimestamp = buf[buf.length - 1].timestamp;
         // Break the loop if the latest data received
         if (
           data.length < limit ||
-          (req.end && dayjs(buf[buf.length - 1].timestamp).valueOf() >= dayjs(req.end).valueOf())
+          (lastTimestamp >= endTime)
         ) {
           break;
         }
 
         // Update query start time
-        const lastTimestamp = buf[buf.length - 1].timestamp;
+       
         startTime = this.getNextStartTime(lastTimestamp, req.interval);
 
         // Wait to meet request flow limit
@@ -182,9 +184,11 @@ export class RestApi {
       }
     }
 
-    if (history[history.length - 1]?.timestamp === dayjs(req.end).valueOf()) {
-      history.pop();
-    }
+    this.broker.writeLog(`K线历史数据查询完成，共${history.length}条数据`);
+
+    // if (history[history.length - 1]?.timestamp === dayjs(req.endDate).valueOf()) {
+    //   history.pop();
+    // }
 
     return history;
   }

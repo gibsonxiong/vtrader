@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 
 import { Get, Query, Post, Body } from '@nestjs/common';
-import { MarketDataService, type GetBarsParams } from './market-data.service';
+import { MarketDataService, type DownloadParams, type GetBarsParams } from './market-data.service';
 import { Interval } from '@vtrader/shared';
 
 @Controller('market-data')
@@ -10,7 +10,6 @@ export class MarketDataController {
 
   /**
    * 获取所有合约
-   * GET /market-data/contracts
    */
   @Post('getContracts')
   async getAllContracts() {
@@ -19,7 +18,6 @@ export class MarketDataController {
 
   /**
    * 获取K线数据
-   * GET /market-data/bars?symbol=BTCUSDT:USDT&interval=1m&start=2024-01-01&end=2024-02-01&preload=100
    */
   @Post('getBars')
   async getBars(
@@ -31,32 +29,20 @@ export class MarketDataController {
 
   /**
    * 下载并入库K线数据
-   * POST /market-data/download
-   * body: { symbol, interval, start, end? }
    */
   @Post('download')
   async downloadBars(
     @Body()
-    body: {
-      symbol: string;
-      interval: string; // 将在运行时转换为 Interval
-      start: string;
-      end?: string;
-    },
+    body: DownloadParams,
   ) {
-    const { symbol, interval, start, end } = body;
+    const { symbol, interval, startDate, endDate } = body;
 
-    if (!symbol || !interval || !start) {
-      throw new Error('symbol, interval, start 为必填参数');
-    }
-
-    const intervalTyped = interval as Interval;
 
     const count = await this.marketDataService.downloadBars({
       symbol,
-      interval: intervalTyped,
-      start,
-      end,
+      interval,
+      startDate,
+      endDate,
     });
 
     return { count };

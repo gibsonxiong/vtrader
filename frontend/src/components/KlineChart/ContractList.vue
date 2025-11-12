@@ -88,8 +88,7 @@ defineExpose({
 }
 
 .contract-search {
-  padding: 12px;
-  
+  padding: 12px 0;
 }
 
 .search-input {

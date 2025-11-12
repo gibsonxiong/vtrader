@@ -144,35 +144,6 @@ const buildBasicInfoRows = () => {
   return rows;
 };
 
-// 新增：构建回测结果比较行（为每个对比填充动态列）
-// const buildResultRows = () => {
-//   if (!state.data) return [] as any[];
-//   const rows: any[] = [
-    
-//     { key: 'annual_return', label: '年化收益率', type: 'percentage', currentRaw: state.data.annual_return ?? null, current: formatPercentage(state.data.annual_return) },
-//     { key: 'max_drawdown', label: '最大回撤', type: 'percentage', currentRaw: state.data.max_drawdown ?? null, current: formatPercentage(state.data.max_drawdown) },
-//     { key: 'sharpe_ratio', label: '夏普比率', type: 'number', currentRaw: state.data.sharpe_ratio ?? null, current: formatNumber(state.data.sharpe_ratio, 3) },
-//     { key: 'total_trades', label: '总交易次数', type: 'number', currentRaw: state.data.total_trades ?? null, current: state.data.total_trades ?? '--' },
-//     { key: 'win_rate', label: '胜率', type: 'percentage', currentRaw: state.data.win_rate ?? null, current: formatPercentage(state.data.win_rate) },
-//   ];
-//   compares.forEach((c) => {
-//     rows.forEach((row) => {
-//       let v: any = '--';
-//       let vr: number | null = null;
-//       switch (row.key) {
-//         case 'totalReturnPercent': vr = c.data?.totalReturnPercent ?? null; v = c.data ? formatPercentage(c.data.totalReturnPercent) : '--'; break;
-//         case 'annual_return': vr = c.data?.annual_return ?? null; v = c.data ? formatPercentage(c.data.annual_return) : '--'; break;
-//         case 'max_drawdown': vr = c.data?.max_drawdown ?? null; v = c.data ? formatPercentage(c.data.max_drawdown) : '--'; break;
-//         case 'sharpe_ratio': vr = c.data?.sharpe_ratio ?? null; v = c.data ? formatNumber(c.data.sharpe_ratio, 3) : '--'; break;
-//         case 'total_trades': vr = c.data?.total_trades ?? null; v = c.data ? (c.data.total_trades ?? '--') : '--'; break;
-//         case 'win_rate': vr = c.data?.win_rate ?? null; v = c.data ? formatPercentage(c.data.win_rate) : '--'; break;
-//       }
-//       row[`compare_${c.id}`] = v;
-//       row[`compareRaw_${c.id}`] = vr;
-//     });
-//   });
-//   return rows;
-// };
 const combinedRows = computed(() => {
   const basic = buildBasicInfoRows();
   // const result = buildResultRows();
@@ -202,12 +173,26 @@ const diffColor = (current: number | null, compare: number | null): string | und
         <div v-if="state.data" class="space-y-6">
           <!-- Tab导航 -->
           <Tabs v-model:activeKey="state.activeTab" type="card" class="mb-4">
-            <Tabs.TabPane key="1" tab="概况">
-              <!-- 概况内容 -->
-              <!-- 已按你的要求移除：基本信息卡片 和 回测结果卡片 -->
-              
+              <Tabs.TabPane key="1" tab="交易分析">
+              <!-- 每日收益图表 -->
+              <Card title="每日收益">
+                <DailyProfitChart :daily-results="state.data?.dailyResults || []" />
+              </Card>
+              <!-- 交易分析内容 -->
+              <TradingAnalysis
+                v-if="state.data"
+                :backtest-id="state.data?.id" 
+                :symbol="state.data?.symbol"
+                :interval="state.data?.interval"
+                :start="dayjs(state.data?.startDate)"
+                :end="dayjs(state.data?.endDate)"
+                :trades="state.data?.trades" 
+              />
+            </Tabs.TabPane>
+
+            <Tabs.TabPane key="2" tab="概况">
               <!-- 对比设置（支持多回测对比） -->
-              <Card title="对比设置" class="shadow-sm">
+              <Card title="对比设置">
                 <Row :gutter="12" align="middle">
                   <Col :span="8">
                     <Input v-model:value="compare.id" placeholder="请输入对比回测ID" />
@@ -234,7 +219,7 @@ const diffColor = (current: number | null, compare: number | null): string | und
               </Card>
               
               <!-- 综合对比表格 -->
-              <Card title="综合对比" class="shadow-sm">
+              <Card title="综合对比">
                 <Table
                   :columns="compareColumns"
                   :data-source="combinedRows"
@@ -289,22 +274,7 @@ const diffColor = (current: number | null, compare: number | null): string | und
               
             </Tabs.TabPane>
             
-            <Tabs.TabPane key="3" tab="交易分析">
-              <!-- 每日收益图表 -->
-              <Card title="每日收益" class="shadow-sm">
-                <DailyProfitChart :daily-results="state.data?.dailyResults || []" />
-              </Card>
-              <!-- 交易分析内容 -->
-              <TradingAnalysis
-                v-if="state.data"
-                :backtest-id="state.data?.id" 
-                :symbol="state.data?.symbol"
-                :interval="state.data?.interval"
-                :start="dayjs(state.data?.startDate)"
-                :end="dayjs(state.data?.endDate)"
-                :trades="state.data?.trades" 
-              />
-            </Tabs.TabPane>
+
           </Tabs>
         </div>
         
@@ -324,9 +294,5 @@ const diffColor = (current: number | null, compare: number | null): string | und
 
 .ant-card {
   border-radius: 8px;
-}
-
-.shadow-sm {
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
 }
 </style>

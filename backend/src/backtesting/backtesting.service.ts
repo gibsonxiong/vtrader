@@ -132,8 +132,8 @@ export class BacktestingService implements StrategyEngine {
       const bars = await this.marketDataService.getBarsFromDb({
         symbol: symbol,
         interval: this.interval,
-        start: this.startDate,
-        end: this.endDate,
+        startDate: this.startDate,
+        endDate: this.endDate,
         preload: preloadCount,
       });
 
@@ -144,8 +144,8 @@ export class BacktestingService implements StrategyEngine {
       // } else if (symbol === 'ETHUSDT:USDT') {
       //   bars = ethData as BarData[];
       // }
-  
-      this.historyData.push(...bars);
+
+      this.historyData = this.historyData.concat(bars);
     }
 
     this.historyData.sort((a, b) => {
@@ -357,16 +357,19 @@ export class BacktestingService implements StrategyEngine {
         peak = balance;
       }
 
-      const drawdown = peak - balance;
+      const drawdown = balance - peak;
       const drawdownPercent = drawdown / peak;
 
-      if (drawdown > maxDrawdown) {
-        maxDrawdown = drawdown;
-      }
+      maxDrawdown = Math.min(maxDrawdown, drawdown);
+      maxDrawdownPercent = Math.min(maxDrawdownPercent, drawdownPercent);
 
-      if (drawdownPercent > maxDrawdownPercent) {
-        maxDrawdownPercent = drawdownPercent;
-      }
+      // if (drawdown > maxDrawdown) {
+      //   maxDrawdown = drawdown;
+      // }
+
+      // if (drawdownPercent > maxDrawdownPercent) {
+      //   maxDrawdownPercent = drawdownPercent;
+      // }
     }
 
 
@@ -473,7 +476,6 @@ export class BacktestingService implements StrategyEngine {
         where
       })
     ]);
-
     return { data, total };
   }
 

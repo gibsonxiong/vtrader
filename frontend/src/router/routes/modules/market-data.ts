@@ -17,7 +17,7 @@ const routes: RouteRecordRaw[] = [
         path: 'list',
         component: () => import('#/views/market-data/list/index.vue'),
         meta: {
-          title: $t('列表'),
+          title: $t('行情数据'),
         },
       },
     ],

@@ -25,8 +25,6 @@ export class BacktestingProcessor {
     await job.progress(0);
     
     try {
-      // 阻塞10秒，等待数据加载完成
-      await new Promise(resolve => setTimeout(resolve, 30000));
       // 设置回测参数
       await this.backtestingService.setSetting(data);
       await job.progress(20);

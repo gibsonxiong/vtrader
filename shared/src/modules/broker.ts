@@ -44,8 +44,8 @@ export interface CancelOrderRequest {
  */
 export interface HistoryRequest {
   symbol: string;
-  start: string;
-  end?: string;
+  startDate: string;
+  endDate?: string;
   interval: Interval;
 }
 

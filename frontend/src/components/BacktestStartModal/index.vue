@@ -27,7 +27,7 @@ const formState = reactive({
   symbols: ['BTCUSDT:USDT'],
   interval: Interval.MINUTE_1,
   startDate: dayjs().subtract(4, 'day'),
-  endDate: dayjs().add(1, 'd'),
+  endDate: dayjs(),
   commissionRate: 0.0005,
   balance: 100_000,
 });

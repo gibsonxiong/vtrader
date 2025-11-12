@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Modal, message, DatePicker } from 'ant-design-vue';
+import { Modal, message, DatePicker, Select, SelectOption } from 'ant-design-vue';
 import { computed, ref, onMounted, onBeforeUnmount, watch, defineExpose, nextTick, reactive } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { init, dispose, utils } from 'klinecharts';
@@ -8,14 +8,15 @@ import { getBarsApi, type MarketDataApi } from '#/api';
 import { Direction, Interval, Offset, type BarData, type TradeData } from '@vtrader/shared';
 import ContractList from './ContractList.vue';
 import './signal-overlay';
+import ScrollPannel from './ScrollPannel.vue';
 
 type ContractData = MarketDataApi.ContractData;
 
 interface Props {
   symbol: string;
   interval: Interval;
-  start: Dayjs;
-  end: Dayjs;
+  startDate: Dayjs;
+  endDate: Dayjs;
   trades?: TradeData[];
 }
 
@@ -29,15 +30,33 @@ const emit = defineEmits<{
 const innerProps = reactive({
   symbol: props.symbol,
   interval: props.interval,
-  start: props.start,
-  end: props.end,
+  startDate: props.startDate,
+  endDate: props.endDate,
 })
 const loading = ref(false);
 const showContractModal = ref(false);
 const contractListRef = ref<InstanceType<typeof ContractList> | null>(null);
 
+const scrollPanelOpen = ref(false);
+function onScrollLeft() {
+  klineChart?.scrollToDataIndex(0, 300);
+}
+
+function onScrollRight() {
+  klineChart?.scrollToDataIndex(klineChart.getDataList().length - 1, 300);
+}
+
+function onScrollCustom(date: string) {
+  const timestamp = dayjs(date).valueOf();
+  klineChart?.scrollToTimestamp(timestamp, 300);
+}
+
+function openScrollPanel() {
+  scrollPanelOpen.value = true;
+}
+
 // 工具栏相关
-const periodOptions = [
+const IntervalOptions = [
   { label: '1m', value: Interval.MINUTE_1 },
   { label: '5m', value: Interval.MINUTE_5 },
   { label: '15m', value: Interval.MINUTE_15 },
@@ -47,14 +66,14 @@ const periodOptions = [
   { label: 'D', value: Interval.DAILY_1 },
   { label: 'W', value: Interval.WEEKLY_1 },
   { label: 'M', value: Interval.MONTHLY_1 },
-  { label: 'Y', value: Interval.MONTHLY_1 }, // 暂时使用月线代替年线
 ]
 
 const isFullscreen = ref(false)
-
 const chartDivRef = ref<HTMLDivElement | null>(null);
 let klineChart: Chart | null = null;
 let resizeObserver: ResizeObserver | null = null;
+// 记录最近一次加载的数据长度，用于滚动到最右边
+const lastDataIndex = ref<number>(0);
 
 // 交易信号类型
 interface TradeSignal {
@@ -95,9 +114,7 @@ function handleSettings() {
   message.info('设置功能开发中...');
 }
 
-function handleScreenshot() {
-  message.info('截屏功能开发中...');
-}
+
 
 
 function mapBarsToKLineData(list: BarData[]) {
@@ -247,46 +264,16 @@ function updateTradeSignals(data: BarData[]) {
 }
 
 async function fetchBars() {
-  if (!klineChart) {
-    message.error('图表未初始化');
-    return;
-  }
-  try {
-    loading.value = true;
-    const period = intervalToPeriod(innerProps.interval);
-    // 设置交易对与周期，v10 推荐通过 setDataLoader 提供数据
-    klineChart.setSymbol({ ticker: innerProps.symbol });
-    klineChart.setPeriod(period);
+  // if (!klineChart) {
+  //   message.error('图表未初始化');
+  //   return;
+  // }
 
-    klineChart.setDataLoader({
-      getBars: async ({ callback }) => {
-        try {
-          const params: MarketDataApi.BarQueryParams = {
-            symbol: innerProps.symbol,
-            interval: innerProps.interval,
-            start: innerProps.start?.format('YYYY-MM-DD'),
-            source: 'db',
-          };
-          if (innerProps.end) params.end = innerProps.end.format('YYYY-MM-DD');
-          
-          const {data} = await getBarsApi(params);
-          callback(mapBarsToKLineData(data));
-          updateTradeSignals(data);
-          nextTick(() => {
-            klineChart?.scrollToDataIndex(100, 0);
-          });
-        } catch (err: any) {
-          message.error('获取K线失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
-          callback([]);
-        } finally {
-          loading.value = false;
-        }
-      },
-    });
-  } catch (err: any) {
-    loading.value = false;
-    message.error('获取K线失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
-  }
+  const period = intervalToPeriod(innerProps.interval);
+  // 设置交易对与周期，v10 推荐通过 setDataLoader 提供数据
+  klineChart?.setSymbol({ ticker: innerProps.symbol });
+  klineChart?.setPeriod(period);
+  klineChart?.resetData();
 }
 
 
@@ -298,71 +285,127 @@ watch(() => props, () => {
   deep: true,
 });
 
-watch(() => innerProps, () => {
-  fetchBars();
-}, {
-  deep: true,
+watch(() => innerProps.symbol, () => {
+  klineChart?.setSymbol({ ticker: innerProps.symbol });
 })
 
-// // 监听 trades 属性变化
-// watch(() => props.trades, () => {
-//   updateTradeSignals();
-// }, {
-//   deep: true,
-//   immediate: true,
-// });
+watch(() => innerProps.interval, () => {
+  const period = intervalToPeriod(innerProps.interval);
+  klineChart?.setPeriod(period);
+})
+
+// watch(() => innerProps.startDate, () => {
+//   klineChart?.resetData();
+// })
+
 
 onMounted(() => {
-  if (chartDivRef.value) {
-    klineChart = init(chartDivRef.value, {
-      locale: 'zh-CN',
-      styles: 'custom',
-      formatter: {
-        formatDate: ({
-          dateTimeFormat,
-          timestamp,
-          type
-        }) => {
-          // switch (type) {
-          //   case 'tooltip': {
-          //     return utils.formatDate(dateTimeFormat, timestamp, 'YYYY-MM-DD HH:mm')
-          //   }
-          //   case 'crosshair': {
-          //     return utils.formatDate(dateTimeFormat, timestamp, 'YYYY-MM-DD')
-          //   }
-          //   case 'xAxis': {
-          //     return utils.formatDate(dateTimeFormat, timestamp, 'MM-DD')
-          //   }
-          //   default: 
-          //     return utils.formatDate(dateTimeFormat, timestamp, 'MM-DD HH:mm')
-          // }
-          return utils.formatDate(dateTimeFormat, timestamp, 'YYYY-MM-DD HH:mm')
-        }
+  if (!chartDivRef.value) return;
+
+  klineChart = init(chartDivRef.value, {
+    locale: 'zh-CN',
+    styles: 'custom',
+    formatter: {
+      formatDate: ({
+        dateTimeFormat,
+        timestamp,
+        type
+      }) => {
+        // switch (type) {
+        //   case 'tooltip': {
+        //     return utils.formatDate(dateTimeFormat, timestamp, 'YYYY-MM-DD HH:mm')
+        //   }
+        //   case 'crosshair': {
+        //     return utils.formatDate(dateTimeFormat, timestamp, 'YYYY-MM-DD')
+        //   }
+        //   case 'xAxis': {
+        //     return utils.formatDate(dateTimeFormat, timestamp, 'MM-DD')
+        //   }
+        //   default: 
+        //     return utils.formatDate(dateTimeFormat, timestamp, 'MM-DD HH:mm')
+        // }
+        return utils.formatDate(dateTimeFormat, timestamp, 'YYYY-MM-DD HH:mm')
       }
-    });
-
-    if (!klineChart) return;
-
-    // 在底部新增成交量指标面板（VOL），高度约 100px
-    try {
-      klineChart.createIndicator({
-        name: 'VOL',
-        calcParams: [],
-        series: 'normal',
-      }, false, { 
-        height: 100,
-      });
-    } catch (e) {
-      // 忽略可能的 v10 alpha 版本 API 差异导致的异常，不影响主图显示
-      console.warn('Create VOL indicator failed:', e);
     }
+  });
 
-    // 设置 ResizeObserver 监听容器大小变化
-    setupResizeObserver();
+  if (!klineChart) return;
 
-    // 首次加载
-    fetchBars();
+  let i = 0;
+  let intervalId = 0;
+
+  klineChart.setDataLoader({
+    getBars: async ({ callback, type }) => {
+      debugger;
+      loading.value = true;
+      console.log('getBars type', type)
+      try {
+        const params: MarketDataApi.BarQueryParams = {
+          symbol: innerProps.symbol,
+          interval: innerProps.interval,
+          startDate: innerProps.startDate.format('YYYY-MM-DD'),
+          endDate: innerProps.endDate.format('YYYY-MM-DD'),
+          source: 'db',
+        };
+        
+        const {data} = await getBarsApi(params);
+        callback(mapBarsToKLineData(data));
+        updateTradeSignals(data);
+      } catch (err: any) {
+        message.error('获取K线失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
+        callback([]);
+      } finally {
+        loading.value = false;
+      }
+    },
+    // TODO
+    // subscribeBar: ({ symbol, period, callback }) => {
+    //   console.log(symbol, period);
+
+    //   const data = klineChart?.getDataList() || [];
+    //   const last = data[data?.length - 1];
+
+    //   if (last) {
+    //     intervalId = window.setInterval(() => {
+    //       callback({
+    //         timestamp: last.timestamp,
+    //         open: last.open + i * 23,
+    //         high:last.high + i * 23,
+    //         low: last.low + i * 23,
+    //         close: last.close + i * 23,
+    //         volume: last.volume,
+    //         turnover:last.turnover,
+    //       });
+    //       i++;
+    //     }, 2000)
+    //   }
+    // },
+    // unsubscribeBar: ({ symbol, period }) => {
+    //   console.log(symbol, period);
+    //   clearInterval(intervalId);
+    // },
+
+  });
+
+  // 在底部新增成交量指标面板（VOL），高度约 100px
+  try {
+    klineChart.createIndicator({
+      name: 'VOL',
+      calcParams: [],
+      series: 'normal',
+    }, false, { 
+      height: 100,
+    });
+  } catch (e) {
+    // 忽略可能的 v10 alpha 版本 API 差异导致的异常，不影响主图显示
+    console.warn('Create VOL indicator failed:', e);
   }
+
+  // 设置 ResizeObserver 监听容器大小变化
+  setupResizeObserver();
+
+  // 首次加载
+  fetchBars();
 });
 
 onBeforeUnmount(() => {
@@ -390,23 +433,22 @@ defineExpose({
           <button class="contract-selector-btn" @click="showContractSelector" title="选择合约">
             {{ innerProps.symbol }}
           </button>
-          <div class="period-buttons">
-            <button
-              v-for="period in periodOptions"
+          <Select
+            v-model:value="innerProps.interval"
+            style="width: 100px"
+          >
+            <SelectOption 
+              v-for="period in IntervalOptions"
               :key="period.value"
-              class="period-btn"
-              :class="{ active: innerProps.interval === period.value }"
-              @click="changeInterval(period.value)"
-            >
-              {{ period.label }}
-            </button>
-          </div>
+              :value="period.value"
+            >{{ period.label }}</SelectOption>
+          </Select>
           
           <!-- 日期选择器 -->
           <div class="date-selectors">
             <div class="date-selector-group">
               <DatePicker
-                v-model:value="innerProps.start"
+                v-model:value="innerProps.startDate"
                 format="YYYY-MM-DD"
                 placeholder="选择开始日期"
                 class="date-picker"
@@ -415,7 +457,7 @@ defineExpose({
             </div>
             <div class="date-selector-group">
               <DatePicker
-                v-model:value="innerProps.end"
+                v-model:value="innerProps.endDate"
                 format="YYYY-MM-DD"
                 placeholder="选择结束日期"
                 class="date-picker"
@@ -425,17 +467,17 @@ defineExpose({
           </div>
         </div>
         <div class="toolbar-right">
+          <button class="tool-btn" @click="openScrollPanel" title="滚动">
+            滚动
+          </button>
           <button class="tool-btn" @click="handleIndicators" title="指标">
-            📊 指标
+            指标
           </button>
           <button class="tool-btn" @click="handleSettings" title="设置">
-            ⚙️ 设置
-          </button>
-          <button class="tool-btn" @click="handleScreenshot" title="截屏">
-            📷 截屏
+            设置
           </button>
           <button class="tool-btn" @click="toggleFullscreen" title="全屏">
-            🔍 全屏
+            全屏
           </button>
         </div>
       </div>
@@ -463,6 +505,14 @@ defineExpose({
           @contractSelected="onContractSelected"
         />
       </Modal>
+
+      <!-- 滚动弹窗 -->
+      <ScrollPannel
+        v-model:open="scrollPanelOpen"
+        @scrollLeft="onScrollLeft"
+        @scrollRight="onScrollRight"
+        @scrollCustom="onScrollCustom"
+      />
     </div>
   </div>
 </template>
@@ -471,6 +521,7 @@ defineExpose({
 .market-data-chart {
   height: 700px;
   width: 100%;
+  background: #fff;
 }
 
 .chart-container {
@@ -486,7 +537,7 @@ defineExpose({
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  background: #fafafa;
+  /* background: #fff; */
   border-bottom: 1px solid #e8e8e8;
   min-height: 48px;
 }
@@ -498,8 +549,8 @@ defineExpose({
 }
 
 .contract-selector-btn {
-  padding: 6px 12px;
-  border: 1px solid #d9d9d9;
+  padding: 6px 6px;
+  /* border: 1px solid #d9d9d9; */
   background: white;
   border-radius: 4px;
   cursor: pointer;
@@ -508,7 +559,7 @@ defineExpose({
   color: #262626;
   transition: all 0.2s;
   min-width: 120px;
-  text-align: left;
+  text-align: center;
 }
 
 .contract-selector-btn:hover {
@@ -516,31 +567,6 @@ defineExpose({
   color: #40a9ff;
 }
 
-.period-buttons {
-  display: flex;
-  gap: 4px;
-}
-
-.period-btn {
-  padding: 4px 8px;
-  border: 1px solid #d9d9d9;
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.2s;
-}
-
-.period-btn:hover {
-  border-color: #40a9ff;
-  color: #40a9ff;
-}
-
-.period-btn.active {
-  background: #1890ff;
-  border-color: #1890ff;
-  color: white;
-}
 
 .date-selectors {
   display: flex;
@@ -577,6 +603,7 @@ defineExpose({
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
+  color: #666;
   transition: all 0.2s;
 }
 

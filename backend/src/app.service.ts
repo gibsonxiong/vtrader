@@ -28,8 +28,8 @@ export class AppService {
   // 获取K线
   async getBars(): Promise<void> {
     const bars = await this.marketDataService.getBarsFromDb({
-      start: '2022-01-01',
-      end: '2025-01-02',
+      startDate: '2022-01-01',
+      endDate: '2025-01-02',
       interval: Interval.MINUTE_15,
       symbol: 'BTCUSDT:USDT',
     });
@@ -40,8 +40,8 @@ export class AppService {
   // 下载K线
   async downlaod(): Promise<void> {
     const count = await this.marketDataService.downloadBars({
-      start: '2025-07-01',
-      // end: '2025-05-02',
+      startDate: '2025-07-01',
+      // endDate: '2025-05-02',
       interval: Interval.MINUTE_1,
       symbol: 'BTCUSDT:USDT',
     });
