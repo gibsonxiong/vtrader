@@ -1,5 +1,5 @@
 import type { ContractData } from '@vtrader/shared';
-import type { BinanceLinearBroker } from './binance-linear-broker';
+import type { BinanceLinearBroker } from './broker';
 
 import * as crypto from 'node:crypto';
 
@@ -11,8 +11,6 @@ import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
   PRODUCT_BINANCE2VT,
-  REAL_REST_HOST,
-  TESTNET_REST_HOST,
 } from './constants';
 import { HistoryRequest } from '@vtrader/shared';
 
@@ -28,6 +26,7 @@ export class RestApi {
   private keepAliveCount: number = 0;
   private server: string = '';
   private timeOffset: number = 0;
+  private host: string = '';
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -40,17 +39,17 @@ export class RestApi {
   public async connect(
     apiKey: string,
     apiSecret: string,
-    server: string,
-    proxyHost?: string,
-    proxyPort?: number,
+    // server: string,
+    // proxyHost?: string,
+    // proxyPort?: number,
   ): Promise<void> {
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
-    this.server = server;
+    // this.server = server;
 
-    const baseURL = server === 'REAL' ? REAL_REST_HOST : TESTNET_REST_HOST;
+    // const baseURL = server === 'REAL' ? REAL_REST_HOST : TESTNET_REST_HOST;
     this.client = axios.create({
-      baseURL,
+      baseURL: this.broker.REST_HOST,
       // proxy: proxyHost && proxyPort ? {
       //   host: proxyHost,
       //   port: proxyPort,

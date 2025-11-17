@@ -1,9 +1,8 @@
-import type { BinanceLinearBroker } from './binance-linear-broker';
+import type { BinanceLinearBroker } from './broker';
 
 import WebSocket from 'ws';
 
 import { BarData, Interval, TickData } from '@vtrader/shared';
-import { REAL_DATA_HOST, TESTNET_DATA_HOST } from './constants';
 import { SubscribeRequest } from '@vtrader/shared';
 
 /**
@@ -11,7 +10,6 @@ import { SubscribeRequest } from '@vtrader/shared';
  */
 export class MdApi {
   private broker: BinanceLinearBroker;
-  private klineStream: boolean = false;
   private subscriptions: Set<string> = new Set();
   private ws: null | WebSocket = null;
 
@@ -23,17 +21,15 @@ export class MdApi {
    * 连接到市场数据API
    */
   public async connect(
-    server: string,
-    klineStream: boolean,
-    proxyHost?: string,
-    proxyPort?: number,
+    // klineStream: boolean,
+    // server: string,
+    // proxyHost?: string,
+    // proxyPort?: number,
   ): Promise<void> {
-    this.klineStream = klineStream;
-
-    const wsUrl = server === 'REAL' ? REAL_DATA_HOST : TESTNET_DATA_HOST;
+    // const wsUrl = server === 'REAL' ? REAL_DATA_HOST : TESTNET_DATA_HOST;
 
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(wsUrl);
+      this.ws = new WebSocket(this.broker.DATA_HOST);
 
       this.ws.on('open', () => {
         this.broker.writeLog('市场数据WebSocket连接成功');
@@ -68,7 +64,7 @@ export class MdApi {
   /**
    * 订阅市场数据
    */
-  public subscribe(req: SubscribeRequest): void {
+  public subscribeBar(req: SubscribeRequest): void {
     const contract = this.broker.getContractBySymbol(req.symbol);
     if (!contract) {
       this.broker.writeLog(`找不到合约: ${req.symbol}`);
@@ -77,21 +73,43 @@ export class MdApi {
 
     const symbol = contract.name.toLowerCase();
 
-    // 订阅Ticker数据
-    const tickerStream = `${symbol}@ticker`;
-    this.subscriptions.add(tickerStream);
+    // // 订阅Ticker数据
+    // const tickerStream = `${symbol}@ticker`;
+    // this.subscriptions.add(tickerStream);
 
-    // 订阅深度数据
-    const depthStream = `${symbol}@depth5@100ms`;
-    this.subscriptions.add(depthStream);
+    // // 订阅深度数据
+    // const depthStream = `${symbol}@depth5@100ms`;
+    // this.subscriptions.add(depthStream);
 
     // 如果启用K线流，订阅K线数据
-    if (this.klineStream) {
-      const klineStream = `${symbol}@kline_1m`;
-      this.subscriptions.add(klineStream);
+    const params = [`${symbol}@kline_${req.interval}`];
+    // this.subscriptions.add(klineStream);
+
+    this.send('SUBSCRIBE', params);
+  }
+
+  /**取消订阅*/
+  public unsubscribeBar(req: SubscribeRequest): void {
+    const contract = this.broker.getContractBySymbol(req.symbol);
+    if (!contract) {
+      return;
     }
 
-    this.sendSubscribe();
+    const symbol = contract.name.toLowerCase();
+
+    // // 取消订阅Ticker数据
+    // const tickerStream = `${symbol}@ticker`;
+    // this.subscriptions.delete(tickerStream);
+
+    // // 取消订阅深度数据
+    // const depthStream = `${symbol}@depth5@100ms`;
+    // this.subscriptions.delete(depthStream);
+
+    // 如果启用K线流，取消订阅K线数据
+    const params = [`${symbol}@kline_${req.interval}`];
+    // this.subscriptions.delete(klineStream);
+
+    this.send('UNSUBSCRIBE', params);
   }
 
   /**
@@ -162,7 +180,7 @@ export class MdApi {
     const bar: BarData = {
       symbol: contract.symbol,
       timestamp: kline.t,
-      interval: Interval.MINUTE_1,
+      interval: kline.i as Interval,
       volume: Number.parseFloat(kline.v),
       open: Number.parseFloat(kline.o),
       high: Number.parseFloat(kline.h),
@@ -179,6 +197,8 @@ export class MdApi {
   private onMessage(data: string): void {
     try {
       const msg = JSON.parse(data);
+
+      console.log('md onMessage', msg)
 
       if (msg.stream) {
         const stream = msg.stream;
@@ -247,14 +267,14 @@ export class MdApi {
   /**
    * 发送订阅请求
    */
-  private sendSubscribe(): void {
+  private send(method: string, params: any[]): void {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
       return;
     }
 
     const req = {
-      method: 'SUBSCRIBE',
-      params: [...this.subscriptions],
+      method,
+      params,
       id: Date.now(),
     };
 

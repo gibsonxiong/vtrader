@@ -1,10 +1,10 @@
 import type { AccountData, OrderData, PositionData, TradeData } from '@vtrader/shared';
-import type { BinanceLinearBroker } from './binance-linear-broker';
+import type { BinanceLinearBroker } from './broker';
 
 import WebSocket from 'ws';
 
 import { Direction, Offset, OrderType } from '@vtrader/shared';
-import { REAL_USER_HOST, STATUS_BINANCE2VT, TESTNET_USER_HOST } from './constants';
+import { STATUS_BINANCE2VT } from './constants';
 
 function binance2offset(direction: 'LONG' | 'SHORT', side: 'BUY' | 'SELL'): Offset {
   if (direction === 'LONG') {
@@ -28,10 +28,10 @@ export class UserApi {
   /**
    * 连接到用户数据API
    */
-  public async connect(listenKey: string, server: string): Promise<void> {
-    const wsUrl = `${server === 'REAL' ? REAL_USER_HOST : TESTNET_USER_HOST}${listenKey}`;
+  public async connect(listenKey: string): Promise<void> {
+    // const wsUrl = `${server === 'REAL' ? REAL_USER_HOST : TESTNET_USER_HOST}${listenKey}`;
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(wsUrl);
+      this.ws = new WebSocket(`${this.broker.USER_HOST}/${listenKey}`);
 
       this.ws.on('open', () => {
         this.broker.writeLog('用户数据WebSocket连接成功');

@@ -128,6 +128,12 @@ export const tradeRequestClient = axios.create({
   responseType: 'json',
 });
 
+tradeRequestClient.interceptors.response.use((value) => {
+  return value;
+}, (error) => {
+  message.error(error.message);
+});
+
 export interface PageFetchParams {
   [key: string]: any;
   pageNo?: number;

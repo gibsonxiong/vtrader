@@ -14,7 +14,7 @@ import { RestApi } from './rest-api';
 import { TradeApi } from './trade-api';
 import {
   CancelOrderRequest,
-  GatewaySettings,
+  BrokerSettings,
   HistoryRequest,
   SendOrderRequest,
   SubscribeRequest,
@@ -27,7 +27,11 @@ import { Broker } from 'src/broker-manager/broker';
  * Binance线性合约网关
  */
 export class BinanceLinearBroker extends Broker {
-  public readonly brokerName: string = 'BINANCE_LINEAR';
+  brokerName = 'BINANCE_LINEAR';
+  REST_HOST = 'https://fapi.binance.com';
+  TRADE_HOST = 'wss://ws-fapi.binance.com/ws-fapi/v1';
+  USER_HOST = 'wss://fstream.binance.com/ws';
+  DATA_HOST = 'wss://fstream.binance.com/stream';
 
   private restApi: RestApi;
   private mdApi: MdApi;
@@ -37,6 +41,7 @@ export class BinanceLinearBroker extends Broker {
   private orders: Map<string, OrderData> = new Map();
   private nameContractMap: Map<string, ContractData> = new Map();
   private symbolContractMap: Map<string, ContractData> = new Map();
+
 
   constructor() {
     super();
@@ -49,16 +54,16 @@ export class BinanceLinearBroker extends Broker {
   /**
    * 连接到服务器
    */
-  public async connect(settings: GatewaySettings): Promise<void> {
-    const { apiKey, apiSecret, server, klineStream, proxyHost, proxyPort } = settings;
+  public async connect(settings: BrokerSettings): Promise<void> {
+    const { apiKey, apiSecret } = settings;
 
     await Promise.all([
-      this.restApi.connect(apiKey, apiSecret, server, proxyHost, proxyPort).then(() => {
-        return this.userApi.connect(this.restApi.userStreamKey, server);
+      this.restApi.connect(apiKey, apiSecret).then(() => {
+        return this.userApi.connect(this.restApi.userStreamKey);
       }),
 
-      this.tradeApi.connect(apiKey, apiSecret, server, proxyHost, proxyPort),
-      this.mdApi.connect(server, klineStream, proxyHost, proxyPort),
+      this.tradeApi.connect(apiKey, apiSecret),
+      this.mdApi.connect(),
     ]);
 
     this.writeLog('网关连接成功');
@@ -183,8 +188,15 @@ export class BinanceLinearBroker extends Broker {
   /**
    * 订阅市场数据
    */
-  public subscribe(req: SubscribeRequest): void {
-    this.mdApi.subscribe(req);
+  public subscribeBar(req: SubscribeRequest): void {
+    this.mdApi.subscribeBar(req);
+  }
+
+  /**
+   * 取消订阅市场数据
+   */
+  public unsubscribeBar(req: SubscribeRequest): void {
+    this.mdApi.unsubscribeBar(req);
   }
 
   /**
@@ -193,6 +205,13 @@ export class BinanceLinearBroker extends Broker {
   public writeLog(msg: string): void {
     console.log(`[${this.brokerName}] ${msg}`);
     this.emit('log', msg);
+  }
+
+  /**
+   * 监听K线数据
+   */
+  public watchBar(watcher: (bar: BarData) => void): void {
+    this.on('bar', watcher);
   }
 
   public watchOrder(watcher: (order: OrderData) => void): ClearHandler {

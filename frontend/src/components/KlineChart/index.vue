@@ -336,7 +336,6 @@ onMounted(() => {
 
   klineChart.setDataLoader({
     getBars: async ({ callback, type }) => {
-      debugger;
       loading.value = true;
       console.log('getBars type', type)
       try {

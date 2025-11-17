@@ -1,25 +1,26 @@
 import { TradeData, OrderData, OrderType, BarData, ContractData, AssetData, OrderStatus, Direction, Offset } from '@vtrader/shared';
 import {
   CancelOrderRequest,
-  GatewaySettings,
+  BrokerSettings,
   HistoryRequest,
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
 } from '@vtrader/shared';
 import { Broker } from 'src/broker-manager/broker';
-import BinanceLinearBroker from '../binance-linear/binance-linear-broker';
+import BinanceLinearBroker from '../binance-linear/broker';
 let tradeCount: number = 0;
 
 interface MockBrokerProps {
   commissionRate: number;
+  // BrokerClass: new () => Broker;
   assetName?: string;
   assetBalance: number;
   assetFrozen?: number;
 }
 
 export class MockBroker extends Broker {
-  private market: Broker;
+  private broker: Broker;
   private activeLimitOrders: Map<string, OrderData> = new Map();
   private limitOrders: Map<string, OrderData> = new Map();
 
@@ -32,13 +33,7 @@ export class MockBroker extends Broker {
     this.commissionRate = props.commissionRate;
     this.initAssets(props);
 
-    // this.market = new BinanceLinearBroker();
-    // this.market.connect({
-    //   apiKey: 'nzadRyiGuHIrLZGHuFeMiyING98FbpZi9127Lf3I8GvMCgMcc70QqZqnVInkFJx7',
-    //   apiSecret: 'KgyQpJrZiYkHsKl4Abj0cy6XwN12bAbxQ2jhbYNUAt6cysSpaEg4Eh7Ry1VEwsTM',
-    //   server: 'TESTNET',
-    //   klineStream: true,
-    // })
+    this.broker = new BinanceLinearBroker();
   }
 
   private initAssets(props: MockBrokerProps) {
@@ -59,15 +54,27 @@ export class MockBroker extends Broker {
     return this.assets.find(asset => asset.assetName === assetName);
   }
 
-  public connect(settings: GatewaySettings): Promise<void> {
-    return Promise.resolve();
+  public connect(settings: BrokerSettings): Promise<void> {
+    return this.broker.connect({
+      apiKey: settings.apiKey,
+      apiSecret: settings.apiSecret,
+    });
   }
+
   public stop(): void {
-    return;
+    return this.broker.stop();
+  }
+
+  public subscribeBar(req: SubscribeRequest): void {
+    return this.broker.subscribeBar(req);
+  }
+
+  public unsubscribeBar(req: SubscribeRequest): void {
+    return this.broker.unsubscribeBar(req);
   }
 
   public getAllContracts(): ContractData[] {
-    return [];
+    return this.broker.getAllContracts();
   }
 
   public getContractByName(name: string): ContractData | undefined {
@@ -131,6 +138,10 @@ export class MockBroker extends Broker {
     return () => {
       this.off('order', watcher);
     }
+  }
+
+  public watchBar(watcher: (bar: BarData) => void): void {
+    this.broker.watchBar(watcher);
   }
 
   public watchTrade(watcher: (trade: TradeData) => void): ClearHandler {

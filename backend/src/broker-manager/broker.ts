@@ -1,7 +1,7 @@
 import { EventEmitter } from 'node:events';
 import type {
   CancelOrderRequest,
-  GatewaySettings,
+  BrokerSettings,
   HistoryRequest,
   SendOrderRequest,
   SubscribeRequest,
@@ -22,7 +22,7 @@ export abstract class Broker extends EventEmitter {
     super();
   }
 
-  public abstract connect(settings: GatewaySettings): Promise<void>;
+  public abstract connect(settings: BrokerSettings): Promise<void>;
   public abstract stop(): void;
 
   public abstract refresh(bar: BarData): void;
@@ -35,7 +35,8 @@ export abstract class Broker extends EventEmitter {
   public abstract queryHistory(req: HistoryRequest): Promise<BarData[]>;
   public abstract sendOrder(req: SendOrderRequest): Promise<string>;
   public abstract cancelOrder(req: CancelOrderRequest): Promise<void>;
-  // public abstract subscribe(req: SubscribeRequest): void;
+  public abstract subscribeBar(req: SubscribeRequest): void;
+  public abstract unsubscribeBar(req: SubscribeRequest): void;
 
   // public abstract onContract(contract: ContractData): void;
   // public abstract onAccount(account: AccountData): void;
@@ -45,6 +46,7 @@ export abstract class Broker extends EventEmitter {
   // public abstract onPosition(position: PositionData): void;
   // public abstract onTick(tick: TickData): void;
 
+  public abstract watchBar(watcher: (bar: BarData) => void): void;
   public abstract watchOrder(watcher: (order: OrderData) => void): ClearHandler;
   public abstract watchTrade(watcher: (trade: TradeData) => void): ClearHandler;
 

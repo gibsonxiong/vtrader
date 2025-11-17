@@ -23,6 +23,7 @@ export class AppService {
     private readonly brokerMgrService: BrokerManagerService,
     private readonly strategyService: StrategyService,
   ) {
+    this.testBroker();
   }
 
   // 获取K线
@@ -86,20 +87,26 @@ export class AppService {
     console.log(strategy);
   }
 
-  async broker(): Promise<void> {
+  async testBroker(): Promise<void> {
     const broker = await this.brokerMgrService.getBroker();
 
     const contract = broker.getContractBySymbol('BTCUSDT:USDT');
 
     console.log('contract', contract);
 
-    // broker.subscribe({
-    //   symbol: 'BTCUSDT:USDT',
-    // });
+    broker.subscribeBar({
+      symbol: 'BTCUSDT:USDT',
+      interval: Interval.MINUTE_5,
+    });
 
-    // broker.on('bar', (bar: BarData) => {
-    //   console.log(bar);
-    // });
+    broker.watchBar((bar: BarData) => {
+      console.log(bar);
+
+      broker.unsubscribeBar({
+        symbol: 'BTCUSDT:USDT',
+        interval: Interval.MINUTE_5,
+      });
+    });
 
     broker.watchTrade((trade: TradeData) => {
       console.log('trade', trade);

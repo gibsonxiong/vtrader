@@ -161,7 +161,6 @@ const fetchData = async () => {
     state.data = response.data?.data.models || [];
     state.total = response.data?.data.total || 0;
   } catch (error) {
-    console.error('获取回测历史数据失败:', error);
     state.data = [];
     state.total = 0;
   } finally {

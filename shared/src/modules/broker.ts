@@ -3,13 +3,13 @@ import type { Direction, Interval, Offset, OrderType } from './common';
 /**
  * 网关设置接口
  */
-export interface GatewaySettings {
+export interface BrokerSettings {
   apiKey: string;
   apiSecret: string;
-  klineStream: boolean;
-  proxyHost?: string;
-  proxyPort?: number;
-  server: 'REAL' | 'TESTNET';
+  // klineStream: boolean;
+  // proxyHost?: string;
+  // proxyPort?: number;
+  // server: 'REAL' | 'TESTNET';
 }
 
 /**
@@ -17,6 +17,7 @@ export interface GatewaySettings {
  */
 export interface SubscribeRequest {
   symbol: string;
+  interval: Interval;
 }
 
 /**
