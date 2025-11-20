@@ -7,7 +7,12 @@ import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';
 
+export interface GetAllContractsParams {
+  brokerId: string;
+}
+
 export interface GetBarsParams {
+  brokerId: string;
   interval: Interval;
   startDate: string;
   endDate?: string;
@@ -17,6 +22,7 @@ export interface GetBarsParams {
 }
 
 export interface DownloadParams {
+  brokerId: string;
   startDate: string;
   endDate?: string;
   symbol: string;
@@ -30,8 +36,9 @@ export class MarketDataService {
     private brokerMgr: BrokerManagerService,
   ) {}
 
-  async getAllContracts(): Promise<ContractData[]> {
-    const broker = await this.brokerMgr.getBroker();
+  async getAllContracts(params: GetAllContractsParams): Promise<ContractData[]> {
+    const { brokerId } = params;
+    const broker = await this.brokerMgr.getBroker(brokerId);
 
     return broker.getAllContracts();
   }
@@ -44,11 +51,11 @@ export class MarketDataService {
   }
 
   async getBarsFromBroker(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
-    const { startDate, endDate, interval, symbol, preload } = params;
+    const { brokerId, startDate, endDate, interval, symbol, preload } = params;
     let startTime = dayjs(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss');
     const endTime = dayjs(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
-    const broker = await this.brokerMgr.getBroker();
+    const broker = await this.brokerMgr.getBroker(brokerId);
 
     if (preload) {
       const [n, unit] = INTERVAL_VT2DAYJS[interval];
@@ -105,9 +112,10 @@ export class MarketDataService {
   }
 
   async downloadBars(params: DownloadParams): Promise<number> {
-    const { startDate, endDate, interval, symbol } = params;
+    const { brokerId, startDate, endDate, interval, symbol } = params;
 
     const bars = await this.getBarsFromBroker({
+      brokerId,
       startDate,
       endDate,
       interval,

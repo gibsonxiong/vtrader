@@ -29,6 +29,7 @@ export class AppService {
   // 获取K线
   async getBars(): Promise<void> {
     const bars = await this.marketDataService.getBarsFromDb({
+      brokerId: '1',
       startDate: '2022-01-01',
       endDate: '2025-01-02',
       interval: Interval.MINUTE_15,
@@ -41,6 +42,7 @@ export class AppService {
   // 下载K线
   async downlaod(): Promise<void> {
     const count = await this.marketDataService.downloadBars({
+      brokerId: '1',
       startDate: '2025-07-01',
       // endDate: '2025-05-02',
       interval: Interval.MINUTE_1,
@@ -88,25 +90,25 @@ export class AppService {
   }
 
   async testBroker(): Promise<void> {
-    const broker = await this.brokerMgrService.getBroker();
+    const broker = await this.brokerMgrService.getBroker('1');
 
     const contract = broker.getContractBySymbol('BTCUSDT:USDT');
 
     console.log('contract', contract);
 
-    broker.subscribeBar({
-      symbol: 'BTCUSDT:USDT',
-      interval: Interval.MINUTE_5,
-    });
+    // broker.subscribeBar({
+    //   symbol: 'BTCUSDT:USDT',
+    //   interval: Interval.MINUTE_5,
+    // });
 
-    broker.watchBar((bar: BarData) => {
-      console.log(bar);
+    // broker.watchBar((bar: BarData) => {
+    //   // console.log(bar);
 
-      broker.unsubscribeBar({
-        symbol: 'BTCUSDT:USDT',
-        interval: Interval.MINUTE_5,
-      });
-    });
+    //   broker.unsubscribeBar({
+    //     symbol: 'BTCUSDT:USDT',
+    //     interval: Interval.MINUTE_5,
+    //   });
+    // });
 
     broker.watchTrade((trade: TradeData) => {
       console.log('trade', trade);

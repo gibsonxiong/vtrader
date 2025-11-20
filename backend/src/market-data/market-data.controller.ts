@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 
 import { Get, Query, Post, Body } from '@nestjs/common';
-import { MarketDataService, type DownloadParams, type GetBarsParams } from './market-data.service';
+import { MarketDataService, type DownloadParams, type GetBarsParams, type GetAllContractsParams } from './market-data.service';
 import { Interval } from '@vtrader/shared';
 
 @Controller('market-data')
@@ -12,8 +12,11 @@ export class MarketDataController {
    * 获取所有合约
    */
   @Post('getContracts')
-  async getAllContracts() {
-    return this.marketDataService.getAllContracts();
+  async getAllContracts(
+    @Body()
+    body: GetAllContractsParams
+  ) {
+    return this.marketDataService.getAllContracts(body);
   }
 
   /**
@@ -35,15 +38,7 @@ export class MarketDataController {
     @Body()
     body: DownloadParams,
   ) {
-    const { symbol, interval, startDate, endDate } = body;
-
-
-    const count = await this.marketDataService.downloadBars({
-      symbol,
-      interval,
-      startDate,
-      endDate,
-    });
+    const count = await this.marketDataService.downloadBars(body);
 
     return { count };
   }

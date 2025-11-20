@@ -43,24 +43,30 @@ const config: BrokerConfig = {
 
 @Injectable()
 export class BrokerManagerService {
-  instance: Broker;
-  promise: Promise<Broker> | null = null;
+  instances: Record<string, Promise<Broker>> = {};
+  // promise: Promise<Broker> | null = null;
 
-  async getBroker(): Promise<Broker> {
-    if (this.instance) {
-      return this.instance;
-    } else {
-      if (!this.promise) {
-        this.promise = new Promise((resolve) => {
-          const broker = new config.brokers[0].Class();
-          broker.connect(config.brokers[0].settings).then(() => {
-            this.promise = null;
-            this.instance = broker;
-            resolve(broker);
-          });
-        });
-      }
-      return this.promise;
+  getBrokerConfig(): BrokerConfig {
+    return config;
+  }
+
+  async getBroker(brokerId: string): Promise<Broker> {
+    const brokerConfig = config.brokers.find(c => c.id === brokerId);
+
+    if (!brokerConfig) {
+      throw new Error('未找到id为[${brokerId}]的broker');
     }
+
+    const instance = this.instances[brokerId];
+
+    if (!instance) {
+      this.instances[brokerId] = new Promise((resolve) => {
+        const broker = new brokerConfig.Class();
+        broker.connect(config.brokers[0].settings).then(() => {
+          resolve(broker);
+        });
+      });
+    }
+    return this.instances[brokerId];
   }
 }
