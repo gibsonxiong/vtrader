@@ -8,6 +8,7 @@ import { BrokerManagerModule } from './broker-manager/broker-manager.module';
 import { MarketDataModule } from './market-data/market-data.module';
 import { StrategyModule } from './strategy/strategy.module';
 import { BacktestingModule } from './backtesting/backtesting.module';
+import { WsGateway } from './ws/ws.gateway';
 
 @Module({
   imports: [
@@ -25,6 +26,6 @@ import { BacktestingModule } from './backtesting/backtesting.module';
     BrokerManagerModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, WsGateway],
 })
 export class AppModule {}
