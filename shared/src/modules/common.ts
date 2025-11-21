@@ -40,14 +40,13 @@ export enum OrderType {
  * K线数据接口
  */
 export interface BarData {
+  symbol: string;
+  interval: Interval;
+  timestamp: number;
   close: number;
   high: number;
-  interval: Interval;
   low: number;
   open: number;
-  openInterest?: number;
-  symbol: string;
-  timestamp: number;
   volume: number;
 }
 

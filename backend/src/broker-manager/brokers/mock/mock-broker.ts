@@ -7,7 +7,7 @@ import {
   SubscribeRequest,
   ClearHandler,
 } from '@vtrader/shared';
-import { Broker } from 'src/broker-manager/broker';
+import { Broker, type BrokerName } from 'src/broker-manager/broker';
 import BinanceLinearBroker from '../binance-linear/broker';
 let tradeCount: number = 0;
 
@@ -34,6 +34,10 @@ export class MockBroker extends Broker {
     this.initAssets(props);
 
     this.broker = new BinanceLinearBroker();
+  }
+
+  public getBrokerName(): BrokerName {
+    return this.broker.getBrokerName();
   }
 
   private initAssets(props: MockBrokerProps) {

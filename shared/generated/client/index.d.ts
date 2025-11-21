@@ -23,6 +23,11 @@ export type Backtesting = $Result.DefaultSelection<Prisma.$BacktestingPayload>
  * 
  */
 export type Bar = $Result.DefaultSelection<Prisma.$BarPayload>
+/**
+ * Model BarOverview
+ * 
+ */
+export type BarOverview = $Result.DefaultSelection<Prisma.$BarOverviewPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -168,6 +173,16 @@ export class PrismaClient<
     * ```
     */
   get bar(): Prisma.BarDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.barOverview`: Exposes CRUD operations for the **BarOverview** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BarOverviews
+    * const barOverviews = await prisma.barOverview.findMany()
+    * ```
+    */
+  get barOverview(): Prisma.BarOverviewDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -609,7 +624,8 @@ export namespace Prisma {
 
   export const ModelName: {
     Backtesting: 'Backtesting',
-    Bar: 'Bar'
+    Bar: 'Bar',
+    BarOverview: 'BarOverview'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -628,7 +644,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "backtesting" | "bar"
+      modelProps: "backtesting" | "bar" | "barOverview"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -764,6 +780,72 @@ export namespace Prisma {
           }
         }
       }
+      BarOverview: {
+        payload: Prisma.$BarOverviewPayload<ExtArgs>
+        fields: Prisma.BarOverviewFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BarOverviewFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BarOverviewFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>
+          }
+          findFirst: {
+            args: Prisma.BarOverviewFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BarOverviewFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>
+          }
+          findMany: {
+            args: Prisma.BarOverviewFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>[]
+          }
+          create: {
+            args: Prisma.BarOverviewCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>
+          }
+          createMany: {
+            args: Prisma.BarOverviewCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.BarOverviewDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>
+          }
+          update: {
+            args: Prisma.BarOverviewUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>
+          }
+          deleteMany: {
+            args: Prisma.BarOverviewDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BarOverviewUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.BarOverviewUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BarOverviewPayload>
+          }
+          aggregate: {
+            args: Prisma.BarOverviewAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBarOverview>
+          }
+          groupBy: {
+            args: Prisma.BarOverviewGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BarOverviewGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BarOverviewCountArgs<ExtArgs>
+            result: $Utils.Optional<BarOverviewCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -850,6 +932,7 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     backtesting?: BacktestingOmit
     bar?: BarOmit
+    barOverview?: BarOverviewOmit
   }
 
   /* Types for Logging */
@@ -1988,127 +2071,113 @@ export namespace Prisma {
   }
 
   export type BarAvgAggregateOutputType = {
-    id: number | null
     timestamp: number | null
     open: Decimal | null
     high: Decimal | null
     low: Decimal | null
     close: Decimal | null
     volume: Decimal | null
-    openInterest: Decimal | null
   }
 
   export type BarSumAggregateOutputType = {
-    id: number | null
     timestamp: bigint | null
     open: Decimal | null
     high: Decimal | null
     low: Decimal | null
     close: Decimal | null
     volume: Decimal | null
-    openInterest: Decimal | null
   }
 
   export type BarMinAggregateOutputType = {
-    id: number | null
+    brokerName: string | null
     symbol: string | null
+    interval: string | null
     timestamp: bigint | null
     open: Decimal | null
     high: Decimal | null
     low: Decimal | null
     close: Decimal | null
     volume: Decimal | null
-    interval: string | null
-    openInterest: Decimal | null
   }
 
   export type BarMaxAggregateOutputType = {
-    id: number | null
+    brokerName: string | null
     symbol: string | null
+    interval: string | null
     timestamp: bigint | null
     open: Decimal | null
     high: Decimal | null
     low: Decimal | null
     close: Decimal | null
     volume: Decimal | null
-    interval: string | null
-    openInterest: Decimal | null
   }
 
   export type BarCountAggregateOutputType = {
-    id: number
+    brokerName: number
     symbol: number
+    interval: number
     timestamp: number
     open: number
     high: number
     low: number
     close: number
     volume: number
-    interval: number
-    openInterest: number
     _all: number
   }
 
 
   export type BarAvgAggregateInputType = {
-    id?: true
     timestamp?: true
     open?: true
     high?: true
     low?: true
     close?: true
     volume?: true
-    openInterest?: true
   }
 
   export type BarSumAggregateInputType = {
-    id?: true
     timestamp?: true
     open?: true
     high?: true
     low?: true
     close?: true
     volume?: true
-    openInterest?: true
   }
 
   export type BarMinAggregateInputType = {
-    id?: true
+    brokerName?: true
     symbol?: true
+    interval?: true
     timestamp?: true
     open?: true
     high?: true
     low?: true
     close?: true
     volume?: true
-    interval?: true
-    openInterest?: true
   }
 
   export type BarMaxAggregateInputType = {
-    id?: true
+    brokerName?: true
     symbol?: true
+    interval?: true
     timestamp?: true
     open?: true
     high?: true
     low?: true
     close?: true
     volume?: true
-    interval?: true
-    openInterest?: true
   }
 
   export type BarCountAggregateInputType = {
-    id?: true
+    brokerName?: true
     symbol?: true
+    interval?: true
     timestamp?: true
     open?: true
     high?: true
     low?: true
     close?: true
     volume?: true
-    interval?: true
-    openInterest?: true
     _all?: true
   }
 
@@ -2199,16 +2268,15 @@ export namespace Prisma {
   }
 
   export type BarGroupByOutputType = {
-    id: number
+    brokerName: string
     symbol: string
+    interval: string
     timestamp: bigint
     open: Decimal
     high: Decimal
     low: Decimal
     close: Decimal
     volume: Decimal
-    interval: string
-    openInterest: Decimal | null
     _count: BarCountAggregateOutputType | null
     _avg: BarAvgAggregateOutputType | null
     _sum: BarSumAggregateOutputType | null
@@ -2231,49 +2299,46 @@ export namespace Prisma {
 
 
   export type BarSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
+    brokerName?: boolean
     symbol?: boolean
+    interval?: boolean
     timestamp?: boolean
     open?: boolean
     high?: boolean
     low?: boolean
     close?: boolean
     volume?: boolean
-    interval?: boolean
-    openInterest?: boolean
   }, ExtArgs["result"]["bar"]>
 
 
 
   export type BarSelectScalar = {
-    id?: boolean
+    brokerName?: boolean
     symbol?: boolean
+    interval?: boolean
     timestamp?: boolean
     open?: boolean
     high?: boolean
     low?: boolean
     close?: boolean
     volume?: boolean
-    interval?: boolean
-    openInterest?: boolean
   }
 
-  export type BarOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "symbol" | "timestamp" | "open" | "high" | "low" | "close" | "volume" | "interval" | "openInterest", ExtArgs["result"]["bar"]>
+  export type BarOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"brokerName" | "symbol" | "interval" | "timestamp" | "open" | "high" | "low" | "close" | "volume", ExtArgs["result"]["bar"]>
 
   export type $BarPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Bar"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
-      id: number
+      brokerName: string
       symbol: string
+      interval: string
       timestamp: bigint
       open: Prisma.Decimal
       high: Prisma.Decimal
       low: Prisma.Decimal
       close: Prisma.Decimal
       volume: Prisma.Decimal
-      interval: string
-      openInterest: Prisma.Decimal | null
     }, ExtArgs["result"]["bar"]>
     composites: {}
   }
@@ -2357,8 +2422,8 @@ export namespace Prisma {
      * // Get first 10 Bars
      * const bars = await prisma.bar.findMany({ take: 10 })
      * 
-     * // Only select the `id`
-     * const barWithIdOnly = await prisma.bar.findMany({ select: { id: true } })
+     * // Only select the `brokerName`
+     * const barWithBrokerNameOnly = await prisma.bar.findMany({ select: { brokerName: true } })
      * 
      */
     findMany<T extends BarFindManyArgs>(args?: SelectSubset<T, BarFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BarPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
@@ -2643,16 +2708,15 @@ export namespace Prisma {
    * Fields of the Bar model
    */
   interface BarFieldRefs {
-    readonly id: FieldRef<"Bar", 'Int'>
+    readonly brokerName: FieldRef<"Bar", 'String'>
     readonly symbol: FieldRef<"Bar", 'String'>
+    readonly interval: FieldRef<"Bar", 'String'>
     readonly timestamp: FieldRef<"Bar", 'BigInt'>
     readonly open: FieldRef<"Bar", 'Decimal'>
     readonly high: FieldRef<"Bar", 'Decimal'>
     readonly low: FieldRef<"Bar", 'Decimal'>
     readonly close: FieldRef<"Bar", 'Decimal'>
     readonly volume: FieldRef<"Bar", 'Decimal'>
-    readonly interval: FieldRef<"Bar", 'String'>
-    readonly openInterest: FieldRef<"Bar", 'Decimal'>
   }
     
 
@@ -2975,6 +3039,918 @@ export namespace Prisma {
 
 
   /**
+   * Model BarOverview
+   */
+
+  export type AggregateBarOverview = {
+    _count: BarOverviewCountAggregateOutputType | null
+    _avg: BarOverviewAvgAggregateOutputType | null
+    _sum: BarOverviewSumAggregateOutputType | null
+    _min: BarOverviewMinAggregateOutputType | null
+    _max: BarOverviewMaxAggregateOutputType | null
+  }
+
+  export type BarOverviewAvgAggregateOutputType = {
+    id: number | null
+  }
+
+  export type BarOverviewSumAggregateOutputType = {
+    id: number | null
+  }
+
+  export type BarOverviewMinAggregateOutputType = {
+    id: number | null
+    brokerName: string | null
+    symbol: string | null
+    interval: string | null
+  }
+
+  export type BarOverviewMaxAggregateOutputType = {
+    id: number | null
+    brokerName: string | null
+    symbol: string | null
+    interval: string | null
+  }
+
+  export type BarOverviewCountAggregateOutputType = {
+    id: number
+    brokerName: number
+    symbol: number
+    interval: number
+    ranges: number
+    _all: number
+  }
+
+
+  export type BarOverviewAvgAggregateInputType = {
+    id?: true
+  }
+
+  export type BarOverviewSumAggregateInputType = {
+    id?: true
+  }
+
+  export type BarOverviewMinAggregateInputType = {
+    id?: true
+    brokerName?: true
+    symbol?: true
+    interval?: true
+  }
+
+  export type BarOverviewMaxAggregateInputType = {
+    id?: true
+    brokerName?: true
+    symbol?: true
+    interval?: true
+  }
+
+  export type BarOverviewCountAggregateInputType = {
+    id?: true
+    brokerName?: true
+    symbol?: true
+    interval?: true
+    ranges?: true
+    _all?: true
+  }
+
+  export type BarOverviewAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BarOverview to aggregate.
+     */
+    where?: BarOverviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarOverviews to fetch.
+     */
+    orderBy?: BarOverviewOrderByWithRelationInput | BarOverviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BarOverviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarOverviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarOverviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BarOverviews
+    **/
+    _count?: true | BarOverviewCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BarOverviewAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BarOverviewSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BarOverviewMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BarOverviewMaxAggregateInputType
+  }
+
+  export type GetBarOverviewAggregateType<T extends BarOverviewAggregateArgs> = {
+        [P in keyof T & keyof AggregateBarOverview]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBarOverview[P]>
+      : GetScalarType<T[P], AggregateBarOverview[P]>
+  }
+
+
+
+
+  export type BarOverviewGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BarOverviewWhereInput
+    orderBy?: BarOverviewOrderByWithAggregationInput | BarOverviewOrderByWithAggregationInput[]
+    by: BarOverviewScalarFieldEnum[] | BarOverviewScalarFieldEnum
+    having?: BarOverviewScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BarOverviewCountAggregateInputType | true
+    _avg?: BarOverviewAvgAggregateInputType
+    _sum?: BarOverviewSumAggregateInputType
+    _min?: BarOverviewMinAggregateInputType
+    _max?: BarOverviewMaxAggregateInputType
+  }
+
+  export type BarOverviewGroupByOutputType = {
+    id: number
+    brokerName: string
+    symbol: string
+    interval: string
+    ranges: JsonValue
+    _count: BarOverviewCountAggregateOutputType | null
+    _avg: BarOverviewAvgAggregateOutputType | null
+    _sum: BarOverviewSumAggregateOutputType | null
+    _min: BarOverviewMinAggregateOutputType | null
+    _max: BarOverviewMaxAggregateOutputType | null
+  }
+
+  type GetBarOverviewGroupByPayload<T extends BarOverviewGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BarOverviewGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BarOverviewGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BarOverviewGroupByOutputType[P]>
+            : GetScalarType<T[P], BarOverviewGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BarOverviewSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    brokerName?: boolean
+    symbol?: boolean
+    interval?: boolean
+    ranges?: boolean
+  }, ExtArgs["result"]["barOverview"]>
+
+
+
+  export type BarOverviewSelectScalar = {
+    id?: boolean
+    brokerName?: boolean
+    symbol?: boolean
+    interval?: boolean
+    ranges?: boolean
+  }
+
+  export type BarOverviewOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "brokerName" | "symbol" | "interval" | "ranges", ExtArgs["result"]["barOverview"]>
+
+  export type $BarOverviewPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BarOverview"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: number
+      brokerName: string
+      symbol: string
+      interval: string
+      ranges: Prisma.JsonValue
+    }, ExtArgs["result"]["barOverview"]>
+    composites: {}
+  }
+
+  type BarOverviewGetPayload<S extends boolean | null | undefined | BarOverviewDefaultArgs> = $Result.GetResult<Prisma.$BarOverviewPayload, S>
+
+  type BarOverviewCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BarOverviewFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BarOverviewCountAggregateInputType | true
+    }
+
+  export interface BarOverviewDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BarOverview'], meta: { name: 'BarOverview' } }
+    /**
+     * Find zero or one BarOverview that matches the filter.
+     * @param {BarOverviewFindUniqueArgs} args - Arguments to find a BarOverview
+     * @example
+     * // Get one BarOverview
+     * const barOverview = await prisma.barOverview.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BarOverviewFindUniqueArgs>(args: SelectSubset<T, BarOverviewFindUniqueArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BarOverview that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BarOverviewFindUniqueOrThrowArgs} args - Arguments to find a BarOverview
+     * @example
+     * // Get one BarOverview
+     * const barOverview = await prisma.barOverview.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BarOverviewFindUniqueOrThrowArgs>(args: SelectSubset<T, BarOverviewFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BarOverview that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewFindFirstArgs} args - Arguments to find a BarOverview
+     * @example
+     * // Get one BarOverview
+     * const barOverview = await prisma.barOverview.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BarOverviewFindFirstArgs>(args?: SelectSubset<T, BarOverviewFindFirstArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BarOverview that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewFindFirstOrThrowArgs} args - Arguments to find a BarOverview
+     * @example
+     * // Get one BarOverview
+     * const barOverview = await prisma.barOverview.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BarOverviewFindFirstOrThrowArgs>(args?: SelectSubset<T, BarOverviewFindFirstOrThrowArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BarOverviews that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BarOverviews
+     * const barOverviews = await prisma.barOverview.findMany()
+     * 
+     * // Get first 10 BarOverviews
+     * const barOverviews = await prisma.barOverview.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const barOverviewWithIdOnly = await prisma.barOverview.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BarOverviewFindManyArgs>(args?: SelectSubset<T, BarOverviewFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BarOverview.
+     * @param {BarOverviewCreateArgs} args - Arguments to create a BarOverview.
+     * @example
+     * // Create one BarOverview
+     * const BarOverview = await prisma.barOverview.create({
+     *   data: {
+     *     // ... data to create a BarOverview
+     *   }
+     * })
+     * 
+     */
+    create<T extends BarOverviewCreateArgs>(args: SelectSubset<T, BarOverviewCreateArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BarOverviews.
+     * @param {BarOverviewCreateManyArgs} args - Arguments to create many BarOverviews.
+     * @example
+     * // Create many BarOverviews
+     * const barOverview = await prisma.barOverview.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BarOverviewCreateManyArgs>(args?: SelectSubset<T, BarOverviewCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a BarOverview.
+     * @param {BarOverviewDeleteArgs} args - Arguments to delete one BarOverview.
+     * @example
+     * // Delete one BarOverview
+     * const BarOverview = await prisma.barOverview.delete({
+     *   where: {
+     *     // ... filter to delete one BarOverview
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BarOverviewDeleteArgs>(args: SelectSubset<T, BarOverviewDeleteArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BarOverview.
+     * @param {BarOverviewUpdateArgs} args - Arguments to update one BarOverview.
+     * @example
+     * // Update one BarOverview
+     * const barOverview = await prisma.barOverview.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BarOverviewUpdateArgs>(args: SelectSubset<T, BarOverviewUpdateArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BarOverviews.
+     * @param {BarOverviewDeleteManyArgs} args - Arguments to filter BarOverviews to delete.
+     * @example
+     * // Delete a few BarOverviews
+     * const { count } = await prisma.barOverview.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BarOverviewDeleteManyArgs>(args?: SelectSubset<T, BarOverviewDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BarOverviews.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BarOverviews
+     * const barOverview = await prisma.barOverview.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BarOverviewUpdateManyArgs>(args: SelectSubset<T, BarOverviewUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one BarOverview.
+     * @param {BarOverviewUpsertArgs} args - Arguments to update or create a BarOverview.
+     * @example
+     * // Update or create a BarOverview
+     * const barOverview = await prisma.barOverview.upsert({
+     *   create: {
+     *     // ... data to create a BarOverview
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BarOverview we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BarOverviewUpsertArgs>(args: SelectSubset<T, BarOverviewUpsertArgs<ExtArgs>>): Prisma__BarOverviewClient<$Result.GetResult<Prisma.$BarOverviewPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BarOverviews.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewCountArgs} args - Arguments to filter BarOverviews to count.
+     * @example
+     * // Count the number of BarOverviews
+     * const count = await prisma.barOverview.count({
+     *   where: {
+     *     // ... the filter for the BarOverviews we want to count
+     *   }
+     * })
+    **/
+    count<T extends BarOverviewCountArgs>(
+      args?: Subset<T, BarOverviewCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BarOverviewCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BarOverview.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BarOverviewAggregateArgs>(args: Subset<T, BarOverviewAggregateArgs>): Prisma.PrismaPromise<GetBarOverviewAggregateType<T>>
+
+    /**
+     * Group by BarOverview.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BarOverviewGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BarOverviewGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BarOverviewGroupByArgs['orderBy'] }
+        : { orderBy?: BarOverviewGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BarOverviewGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBarOverviewGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BarOverview model
+   */
+  readonly fields: BarOverviewFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BarOverview.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BarOverviewClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BarOverview model
+   */
+  interface BarOverviewFieldRefs {
+    readonly id: FieldRef<"BarOverview", 'Int'>
+    readonly brokerName: FieldRef<"BarOverview", 'String'>
+    readonly symbol: FieldRef<"BarOverview", 'String'>
+    readonly interval: FieldRef<"BarOverview", 'String'>
+    readonly ranges: FieldRef<"BarOverview", 'Json'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BarOverview findUnique
+   */
+  export type BarOverviewFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * Filter, which BarOverview to fetch.
+     */
+    where: BarOverviewWhereUniqueInput
+  }
+
+  /**
+   * BarOverview findUniqueOrThrow
+   */
+  export type BarOverviewFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * Filter, which BarOverview to fetch.
+     */
+    where: BarOverviewWhereUniqueInput
+  }
+
+  /**
+   * BarOverview findFirst
+   */
+  export type BarOverviewFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * Filter, which BarOverview to fetch.
+     */
+    where?: BarOverviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarOverviews to fetch.
+     */
+    orderBy?: BarOverviewOrderByWithRelationInput | BarOverviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BarOverviews.
+     */
+    cursor?: BarOverviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarOverviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarOverviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BarOverviews.
+     */
+    distinct?: BarOverviewScalarFieldEnum | BarOverviewScalarFieldEnum[]
+  }
+
+  /**
+   * BarOverview findFirstOrThrow
+   */
+  export type BarOverviewFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * Filter, which BarOverview to fetch.
+     */
+    where?: BarOverviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarOverviews to fetch.
+     */
+    orderBy?: BarOverviewOrderByWithRelationInput | BarOverviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BarOverviews.
+     */
+    cursor?: BarOverviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarOverviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarOverviews.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BarOverviews.
+     */
+    distinct?: BarOverviewScalarFieldEnum | BarOverviewScalarFieldEnum[]
+  }
+
+  /**
+   * BarOverview findMany
+   */
+  export type BarOverviewFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * Filter, which BarOverviews to fetch.
+     */
+    where?: BarOverviewWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BarOverviews to fetch.
+     */
+    orderBy?: BarOverviewOrderByWithRelationInput | BarOverviewOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BarOverviews.
+     */
+    cursor?: BarOverviewWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BarOverviews from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BarOverviews.
+     */
+    skip?: number
+    distinct?: BarOverviewScalarFieldEnum | BarOverviewScalarFieldEnum[]
+  }
+
+  /**
+   * BarOverview create
+   */
+  export type BarOverviewCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * The data needed to create a BarOverview.
+     */
+    data: XOR<BarOverviewCreateInput, BarOverviewUncheckedCreateInput>
+  }
+
+  /**
+   * BarOverview createMany
+   */
+  export type BarOverviewCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BarOverviews.
+     */
+    data: BarOverviewCreateManyInput | BarOverviewCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BarOverview update
+   */
+  export type BarOverviewUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * The data needed to update a BarOverview.
+     */
+    data: XOR<BarOverviewUpdateInput, BarOverviewUncheckedUpdateInput>
+    /**
+     * Choose, which BarOverview to update.
+     */
+    where: BarOverviewWhereUniqueInput
+  }
+
+  /**
+   * BarOverview updateMany
+   */
+  export type BarOverviewUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BarOverviews.
+     */
+    data: XOR<BarOverviewUpdateManyMutationInput, BarOverviewUncheckedUpdateManyInput>
+    /**
+     * Filter which BarOverviews to update
+     */
+    where?: BarOverviewWhereInput
+    /**
+     * Limit how many BarOverviews to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BarOverview upsert
+   */
+  export type BarOverviewUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * The filter to search for the BarOverview to update in case it exists.
+     */
+    where: BarOverviewWhereUniqueInput
+    /**
+     * In case the BarOverview found by the `where` argument doesn't exist, create a new BarOverview with this data.
+     */
+    create: XOR<BarOverviewCreateInput, BarOverviewUncheckedCreateInput>
+    /**
+     * In case the BarOverview was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BarOverviewUpdateInput, BarOverviewUncheckedUpdateInput>
+  }
+
+  /**
+   * BarOverview delete
+   */
+  export type BarOverviewDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+    /**
+     * Filter which BarOverview to delete.
+     */
+    where: BarOverviewWhereUniqueInput
+  }
+
+  /**
+   * BarOverview deleteMany
+   */
+  export type BarOverviewDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BarOverviews to delete
+     */
+    where?: BarOverviewWhereInput
+    /**
+     * Limit how many BarOverviews to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BarOverview without action
+   */
+  export type BarOverviewDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BarOverview
+     */
+    select?: BarOverviewSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BarOverview
+     */
+    omit?: BarOverviewOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -3009,19 +3985,29 @@ export namespace Prisma {
 
 
   export const BarScalarFieldEnum: {
-    id: 'id',
+    brokerName: 'brokerName',
     symbol: 'symbol',
+    interval: 'interval',
     timestamp: 'timestamp',
     open: 'open',
     high: 'high',
     low: 'low',
     close: 'close',
-    volume: 'volume',
-    interval: 'interval',
-    openInterest: 'openInterest'
+    volume: 'volume'
   };
 
   export type BarScalarFieldEnum = (typeof BarScalarFieldEnum)[keyof typeof BarScalarFieldEnum]
+
+
+  export const BarOverviewScalarFieldEnum: {
+    id: 'id',
+    brokerName: 'brokerName',
+    symbol: 'symbol',
+    interval: 'interval',
+    ranges: 'ranges'
+  };
+
+  export type BarOverviewScalarFieldEnum = (typeof BarOverviewScalarFieldEnum)[keyof typeof BarOverviewScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -3067,20 +4053,22 @@ export namespace Prisma {
   export type BacktestingOrderByRelevanceFieldEnum = (typeof BacktestingOrderByRelevanceFieldEnum)[keyof typeof BacktestingOrderByRelevanceFieldEnum]
 
 
-  export const NullsOrder: {
-    first: 'first',
-    last: 'last'
-  };
-
-  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
-
-
   export const BarOrderByRelevanceFieldEnum: {
+    brokerName: 'brokerName',
     symbol: 'symbol',
     interval: 'interval'
   };
 
   export type BarOrderByRelevanceFieldEnum = (typeof BarOrderByRelevanceFieldEnum)[keyof typeof BarOrderByRelevanceFieldEnum]
+
+
+  export const BarOverviewOrderByRelevanceFieldEnum: {
+    brokerName: 'brokerName',
+    symbol: 'symbol',
+    interval: 'interval'
+  };
+
+  export type BarOverviewOrderByRelevanceFieldEnum = (typeof BarOverviewOrderByRelevanceFieldEnum)[keyof typeof BarOverviewOrderByRelevanceFieldEnum]
 
 
   /**
@@ -3244,60 +4232,56 @@ export namespace Prisma {
     AND?: BarWhereInput | BarWhereInput[]
     OR?: BarWhereInput[]
     NOT?: BarWhereInput | BarWhereInput[]
-    id?: IntFilter<"Bar"> | number
+    brokerName?: StringFilter<"Bar"> | string
     symbol?: StringFilter<"Bar"> | string
+    interval?: StringFilter<"Bar"> | string
     timestamp?: BigIntFilter<"Bar"> | bigint | number
     open?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     high?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     low?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     close?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     volume?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
-    interval?: StringFilter<"Bar"> | string
-    openInterest?: DecimalNullableFilter<"Bar"> | Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarOrderByWithRelationInput = {
-    id?: SortOrder
+    brokerName?: SortOrder
     symbol?: SortOrder
+    interval?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    interval?: SortOrder
-    openInterest?: SortOrderInput | SortOrder
     _relevance?: BarOrderByRelevanceInput
   }
 
   export type BarWhereUniqueInput = Prisma.AtLeast<{
-    id?: number
-    symbol_timestamp_interval?: BarSymbolTimestampIntervalCompoundUniqueInput
+    brokerName_symbol_timestamp_interval?: BarBrokerNameSymbolTimestampIntervalCompoundUniqueInput
     AND?: BarWhereInput | BarWhereInput[]
     OR?: BarWhereInput[]
     NOT?: BarWhereInput | BarWhereInput[]
+    brokerName?: StringFilter<"Bar"> | string
     symbol?: StringFilter<"Bar"> | string
+    interval?: StringFilter<"Bar"> | string
     timestamp?: BigIntFilter<"Bar"> | bigint | number
     open?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     high?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     low?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     close?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     volume?: DecimalFilter<"Bar"> | Decimal | DecimalJsLike | number | string
-    interval?: StringFilter<"Bar"> | string
-    openInterest?: DecimalNullableFilter<"Bar"> | Decimal | DecimalJsLike | number | string | null
-  }, "id" | "symbol_timestamp_interval">
+  }, "brokerName_symbol_timestamp_interval">
 
   export type BarOrderByWithAggregationInput = {
-    id?: SortOrder
+    brokerName?: SortOrder
     symbol?: SortOrder
+    interval?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    interval?: SortOrder
-    openInterest?: SortOrderInput | SortOrder
     _count?: BarCountOrderByAggregateInput
     _avg?: BarAvgOrderByAggregateInput
     _max?: BarMaxOrderByAggregateInput
@@ -3309,16 +4293,71 @@ export namespace Prisma {
     AND?: BarScalarWhereWithAggregatesInput | BarScalarWhereWithAggregatesInput[]
     OR?: BarScalarWhereWithAggregatesInput[]
     NOT?: BarScalarWhereWithAggregatesInput | BarScalarWhereWithAggregatesInput[]
-    id?: IntWithAggregatesFilter<"Bar"> | number
+    brokerName?: StringWithAggregatesFilter<"Bar"> | string
     symbol?: StringWithAggregatesFilter<"Bar"> | string
+    interval?: StringWithAggregatesFilter<"Bar"> | string
     timestamp?: BigIntWithAggregatesFilter<"Bar"> | bigint | number
     open?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     high?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     low?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     close?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     volume?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
-    interval?: StringWithAggregatesFilter<"Bar"> | string
-    openInterest?: DecimalNullableWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type BarOverviewWhereInput = {
+    AND?: BarOverviewWhereInput | BarOverviewWhereInput[]
+    OR?: BarOverviewWhereInput[]
+    NOT?: BarOverviewWhereInput | BarOverviewWhereInput[]
+    id?: IntFilter<"BarOverview"> | number
+    brokerName?: StringFilter<"BarOverview"> | string
+    symbol?: StringFilter<"BarOverview"> | string
+    interval?: StringFilter<"BarOverview"> | string
+    ranges?: JsonFilter<"BarOverview">
+  }
+
+  export type BarOverviewOrderByWithRelationInput = {
+    id?: SortOrder
+    brokerName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    ranges?: SortOrder
+    _relevance?: BarOverviewOrderByRelevanceInput
+  }
+
+  export type BarOverviewWhereUniqueInput = Prisma.AtLeast<{
+    id?: number
+    brokerName_symbol_interval?: BarOverviewBrokerNameSymbolIntervalCompoundUniqueInput
+    AND?: BarOverviewWhereInput | BarOverviewWhereInput[]
+    OR?: BarOverviewWhereInput[]
+    NOT?: BarOverviewWhereInput | BarOverviewWhereInput[]
+    brokerName?: StringFilter<"BarOverview"> | string
+    symbol?: StringFilter<"BarOverview"> | string
+    interval?: StringFilter<"BarOverview"> | string
+    ranges?: JsonFilter<"BarOverview">
+  }, "id" | "brokerName_symbol_interval">
+
+  export type BarOverviewOrderByWithAggregationInput = {
+    id?: SortOrder
+    brokerName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    ranges?: SortOrder
+    _count?: BarOverviewCountOrderByAggregateInput
+    _avg?: BarOverviewAvgOrderByAggregateInput
+    _max?: BarOverviewMaxOrderByAggregateInput
+    _min?: BarOverviewMinOrderByAggregateInput
+    _sum?: BarOverviewSumOrderByAggregateInput
+  }
+
+  export type BarOverviewScalarWhereWithAggregatesInput = {
+    AND?: BarOverviewScalarWhereWithAggregatesInput | BarOverviewScalarWhereWithAggregatesInput[]
+    OR?: BarOverviewScalarWhereWithAggregatesInput[]
+    NOT?: BarOverviewScalarWhereWithAggregatesInput | BarOverviewScalarWhereWithAggregatesInput[]
+    id?: IntWithAggregatesFilter<"BarOverview"> | number
+    brokerName?: StringWithAggregatesFilter<"BarOverview"> | string
+    symbol?: StringWithAggregatesFilter<"BarOverview"> | string
+    interval?: StringWithAggregatesFilter<"BarOverview"> | string
+    ranges?: JsonWithAggregatesFilter<"BarOverview">
   }
 
   export type BacktestingCreateInput = {
@@ -3438,91 +4477,140 @@ export namespace Prisma {
   }
 
   export type BarCreateInput = {
+    brokerName: string
     symbol: string
+    interval: string
     timestamp: bigint | number
     open: Decimal | DecimalJsLike | number | string
     high: Decimal | DecimalJsLike | number | string
     low: Decimal | DecimalJsLike | number | string
     close: Decimal | DecimalJsLike | number | string
     volume: Decimal | DecimalJsLike | number | string
-    interval: string
-    openInterest?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarUncheckedCreateInput = {
-    id?: number
+    brokerName: string
     symbol: string
+    interval: string
     timestamp: bigint | number
     open: Decimal | DecimalJsLike | number | string
     high: Decimal | DecimalJsLike | number | string
     low: Decimal | DecimalJsLike | number | string
     close: Decimal | DecimalJsLike | number | string
     volume: Decimal | DecimalJsLike | number | string
-    interval: string
-    openInterest?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarUpdateInput = {
+    brokerName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
     timestamp?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    interval?: StringFieldUpdateOperationsInput | string
-    openInterest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarUncheckedUpdateInput = {
-    id?: IntFieldUpdateOperationsInput | number
+    brokerName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
     timestamp?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    interval?: StringFieldUpdateOperationsInput | string
-    openInterest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarCreateManyInput = {
-    id?: number
+    brokerName: string
     symbol: string
+    interval: string
     timestamp: bigint | number
     open: Decimal | DecimalJsLike | number | string
     high: Decimal | DecimalJsLike | number | string
     low: Decimal | DecimalJsLike | number | string
     close: Decimal | DecimalJsLike | number | string
     volume: Decimal | DecimalJsLike | number | string
-    interval: string
-    openInterest?: Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarUpdateManyMutationInput = {
+    brokerName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
     timestamp?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    interval?: StringFieldUpdateOperationsInput | string
-    openInterest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
   }
 
   export type BarUncheckedUpdateManyInput = {
-    id?: IntFieldUpdateOperationsInput | number
+    brokerName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
     timestamp?: BigIntFieldUpdateOperationsInput | bigint | number
     open?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     high?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BarOverviewCreateInput = {
+    brokerName: string
+    symbol: string
+    interval: string
+    ranges: JsonNullValueInput | InputJsonValue
+  }
+
+  export type BarOverviewUncheckedCreateInput = {
+    id?: number
+    brokerName: string
+    symbol: string
+    interval: string
+    ranges: JsonNullValueInput | InputJsonValue
+  }
+
+  export type BarOverviewUpdateInput = {
+    brokerName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
-    openInterest?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    ranges?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type BarOverviewUncheckedUpdateInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    brokerName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    ranges?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type BarOverviewCreateManyInput = {
+    id?: number
+    brokerName: string
+    symbol: string
+    interval: string
+    ranges: JsonNullValueInput | InputJsonValue
+  }
+
+  export type BarOverviewUpdateManyMutationInput = {
+    brokerName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    ranges?: JsonNullValueInput | InputJsonValue
+  }
+
+  export type BarOverviewUncheckedUpdateManyInput = {
+    id?: IntFieldUpdateOperationsInput | number
+    brokerName?: StringFieldUpdateOperationsInput | string
+    symbol?: StringFieldUpdateOperationsInput | string
+    interval?: StringFieldUpdateOperationsInput | string
+    ranges?: JsonNullValueInput | InputJsonValue
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -3745,93 +4833,71 @@ export namespace Prisma {
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
   }
 
-  export type DecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-  }
-
-  export type SortOrderInput = {
-    sort: SortOrder
-    nulls?: NullsOrder
-  }
-
   export type BarOrderByRelevanceInput = {
     fields: BarOrderByRelevanceFieldEnum | BarOrderByRelevanceFieldEnum[]
     sort: SortOrder
     search: string
   }
 
-  export type BarSymbolTimestampIntervalCompoundUniqueInput = {
+  export type BarBrokerNameSymbolTimestampIntervalCompoundUniqueInput = {
+    brokerName: string
     symbol: string
     timestamp: bigint | number
     interval: string
   }
 
   export type BarCountOrderByAggregateInput = {
-    id?: SortOrder
+    brokerName?: SortOrder
     symbol?: SortOrder
+    interval?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    interval?: SortOrder
-    openInterest?: SortOrder
   }
 
   export type BarAvgOrderByAggregateInput = {
-    id?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    openInterest?: SortOrder
   }
 
   export type BarMaxOrderByAggregateInput = {
-    id?: SortOrder
+    brokerName?: SortOrder
     symbol?: SortOrder
+    interval?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    interval?: SortOrder
-    openInterest?: SortOrder
   }
 
   export type BarMinOrderByAggregateInput = {
-    id?: SortOrder
+    brokerName?: SortOrder
     symbol?: SortOrder
+    interval?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    interval?: SortOrder
-    openInterest?: SortOrder
   }
 
   export type BarSumOrderByAggregateInput = {
-    id?: SortOrder
     timestamp?: SortOrder
     open?: SortOrder
     high?: SortOrder
     low?: SortOrder
     close?: SortOrder
     volume?: SortOrder
-    openInterest?: SortOrder
   }
 
   export type BigIntWithAggregatesFilter<$PrismaModel = never> = {
@@ -3850,20 +4916,46 @@ export namespace Prisma {
     _max?: NestedBigIntFilter<$PrismaModel>
   }
 
-  export type DecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
+  export type BarOverviewOrderByRelevanceInput = {
+    fields: BarOverviewOrderByRelevanceFieldEnum | BarOverviewOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type BarOverviewBrokerNameSymbolIntervalCompoundUniqueInput = {
+    brokerName: string
+    symbol: string
+    interval: string
+  }
+
+  export type BarOverviewCountOrderByAggregateInput = {
+    id?: SortOrder
+    brokerName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+    ranges?: SortOrder
+  }
+
+  export type BarOverviewAvgOrderByAggregateInput = {
+    id?: SortOrder
+  }
+
+  export type BarOverviewMaxOrderByAggregateInput = {
+    id?: SortOrder
+    brokerName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+  }
+
+  export type BarOverviewMinOrderByAggregateInput = {
+    id?: SortOrder
+    brokerName?: SortOrder
+    symbol?: SortOrder
+    interval?: SortOrder
+  }
+
+  export type BarOverviewSumOrderByAggregateInput = {
+    id?: SortOrder
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -3892,14 +4984,6 @@ export namespace Prisma {
     decrement?: bigint | number
     multiply?: bigint | number
     divide?: bigint | number
-  }
-
-  export type NullableDecimalFieldUpdateOperationsInput = {
-    set?: Decimal | DecimalJsLike | number | string | null
-    increment?: Decimal | DecimalJsLike | number | string
-    decrement?: Decimal | DecimalJsLike | number | string
-    multiply?: Decimal | DecimalJsLike | number | string
-    divide?: Decimal | DecimalJsLike | number | string
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -4034,17 +5118,6 @@ export namespace Prisma {
     not?: NestedBigIntFilter<$PrismaModel> | bigint | number
   }
 
-  export type NestedDecimalNullableFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-  }
-
   export type NestedBigIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: bigint | number | BigIntFieldRefInput<$PrismaModel>
     in?: bigint[] | number[]
@@ -4059,33 +5132,6 @@ export namespace Prisma {
     _sum?: NestedBigIntFilter<$PrismaModel>
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
-  }
-
-  export type NestedDecimalNullableWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel> | null
-    in?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    notIn?: Decimal[] | DecimalJsLike[] | number[] | string[] | null
-    lt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    lte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gt?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    gte?: Decimal | DecimalJsLike | number | string | DecimalFieldRefInput<$PrismaModel>
-    not?: NestedDecimalNullableWithAggregatesFilter<$PrismaModel> | Decimal | DecimalJsLike | number | string | null
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _avg?: NestedDecimalNullableFilter<$PrismaModel>
-    _sum?: NestedDecimalNullableFilter<$PrismaModel>
-    _min?: NestedDecimalNullableFilter<$PrismaModel>
-    _max?: NestedDecimalNullableFilter<$PrismaModel>
-  }
-
-  export type NestedIntNullableFilter<$PrismaModel = never> = {
-    equals?: number | IntFieldRefInput<$PrismaModel> | null
-    in?: number[] | null
-    notIn?: number[] | null
-    lt?: number | IntFieldRefInput<$PrismaModel>
-    lte?: number | IntFieldRefInput<$PrismaModel>
-    gt?: number | IntFieldRefInput<$PrismaModel>
-    gte?: number | IntFieldRefInput<$PrismaModel>
-    not?: NestedIntNullableFilter<$PrismaModel> | number | null
   }
 
 

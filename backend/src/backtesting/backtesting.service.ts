@@ -130,7 +130,7 @@ export class BacktestingService implements StrategyEngine {
     // 从数据库加载K线数据
     for (let symbol of this.symbols) {
       const bars = await this.marketDataService.getBarsFromDb({
-        brokerId: '1',
+        brokerId: 'binance_test',
         symbol: symbol,
         interval: this.interval,
         startDate: this.startDate,

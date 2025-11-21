@@ -11,9 +11,12 @@ import { mockBars } from './mock/bars';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
 import { test } from './optimization/index';
 import type { BacktestingSetting } from '@vtrader/shared';
+import config from './config';
 
 // test();
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
+
+const brokerId = config.brokers[0].id;
 
 @Injectable()
 export class AppService {
@@ -29,7 +32,7 @@ export class AppService {
   // 获取K线
   async getBars(): Promise<void> {
     const bars = await this.marketDataService.getBarsFromDb({
-      brokerId: '1',
+      brokerId,
       startDate: '2022-01-01',
       endDate: '2025-01-02',
       interval: Interval.MINUTE_15,
@@ -42,7 +45,7 @@ export class AppService {
   // 下载K线
   async downlaod(): Promise<void> {
     const count = await this.marketDataService.downloadBars({
-      brokerId: '1',
+      brokerId,
       startDate: '2025-07-01',
       // endDate: '2025-05-02',
       interval: Interval.MINUTE_1,
@@ -90,7 +93,7 @@ export class AppService {
   }
 
   async testBroker(): Promise<void> {
-    const broker = await this.brokerMgrService.getBroker('1');
+    const broker = await this.brokerMgrService.getBroker(brokerId);
 
     const contract = broker.getContractBySymbol('BTCUSDT:USDT');
 

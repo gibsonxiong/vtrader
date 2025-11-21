@@ -8,10 +8,12 @@ type ContractData = MarketDataApi.ContractData;
 
 interface Props {
   selectedSymbol?: string;
+  brokerId: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   selectedSymbol: '',
+  brokerId: 'binance_test',
 });
 
 const emit = defineEmits<{
@@ -25,7 +27,7 @@ const contractsLoading = ref(false);
 async function fetchContracts() {
   try {
     contractsLoading.value = true;
-    const { data } = await getContractsApi();
+    const { data } = await getContractsApi(props.brokerId);
     contracts.value = data || [];
   } catch (err: any) {
     message.error('获取合约失败：' + (err?.response?.data?.message || err?.message || '未知错误'));

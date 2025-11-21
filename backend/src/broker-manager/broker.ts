@@ -17,11 +17,14 @@ import type {
   TradeData,
 } from '@vtrader/shared';
 
+export type BrokerName = 'BINANCE_LINEAR_BROKER' | 'BINANCE_LINEAR_TESTNET_BROKER';
+
 export abstract class Broker extends EventEmitter {
   constructor() {
     super();
   }
 
+  public abstract getBrokerName(): BrokerName;
   public abstract connect(settings: BrokerSettings): Promise<void>;
   public abstract stop(): void;
 

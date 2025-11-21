@@ -21,13 +21,12 @@ import {
   ClearHandler,
 } from '@vtrader/shared';
 import { UserApi } from './user-api';
-import { Broker } from 'src/broker-manager/broker';
+import { Broker, type BrokerName } from 'src/broker-manager/broker';
 
 /**
  * Binance线性合约网关
  */
 export class BinanceLinearBroker extends Broker {
-  brokerName = 'BINANCE_LINEAR';
   REST_HOST = 'https://fapi.binance.com';
   TRADE_HOST = 'wss://ws-fapi.binance.com/ws-fapi/v1';
   USER_HOST = 'wss://fstream.binance.com/ws';
@@ -49,6 +48,10 @@ export class BinanceLinearBroker extends Broker {
     this.tradeApi = new TradeApi(this);
     this.userApi = new UserApi(this);
     this.mdApi = new MdApi(this);
+  }
+
+  public getBrokerName(): BrokerName {
+    return 'BINANCE_LINEAR_BROKER';
   }
 
   /**
@@ -203,7 +206,7 @@ export class BinanceLinearBroker extends Broker {
    * 写入日志
    */
   public writeLog(msg: string): void {
-    console.log(`[${this.brokerName}] ${msg}`);
+    console.log(`[${this.getBrokerName()}] ${msg}`);
     this.emit('log', msg);
   }
 

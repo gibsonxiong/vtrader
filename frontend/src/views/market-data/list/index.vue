@@ -1,10 +1,11 @@
 <script lang="ts" setup>
 import { Page } from '@vtrader/common-ui';
-import { Form, Input, Button, DatePicker, Select, Space, message, Table } from 'ant-design-vue';
-import { reactive, ref } from 'vue';
+import { Form, Input, Button, DatePicker, Select, Space, message, Table, SelectOptGroup, SelectOption } from 'ant-design-vue';
+import { reactive, ref, onMounted } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import KlineChart from '#/components/KlineChart/index.vue';
 import { getContractsApi, getBarsApi, downloadBarsApi, type MarketDataApi } from '#/api';
+import { tradeRequestClient } from '#/api/request';
 import { Interval, type BarData } from '@vtrader/shared';
 import { globalTableConfig } from '#/config/table';
 
@@ -19,14 +20,17 @@ const defaultState = {
 const chartRef = ref<typeof KlineChart>();
 
 const formState = reactive<{
+  brokerId: string;
   symbol: string;
   interval: Interval;
   startDate: Dayjs;
   endDate: Dayjs;
 }>({
+  brokerId: 'binance_test',
   ...defaultState,
 });
 const downloading = ref(false);
+const brokerGroups = ref<{ label: string; options: { label: string; value: string }[] }[]>([]);
 
 const intervalOptions = [
   { label: '1m', value: Interval.MINUTE_1 },
@@ -62,6 +66,7 @@ async function downloadBars() {
   try {
     downloading.value = true;
     const params: MarketDataApi.DownloadParams = {
+      brokerId: formState.brokerId,
       symbol: formState.symbol,
       interval: formState.interval,
       startDate: formState.startDate?.format('YYYY-MM-DD') || '',
@@ -78,6 +83,27 @@ async function downloadBars() {
   }
 }
 
+async function fetchBrokerConfigs() {
+  try {
+    const { data } = await tradeRequestClient.post('/broker-manager/getConfigs');
+    const groupsMap: Record<string, { label: string; options: { label: string; value: string }[] }> = {};
+    (data || []).forEach((c: any) => {
+      const key = c.brokerName;
+      if (!groupsMap[key]) {
+        groupsMap[key] = { label: key, options: [] };
+      }
+      groupsMap[key].options.push({ label: c.id, value: c.id });
+    });
+    brokerGroups.value = Object.values(groupsMap);
+    if (!formState.brokerId && brokerGroups.value.length) {
+      const first = brokerGroups.value[0]?.options?.[0];
+      if (first) formState.brokerId = first.value;
+    }
+  } catch (err: any) {
+    message.error('获取Broker配置失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
+  }
+}
+
 // 处理图表组件的数据更新
 function handleBarsUpdated(newBars: BarData[]) {
   bars.value = newBars;
@@ -88,12 +114,24 @@ function handleSymbolChanged(symbol: string) {
   formState.symbol = symbol;
   console.log('Symbol changed to:', symbol);
 }
+
+onMounted(() => {
+  fetchBrokerConfigs();
+});
 </script>
 
 <template>
   <Page>
     <div>
       <Form :model="formState" layout="inline" autocomplete="off" @submit.prevent class="mb-4">
+        <Form.Item label="Broker" name="brokerId" :rules="[{ required: true, message: '请选择Broker!' }]">
+          <Select v-model:value="formState.brokerId" style="width: 220px">
+            <SelectOptGroup v-for="group in brokerGroups" :key="group.label" :label="group.label">
+              <SelectOption v-for="opt in group.options" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectOption>
+            </SelectOptGroup>
+          </Select>
+        </Form.Item>
+
         <Form.Item label="Symbol" name="symbol" :rules="[{ required: true, message: '请输入标的!' }]">
           <Input v-model:value="formState.symbol" style="width: 200px" placeholder="如 BTCUSDT:USDT" />
         </Form.Item>
@@ -120,6 +158,7 @@ function handleSymbolChanged(symbol: string) {
 
       <KlineChart
         ref="chartRef"
+        :broker-id="formState.brokerId"
         :symbol="formState.symbol"
         :interval="formState.interval"
         :startDate="formState.startDate"

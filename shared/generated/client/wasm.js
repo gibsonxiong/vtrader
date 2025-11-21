@@ -138,16 +138,23 @@ exports.Prisma.BacktestingScalarFieldEnum = {
 };
 
 exports.Prisma.BarScalarFieldEnum = {
-  id: 'id',
+  brokerName: 'brokerName',
   symbol: 'symbol',
+  interval: 'interval',
   timestamp: 'timestamp',
   open: 'open',
   high: 'high',
   low: 'low',
   close: 'close',
-  volume: 'volume',
+  volume: 'volume'
+};
+
+exports.Prisma.BarOverviewScalarFieldEnum = {
+  id: 'id',
+  brokerName: 'brokerName',
+  symbol: 'symbol',
   interval: 'interval',
-  openInterest: 'openInterest'
+  ranges: 'ranges'
 };
 
 exports.Prisma.SortOrder = {
@@ -178,12 +185,14 @@ exports.Prisma.BacktestingOrderByRelevanceFieldEnum = {
   endDate: 'endDate'
 };
 
-exports.Prisma.NullsOrder = {
-  first: 'first',
-  last: 'last'
+exports.Prisma.BarOrderByRelevanceFieldEnum = {
+  brokerName: 'brokerName',
+  symbol: 'symbol',
+  interval: 'interval'
 };
 
-exports.Prisma.BarOrderByRelevanceFieldEnum = {
+exports.Prisma.BarOverviewOrderByRelevanceFieldEnum = {
+  brokerName: 'brokerName',
   symbol: 'symbol',
   interval: 'interval'
 };
@@ -191,7 +200,8 @@ exports.Prisma.BarOrderByRelevanceFieldEnum = {
 
 exports.Prisma.ModelName = {
   Backtesting: 'Backtesting',
-  Bar: 'Bar'
+  Bar: 'Bar',
+  BarOverview: 'BarOverview'
 };
 
 /**

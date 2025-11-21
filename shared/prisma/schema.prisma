@@ -32,16 +32,25 @@ model Backtesting {
 }
 
 model Bar {
-  id Int @default(autoincrement()) @id
+  brokerName String
   symbol String
+  interval String
   timestamp BigInt
   open Decimal
   high Decimal
   low Decimal
   close Decimal
   volume Decimal
-  interval String
-  openInterest Decimal?
 
-  @@unique([symbol, timestamp, interval])
+  @@unique([brokerName, symbol, timestamp, interval])
+}
+
+model BarOverview {
+  id  Int  @default(autoincrement()) @id
+  brokerName String
+  symbol String
+  interval String
+  ranges Json
+
+  @@unique([brokerName, symbol, interval])
 }

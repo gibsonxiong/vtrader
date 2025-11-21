@@ -1,68 +1,57 @@
 import { Injectable } from '@nestjs/common';
-import { Broker } from './broker';
+import { Broker, type BrokerName } from './broker';
 import type { BrokerSettings } from '@vtrader/shared';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear/broker';
 import BinanceLinearTestnetBroker from 'src/broker-manager/brokers/binance-linear-testnet/broker';
+import config from 'src/config';
 
 export interface BrokerConfig {
-  brokers: {
-    id: string;
-    Class: new () => Broker;
-    settings: BrokerSettings;
-  }[];
+  id: string;
+  brokerName: string;
+  settings: BrokerSettings;
 }
-
-const config: BrokerConfig = {
-  brokers: [
-    {
-      id: '1',
-      Class: BinanceLinearTestnetBroker,
-      settings: {
-        apiKey: 'nzadRyiGuHIrLZGHuFeMiyING98FbpZi9127Lf3I8GvMCgMcc70QqZqnVInkFJx7',
-        apiSecret: 'KgyQpJrZiYkHsKl4Abj0cy6XwN12bAbxQ2jhbYNUAt6cysSpaEg4Eh7Ry1VEwsTM',
-        // server: 'TESTNET',
-        // klineStream: true,
-        // proxyHost: '127.0.0.1',
-        // proxyPort: 7890,
-      },
-    },
-    {
-      id: '2',
-      Class: BinanceLinearBroker,
-      settings: {
-        apiKey: 'nzadRyiGuHIrLZGHuFeMiyING98FbpZi9127Lf3I8GvMCgMcc70QqZqnVInkFJx7',
-        apiSecret: 'KgyQpJrZiYkHsKl4Abj0cy6XwN12bAbxQ2jhbYNUAt6cysSpaEg4Eh7Ry1VEwsTM',
-        // server: 'TESTNET',
-        // klineStream: true,
-        // proxyHost: '127.0.0.1',
-        // proxyPort: 7890,
-      },
-    },
-  ],
-};
 
 @Injectable()
 export class BrokerManagerService {
+  brokerClassMap: Record<string, new () => Broker> = {};
   instances: Record<string, Promise<Broker>> = {};
-  // promise: Promise<Broker> | null = null;
 
-  getBrokerConfig(): BrokerConfig {
-    return config;
+  constructor() {
+    this.registerBroker('BINANCE_LINEAR_BROKER', BinanceLinearBroker);
+    this.registerBroker('BINANCE_LINEAR_TESTNET_BROKER', BinanceLinearTestnetBroker);
+  }
+
+  registerBroker(brokerName: BrokerName, BrokerClass: new () => Broker) {
+    this.brokerClassMap[brokerName] = BrokerClass;
+  }
+
+  getBrokerConfigs(): BrokerConfig[] {
+    return config.brokers;
+  }
+
+  getBrokerConfig(brokerId: string): BrokerConfig | undefined {
+    return this.getBrokerConfigs().find(c => c.id === brokerId);
   }
 
   async getBroker(brokerId: string): Promise<Broker> {
-    const brokerConfig = config.brokers.find(c => c.id === brokerId);
+    const brokerConfig = this.getBrokerConfig(brokerId);
 
     if (!brokerConfig) {
-      throw new Error('未找到id为[${brokerId}]的broker');
+      throw new Error(`未找到id为[${brokerId}]的broker`);
+    }
+
+    const brokerClass = this.brokerClassMap[brokerConfig.brokerName];
+
+    if (!brokerClass) {
+      throw new Error(`未找到id为[${brokerId}]的broker`);
     }
 
     const instance = this.instances[brokerId];
 
     if (!instance) {
       this.instances[brokerId] = new Promise((resolve) => {
-        const broker = new brokerConfig.Class();
-        broker.connect(config.brokers[0].settings).then(() => {
+        const broker = new brokerClass();
+        broker.connect(brokerConfig.settings).then(() => {
           resolve(broker);
         });
       });

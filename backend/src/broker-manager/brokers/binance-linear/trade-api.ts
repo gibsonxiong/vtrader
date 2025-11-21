@@ -115,6 +115,8 @@ export class TradeApi {
       tradeCommission: 0,
     };
 
+    this.broker.emit('order', order);
+
     this.orders.set(order.orderId, order);
 
     // 构建订单参数
@@ -136,10 +138,10 @@ export class TradeApi {
     // 设置订单类型和价格
     const orderType = OrderType.LIMIT;
 
-      const [binanceType, timeCondition] = ORDERTYPE_VT2BINANCE[orderType];
-      params.type = binanceType;
-      params.timeInForce = timeCondition;
-      params.price = formatFloat(req.price);
+    const [binanceType, timeCondition] = ORDERTYPE_VT2BINANCE[orderType];
+    params.type = binanceType;
+    params.timeInForce = timeCondition;
+    params.price = formatFloat(req.price);
 
     // 签名参数
     this.sign(params);

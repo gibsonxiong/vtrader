@@ -13,6 +13,7 @@ import ScrollPannel from './ScrollPannel.vue';
 type ContractData = MarketDataApi.ContractData;
 
 interface Props {
+  brokerId: string;
   symbol: string;
   interval: Interval;
   startDate: Dayjs;
@@ -21,6 +22,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
+  brokerId: 'binance_test',
   trades: () => [],
 });
 
@@ -28,6 +30,7 @@ const emit = defineEmits<{
 }>();
 
 const innerProps = reactive({
+  brokerId: props.brokerId,
   symbol: props.symbol,
   interval: props.interval,
   startDate: props.startDate,
@@ -331,17 +334,15 @@ onMounted(() => {
 
   if (!klineChart) return;
 
-  let i = 0;
-  let intervalId = 0;
-
   klineChart.setDataLoader({
     getBars: async ({ callback, type }) => {
       loading.value = true;
       console.log('getBars type', type)
       try {
         const params: MarketDataApi.BarQueryParams = {
+          brokerId: innerProps.brokerId,
           symbol: innerProps.symbol,
-          interval: innerProps.interval,
+          interval: innerProps.interval as any,
           startDate: innerProps.startDate.format('YYYY-MM-DD'),
           endDate: innerProps.endDate.format('YYYY-MM-DD'),
           source: 'db',
@@ -351,7 +352,6 @@ onMounted(() => {
         callback(mapBarsToKLineData(data));
         updateTradeSignals(data);
       } catch (err: any) {
-        message.error('获取K线失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
         callback([]);
       } finally {
         loading.value = false;
@@ -500,6 +500,7 @@ defineExpose({
       >
         <ContractList
           ref="contractListRef"
+          :broker-id="innerProps.brokerId"
           :selectedSymbol="innerProps.symbol"
           @contractSelected="onContractSelected"
         />

@@ -19,6 +19,7 @@ export namespace MarketDataApi {
 
   /** K线查询参数 */
   export interface BarQueryParams {
+    brokerId: string;
     symbol: string;
     interval: string;
     startDate?: string;
@@ -28,6 +29,7 @@ export namespace MarketDataApi {
 
   /** 数据下载参数 */
   export interface DownloadParams {
+    brokerId: string;
     symbol: string;
     interval: string;
     startDate: string;
@@ -44,8 +46,8 @@ export namespace MarketDataApi {
 /**
  * 获取所有合约列表
  */
-export async function getContractsApi() {
-  return tradeRequestClient.post<MarketDataApi.ContractData[]>('/market-data/getContracts');
+export async function getContractsApi(brokerId: string) {
+  return tradeRequestClient.post<MarketDataApi.ContractData[]>('/market-data/getContracts', { brokerId });
 }
 
 /**
