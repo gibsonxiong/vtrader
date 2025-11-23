@@ -118,6 +118,7 @@ export interface OrderData {
   symbol: string;
   time: Date;
   type: OrderType;
+  msg: string;
 }
 
 /**

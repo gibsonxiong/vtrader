@@ -68,7 +68,7 @@ export class TradeApi {
    */
   private sign(params: any): void {
     // 添加时间戳
-    const timestamp = Date.now();
+    const timestamp = Date.now() - this.broker.timeOffset;
     params.timestamp = timestamp;
 
     // 按字母顺序排序参数并生成查询字符串
@@ -113,11 +113,8 @@ export class TradeApi {
       status: OrderStatus.SUBMITTING,
       time: new Date(),
       tradeCommission: 0,
+      msg: '',
     };
-
-    this.broker.emit('order', order);
-
-    this.orders.set(order.orderId, order);
 
     // 构建订单参数
     const params: any = {
@@ -156,6 +153,9 @@ export class TradeApi {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify(packet));
       this.broker.writeLog(`发送订单: ${req.symbol} ${req.direction} ${req.volume}`);
+
+      this.broker.emit('order', order);
+      this.orders.set(order.orderId, order);
     } else {
       this.broker.writeLog('WebSocket连接未建立，无法发送订单');
       return '';
@@ -228,6 +228,7 @@ export class TradeApi {
 
         if (order) {
           order.status = OrderStatus.REJECTED;
+          order.msg = msg.error?.msg || '未知错误';
           this.broker.emit('order', order);
           this.orders.delete(id);
         }

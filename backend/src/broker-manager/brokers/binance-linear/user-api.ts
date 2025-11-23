@@ -115,8 +115,14 @@ export class UserApi {
    * 处理订单更新
    */
   private onOrderUpdate(data: any): void {
+    const contract = this.broker.getContractByName(data.s);
+
+    if (!contract) {
+      return;
+    }
+
     const order: OrderData = {
-      symbol: data.s,
+      symbol: contract.symbol,
       orderId: data.c,
       type: data.o === 'LIMIT' ? OrderType.LIMIT : OrderType.MARKET,
       direction: data.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
@@ -130,6 +136,7 @@ export class UserApi {
       traded: Number.parseFloat(data.z),
       status: STATUS_BINANCE2VT[data.X],
       time: new Date(data.T),
+      msg: '',
     };
 
     this.broker.onOrder(order);

@@ -354,6 +354,7 @@ export abstract class Strategy {
       status: OrderStatus.SUBMITTING,
       time: new Date(),
       tradeCommission: 0,
+      msg: '',
     };
 
     this.orders.set(orderId, order);

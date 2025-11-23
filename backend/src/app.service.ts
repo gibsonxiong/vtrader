@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
-import { Direction, Interval, Offset } from '@vtrader/shared';
+import { Direction, Interval, Offset, OrderStatus } from '@vtrader/shared';
 import type { BarData, OrderData, TradeData } from '@vtrader/shared';
 import { MarketDataService } from './market-data/market-data.service';
 import { BacktestingService } from './backtesting/backtesting.service';
@@ -113,27 +113,31 @@ export class AppService {
     //   });
     // });
 
-    broker.watchTrade((trade: TradeData) => {
-      console.log('trade', trade);
-    });
+    // broker.watchTrade((trade: TradeData) => {
+    //   console.log('trade', trade);
+    // });
 
     broker.watchOrder((order: OrderData) => {
       console.log('order', order);
+
+      if (order.status === OrderStatus.NOTTRADED) {
+        // 取消订单
+        broker.cancelOrder({
+          orderId: order.orderId,
+          symbol: order.symbol,
+        });
+      }
     });
 
+    // 发送订单
     broker.sendOrder({
-      orderId: '1234',
+      orderId: '12345',
       symbol: 'BTCUSDT:USDT',
       direction: Direction.LONG,
       offset: Offset.OPEN,
-      price: 100000,
-      volume: 2222
+      price: 85000,
+      volume: 0.01,
     });
-
-    // broker.cancelOrder({
-    //   orderId: '1234',
-    //   symbol: 'BTCUSDT:USDT',
-    // });
   }
 
   test6(): void {

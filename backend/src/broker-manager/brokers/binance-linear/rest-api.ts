@@ -25,7 +25,7 @@ export class RestApi {
   private broker: BinanceLinearBroker;
   private keepAliveCount: number = 0;
   private server: string = '';
-  private timeOffset: number = 0;
+
   private host: string = '';
 
   constructor(broker: BinanceLinearBroker) {
@@ -252,8 +252,8 @@ export class RestApi {
       const response = await this.client.get('/fapi/v1/time');
       const serverTime = response.data.serverTime;
       const localTime = Date.now();
-      this.timeOffset = localTime - serverTime;
-      this.broker.writeLog(`服务器时间同步完成，偏移: ${this.timeOffset}ms`);
+      this.broker.timeOffset = localTime - serverTime;
+      this.broker.writeLog(`服务器时间同步完成，偏移: ${this.broker.timeOffset}ms`);
     } catch (error) {
       this.broker.writeLog(`查询服务器时间失败: ${error}`);
       throw error;
@@ -297,7 +297,7 @@ export class RestApi {
    * 签名请求
    */
   private sign(params: Record<string, any>): string {
-    const timestamp = Date.now() + this.timeOffset;
+    const timestamp = Date.now() - this.broker.timeOffset;
     params.timestamp = timestamp;
 
     const queryString = Object.keys(params)

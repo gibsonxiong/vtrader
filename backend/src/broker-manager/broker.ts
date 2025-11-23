@@ -24,6 +24,8 @@ export abstract class Broker extends EventEmitter {
     super();
   }
 
+  public abstract timeOffset: number;
+
   public abstract getBrokerName(): BrokerName;
   public abstract connect(settings: BrokerSettings): Promise<void>;
   public abstract stop(): void;

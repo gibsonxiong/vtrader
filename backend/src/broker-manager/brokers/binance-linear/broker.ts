@@ -32,6 +32,8 @@ export class BinanceLinearBroker extends Broker {
   USER_HOST = 'wss://fstream.binance.com/ws';
   DATA_HOST = 'wss://fstream.binance.com/stream';
 
+  public timeOffset: number = 0;
+
   private restApi: RestApi;
   private mdApi: MdApi;
   private tradeApi: TradeApi;

@@ -284,7 +284,7 @@ export class MarketDataService {
 
     for (let i = 1; i < sorted.length; i++) {
       const [nextStart, nextEnd] = sorted[i];
-      if (nextStart.isSame(end.add(1, 'day')) || nextStart.isBefore(end.add(1, 'day'))) {
+      if (nextStart.isSame(end) || nextStart.isBefore(end)) {
         if (nextEnd.isAfter(end)) {
           end = nextEnd;
         }

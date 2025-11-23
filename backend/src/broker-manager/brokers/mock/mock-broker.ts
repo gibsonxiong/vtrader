@@ -27,6 +27,8 @@ export class MockBroker extends Broker {
   commissionRate: number;
   assets: AssetData[] = [];
 
+  public timeOffset = 0;
+
   constructor(props: MockBrokerProps) {
     super();
 
@@ -111,6 +113,7 @@ export class MockBroker extends Broker {
       status: OrderStatus.NOTTRADED,
       time: new Date(),
       tradeCommission: 0,
+      msg: '',
     };
 
     this.activeLimitOrders.set(orderId, order);
