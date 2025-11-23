@@ -117,27 +117,43 @@ export class AppService {
     //   console.log('trade', trade);
     // });
 
-    broker.watchOrder((order: OrderData) => {
-      console.log('order', order);
+    // broker.watchOrder((order: OrderData) => {
+    //   console.log('order', order);
 
-      if (order.status === OrderStatus.NOTTRADED) {
-        // 取消订单
-        broker.cancelOrder({
-          orderId: order.orderId,
-          symbol: order.symbol,
-        });
-      }
-    });
+    //   if (order.status === OrderStatus.NOTTRADED) {
+    //     // 取消订单
+    //     broker.cancelOrder({
+    //       orderId: order.orderId,
+    //       symbol: order.symbol,
+    //     });
+    //   }
+    // });
 
     // 发送订单
-    broker.sendOrder({
-      orderId: '12345',
-      symbol: 'BTCUSDT:USDT',
-      direction: Direction.LONG,
-      offset: Offset.OPEN,
-      price: 85000,
-      volume: 0.01,
+    // broker.sendOrder({
+    //   orderId: '123456',
+    //   symbol: 'BTCUSDT:USDT',
+    //   direction: Direction.LONG,
+    //   offset: Offset.OPEN,
+    //   price: 83600,
+    //   volume: 0.56,
+    // });
+
+    // 查询订单
+    // @ts-expect-error
+    const orders = await broker.restApi.queryOrders({
+      symbol: 'ETHUSDT:USDT',
+      limit: 10,
     });
+
+    console.log('orders', orders);
+
+    // // @ts-expect-error
+    // const order = await broker.restApi.queryOrder({
+    //   symbol: 'BTCUSDT:USDT',
+    //   orderId: '123456',
+    // });
+
   }
 
   test6(): void {

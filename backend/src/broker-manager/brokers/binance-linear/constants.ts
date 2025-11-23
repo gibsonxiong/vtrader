@@ -1,6 +1,6 @@
 import type dayjs from 'dayjs';
 
-import { Direction, Interval, OrderStatus, Product } from '@vtrader/shared';
+import { Direction, Interval, Offset, OrderStatus, Product } from '@vtrader/shared';
 import { OrderType } from '@vtrader/shared';
 
 // 服务器地址常量
@@ -96,4 +96,29 @@ export const ORDERTYPE_VT2BINANCE: Record<OrderType, [string, string]> = {
 // 格式化浮点数函数
 export function formatFloat(value: number): string {
   return value.toFixed(8).replace(/\.?0+$/, '');
+}
+
+export function binance2direction(positionSide: 'LONG' | 'SHORT' | 'BOTH'): Direction {
+  if (positionSide === 'BOTH') return Direction.LONG;
+  
+  return positionSide === 'LONG' ? Direction.LONG : Direction.SHORT
+}
+
+export function binance2offset(positionSide: 'LONG' | 'SHORT' | 'BOTH', side: 'BUY' | 'SELL'): Offset {
+  if (positionSide === 'BOTH') {
+    return side === 'BUY' ? Offset.OPEN : Offset.CLOSE;
+  } else if (positionSide === 'LONG') {
+    return side === 'BUY' ? Offset.OPEN : Offset.CLOSE;
+  } else {
+    return side === 'BUY' ? Offset.CLOSE : Offset.OPEN;
+  }
+}
+
+
+export function binance2status(status: string): OrderStatus {
+  return STATUS_BINANCE2VT[status];
+}
+
+export function binance2ordertype(orderType: string): OrderType {
+  return orderType === 'LIMIT' ? OrderType.LIMIT : OrderType.MARKET;
 }

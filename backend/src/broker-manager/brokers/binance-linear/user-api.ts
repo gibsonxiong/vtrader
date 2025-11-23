@@ -1,18 +1,9 @@
-import type { AccountData, OrderData, PositionData, TradeData } from '@vtrader/shared';
+import { Direction, type AccountData, type OrderData, type PositionData, type TradeData } from '@vtrader/shared';
 import type { BinanceLinearBroker } from './broker';
 
 import WebSocket from 'ws';
 
-import { Direction, Offset, OrderType } from '@vtrader/shared';
-import { STATUS_BINANCE2VT } from './constants';
-
-function binance2offset(direction: 'LONG' | 'SHORT', side: 'BUY' | 'SELL'): Offset {
-  if (direction === 'LONG') {
-    return side === 'BUY' ? Offset.OPEN : Offset.CLOSE;
-  } else {
-    return side === 'BUY' ? Offset.CLOSE : Offset.OPEN;
-  }
-}
+import { binance2direction, binance2offset, binance2ordertype, binance2status } from './constants';
 
 /**
  * 用户数据API客户端
@@ -82,7 +73,7 @@ export class UserApi {
     for (const position of data.P) {
       const pos: PositionData = {
         symbol: position.s,
-        direction: position.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
+        direction: position.ps === 'SHORT' ? Direction.SHORT : Direction.LONG,
         volume: Math.abs(Number.parseFloat(position.pa)),
         price: Number.parseFloat(position.ep),
         pnl: Number.parseFloat(position.up),
@@ -124,17 +115,17 @@ export class UserApi {
     const order: OrderData = {
       symbol: contract.symbol,
       orderId: data.c,
-      type: data.o === 'LIMIT' ? OrderType.LIMIT : OrderType.MARKET,
-      direction: data.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
+      type: binance2ordertype(data.o),
+      direction: binance2direction(data.ps),
       offset: binance2offset(data.ps, data.S),
       price: Number.parseFloat(data.p),
+      status: binance2status(data.X),
       volume: Number.parseFloat(data.q),
       tradePrice: Number.parseFloat(data.L),
       tradeVolume: Number.parseFloat(data.l),
       tradeCommission: Number.parseFloat(data.n),
       avgPrice: Number.parseFloat(data.ap),
       traded: Number.parseFloat(data.z),
-      status: STATUS_BINANCE2VT[data.X],
       time: new Date(data.T),
       msg: '',
     };
@@ -146,9 +137,9 @@ export class UserApi {
       const trade: TradeData = {
         symbol: data.s,
         orderId: data.c,
-        tradeId: data.t.toString(),
-        direction: data.ps === 'LONG' ? Direction.LONG : Direction.SHORT,
+        direction: binance2direction(data.ps),
         offset: binance2offset(data.ps, data.S),
+        tradeId: data.t.toString(),
         price: Number.parseFloat(data.L),
         volume: Number.parseFloat(data.l),
         time: new Date(data.T),

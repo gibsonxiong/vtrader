@@ -6,11 +6,15 @@ import * as crypto from 'node:crypto';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import dayjs from 'dayjs';
 
-import { BarData, Interval, Product } from '@vtrader/shared';
+import { BarData, Interval, Product, type OrderData, OrderStatus, OrderType, Direction, Offset } from '@vtrader/shared';
 import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
   PRODUCT_BINANCE2VT,
+  binance2direction,
+  binance2offset,
+  binance2ordertype,
+  binance2status
 } from './constants';
 import { HistoryRequest } from '@vtrader/shared';
 
@@ -199,10 +203,75 @@ export class RestApi {
     // 清理资源
   }
 
+  /**
+   * 查询单个订单
+   */
+  public async queryOrder(req: { symbol: string; orderId: string }): Promise<OrderData | null> {
+    const contract = this.broker.getContractBySymbol(req.symbol);
+    if (!contract) return null;
+
+    const params: Record<string, any> = { 
+      symbol: contract.name,
+      origClientOrderId: req.orderId,
+    };
+
+    try {
+      const data = await this.sendSignedRequest('GET', '/fapi/v1/order', params);
+      return this.mapOrder(data, req.symbol);
+    } catch (error) {
+      // this.broker.writeLog(`查询订单失败: ${error}`);
+      return null;
+    }
+  }
+
+  /**
+   * 查询历史订单列表
+   */
+  public async queryOrders(req: { symbol: string; startTime?: number; endTime?: number; limit?: number }): Promise<OrderData[]> {
+    const contract = this.broker.getContractBySymbol(req.symbol);
+    if (!contract) return [];
+
+    const params: Record<string, any> = { symbol: contract.name };
+    if (req.startTime) params.startTime = req.startTime;
+    if (req.endTime) params.endTime = req.endTime;
+    if (req.limit) params.limit = req.limit;
+
+    try {
+      const list = await this.sendSignedRequest('GET', '/fapi/v1/allOrders', params);
+      if (!Array.isArray(list)) return [];
+      return list.map((o: any) => this.mapOrder(o, req.symbol));
+    } catch (error) {
+      this.broker.writeLog(`查询历史订单失败: ${error}`);
+      return [];
+    }
+  }
+
   private getNextStartTime(timestamp: number, interval: Interval): number {
     const args = INTERVAL_VT2DAYJS[interval];
     const nextTime = dayjs(timestamp).add(...args);
     return nextTime.valueOf();
+  }
+
+  private mapOrder(order: any, symbol: string): OrderData {
+    console.log(order);
+
+    return {
+      direction: binance2direction(order.positionSide),
+      offset: binance2offset(order.positionSide, order.side),
+      type: binance2ordertype(order.type),
+      status: binance2status(order.status),
+      orderId: order.clientOrderId,
+      price: Number(order.price ?? 0),
+      volume: Number(order.origQty ?? 0),
+      avgPrice: Number(order.avgPrice ?? 0),
+      traded: Number(order.executedQty ?? 0),
+      tradePrice: 0,
+      tradeVolume: 0,
+      tradeCommission: 0,
+      symbol: symbol,
+      time: new Date(order.time),
+      msg: '',
+    };
   }
 
   /**
@@ -288,7 +357,9 @@ export class RestApi {
       const response = await this.client.request(config);
       return response.data;
     } catch (error) {
-      this.broker.writeLog(`REST API请求失败: ${error}`);
+      const res = error.response?.data;
+      const msg = res?.msg || error.message;
+      this.broker.writeLog(`REST API请求失败: ${msg}`);
       throw error;
     }
   }
