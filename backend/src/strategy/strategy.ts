@@ -195,6 +195,8 @@ export abstract class Strategy {
     }
     
     ctx.am.add(bar);
+    ctx.longPos.updateByPrice(bar.close);
+    ctx.shortPos.updateByPrice(bar.close);
     await this.onBar(bar, ctx);
   }
   public onBar(bar: BarData, ctx: Context): Promise<void> | void {}
@@ -216,6 +218,8 @@ export abstract class Strategy {
     ctx.wallet.updateByOrder(newOrder);
     ctx.longHolding.update(newOrder);
     ctx.shortHolding.update(newOrder);
+    ctx.longPos.updateByOrder(newOrder);
+    ctx.shortPos.updateByOrder(newOrder);
 
     this.onOrder(newOrder, ctx);
   }
@@ -238,6 +242,8 @@ export abstract class Strategy {
     }
 
     this.trades.push(trade);
+    ctx.longPos.updateByTrade(trade);
+    ctx.shortPos.updateByTrade(trade);
     this.onTrade(trade, ctx);
   }
 

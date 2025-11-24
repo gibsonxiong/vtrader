@@ -4,6 +4,7 @@ import { LongHolding, ShortHolding } from './holding';
 import { Wallet } from './wallet';
 import { Strategy } from './strategy';
 import { ArrayManger } from 'src/strategy/array-manager';
+import { Position } from './position';
 
 export interface ContextProps {
   strategy: Strategy;
@@ -18,6 +19,8 @@ export class Context {
   wallet: Wallet;
   longHolding: LongHolding;
   shortHolding: ShortHolding;
+  longPos: Position;
+  shortPos: Position;
   am: ArrayManger;
 
   [key: string]: any;
@@ -28,6 +31,8 @@ export class Context {
     this.wallet = props.wallet;
     this.longHolding = new LongHolding(props.symbol);
     this.shortHolding = new ShortHolding(props.symbol);
+    this.longPos = new Position(props.symbol, Direction.LONG);
+    this.shortPos = new Position(props.symbol, Direction.SHORT);
     this.am = new ArrayManger(props.amLength);
   }
 
