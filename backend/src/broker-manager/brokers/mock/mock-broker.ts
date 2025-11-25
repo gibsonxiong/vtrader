@@ -48,6 +48,7 @@ export class MockBroker extends Broker {
         assetName: props.assetName || 'USDT',
         frozen: props.assetFrozen || 0,
         balance: props.assetBalance,
+        available: props.assetBalance - (props.assetFrozen ?? 0),
       }
     ]
   }

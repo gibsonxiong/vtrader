@@ -1,7 +1,6 @@
-import type { ContractData } from '@vtrader/shared';
+import type { AssetData, ContractData } from '@vtrader/shared';
 
 import {
-  AccountData,
   BarData,
   OrderbookData,
   OrderData,
@@ -102,8 +101,8 @@ export class BinanceLinearBroker extends Broker {
   /**
    * 处理账户数据
    */
-  public onAccount(account: AccountData): void {
-    this.emit('account', account);
+  public onAsset(asset: AssetData): void {
+    this.emit('asset', asset);
   }
 
   /**

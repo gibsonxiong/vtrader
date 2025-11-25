@@ -142,7 +142,7 @@ export class AppService {
     // 查询订单
     // @ts-expect-error
     const orders = await broker.restApi.queryOrders({
-      symbol: 'ETHUSDT:USDT',
+      symbol: 'BTCUSDT:USDT',
       limit: 10,
     });
 
@@ -153,6 +153,14 @@ export class AppService {
     //   symbol: 'BTCUSDT:USDT',
     //   orderId: '123456',
     // });
+
+    // @ts-expect-error
+    const assets = await broker.restApi.queryAssets();
+    console.log('assets', assets);
+
+    // @ts-expect-error
+    const positions = await broker.restApi.queryPositions();
+    console.log('positions', positions);
 
   }
 

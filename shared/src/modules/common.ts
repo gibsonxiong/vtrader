@@ -141,22 +141,20 @@ export interface TradeData {
  */
 export interface PositionData {
   direction: Direction;
-  frozen: number;
   pnl: number;
   price: number;
   symbol: string;
   volume: number;
-  ydVolume: number;
 }
 
-/**
- * 账户数据接口
- */
-export interface AccountData {
-  accountId: string;
-  balance: number;
-  frozen: number;
-}
+// /**
+//  * 账户数据接口
+//  */
+// // export interface AccountData {
+// //   accountId: string;
+// //   balance: number;
+// //   frozen: number;
+// // }
 
 /**
  * 资产数据接口
@@ -165,6 +163,7 @@ export interface AssetData {
   assetName: string;
   balance: number;
   frozen: number;
+  available: number;
 }
 
 /**

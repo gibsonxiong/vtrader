@@ -8,7 +8,6 @@ import type {
   ClearHandler,
 } from '@vtrader/shared';
 import type {
-  AccountData,
   BarData,
   ContractData,
   OrderData,

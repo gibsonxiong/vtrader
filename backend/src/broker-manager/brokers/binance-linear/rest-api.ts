@@ -6,7 +6,7 @@ import * as crypto from 'node:crypto';
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import dayjs from 'dayjs';
 
-import { BarData, Interval, Product, type OrderData, OrderStatus, OrderType, Direction, Offset } from '@vtrader/shared';
+import { BarData, Interval, Product, type OrderData, OrderStatus, OrderType, Direction, Offset, type AssetData, type PositionData } from '@vtrader/shared';
 import {
   INTERVAL_VT2BINANCE,
   INTERVAL_VT2DAYJS,
@@ -242,6 +242,46 @@ export class RestApi {
       return list.map((o: any) => this.mapOrder(o, req.symbol));
     } catch (error) {
       this.broker.writeLog(`查询历史订单失败: ${error}`);
+      return [];
+    }
+  }
+
+  public async queryAssets(): Promise<AssetData[]> {
+    try {
+      const data = await this.sendSignedRequest('GET', '/fapi/v2/account');
+      const list = Array.isArray(data?.assets) ? data.assets : [];
+      return list.map((a: any) => ({
+        assetName: String(a.asset),
+        balance: Number(a.walletBalance),
+        frozen: Number(a.walletBalance - a.availableBalance),
+        available: Number(a.availableBalance),
+      }));
+    } catch (error) {
+      this.broker.writeLog(`查询资产失败: ${error}`);
+      return [];
+    }
+  }
+
+  public async queryPositions(): Promise<PositionData[]> {
+    try {
+      const data = await this.sendSignedRequest('GET', '/fapi/v2/account');
+      const list = Array.isArray(data?.positions) ? data.positions : [];
+      return list
+        .filter(p => Number(p.positionAmt ?? 0) !== 0)
+        .map((p: any) => {
+          const contract = this.broker.getContractByName(String(p.symbol ?? ''));
+          const symbol = contract?.symbol ?? '';
+          return {
+            direction: binance2direction(p.positionSide),
+            pnl: Number(p.unrealizedProfit ?? 0),
+            price: Number(p.entryPrice ?? 0),
+            symbol,
+            volume: Math.abs(Number(p.positionAmt ?? 0)),
+            ydVolume: 0,
+          } as PositionData;
+        });
+    } catch (error) {
+      this.broker.writeLog(`查询仓位失败: ${error}`);
       return [];
     }
   }

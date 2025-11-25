@@ -1,4 +1,4 @@
-import { Direction, type AccountData, type OrderData, type PositionData, type TradeData } from '@vtrader/shared';
+import { Direction, type AssetData, type OrderData, type PositionData, type TradeData } from '@vtrader/shared';
 import type { BinanceLinearBroker } from './broker';
 
 import WebSocket from 'ws';
@@ -60,13 +60,14 @@ export class UserApi {
   private onAccountUpdate(data: any): void {
     // 处理余额更新
     for (const balance of data.B) {
-      const account: AccountData = {
-        accountId: balance.a,
+      const asset: AssetData = { //TODO
+        assetName: balance.a,
         balance: Number.parseFloat(balance.wb),
-        frozen: Number.parseFloat(balance.cw) - Number.parseFloat(balance.wb),
+        available: Number.parseFloat(balance.cw),
+        frozen: Number.parseFloat(balance.wb) - Number.parseFloat(balance.cw),
       };
 
-      this.broker.onAccount(account);
+      this.broker.onAsset(asset);
     }
 
     // 处理持仓更新
@@ -77,8 +78,6 @@ export class UserApi {
         volume: Math.abs(Number.parseFloat(position.pa)),
         price: Number.parseFloat(position.ep),
         pnl: Number.parseFloat(position.up),
-        frozen: 0,
-        ydVolume: 0,
       };
 
       this.broker.onPosition(pos);
