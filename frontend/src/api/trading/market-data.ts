@@ -41,6 +41,15 @@ export namespace MarketDataApi {
     count: number;
     message?: string;
   }
+
+  /** 批量下载参数 */
+  export interface BatchDownloadParams {
+    brokerId: string;
+    symbols: string[];
+    intervals: string[];
+    startDate: string;
+    endDate?: string;
+  }
 }
 
 /**
@@ -62,4 +71,18 @@ export async function getBarsApi(params: MarketDataApi.BarQueryParams) {
  */
 export async function downloadBarsApi(params: MarketDataApi.DownloadParams) {
   return tradeRequestClient.post<MarketDataApi.DownloadResponse>('/market-data/download', params);
+}
+
+/**
+ * 批量下载历史数据
+ */
+export async function batchDownloadBarsApi(params: MarketDataApi.BatchDownloadParams) {
+  return tradeRequestClient.post<MarketDataApi.DownloadResponse>('/market-data/batchDownload', params);
+}
+
+/** 删除概览记录 */
+export interface DeleteBarOverviewParams { id: number }
+export interface DeleteBarOverviewResp { id: number }
+export async function deleteBarOverviewApi(params: DeleteBarOverviewParams) {
+  return tradeRequestClient.post<DeleteBarOverviewResp>('/market-data/deleteBarOverview', params);
 }

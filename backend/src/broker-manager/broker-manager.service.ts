@@ -49,6 +49,8 @@ export class BrokerManagerService {
     const instance = this.instances[brokerId];
 
     if (!instance) {
+      console.log('生成broker中');
+      
       this.instances[brokerId] = new Promise((resolve) => {
         const broker = new brokerClass();
         broker.connect(brokerConfig.settings).then(() => {

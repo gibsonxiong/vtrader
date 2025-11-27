@@ -6,6 +6,7 @@ import { Interval } from '@vtrader/shared';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';
+import type { BarOverview } from '@vtrader/shared/prismaClient';
 
 export interface GetAllContractsParams {
   brokerId: string;
@@ -35,6 +36,10 @@ export interface BatchDownloadBarsParams {
   intervals: Interval[];
   startDate: string;
   endDate?: string;
+}
+
+export interface DeleteBarOverviewParams {
+  id: number;
 }
 
 @Injectable()
@@ -146,6 +151,10 @@ export class MarketDataService {
     })
 
     return barOverviewItem;
+  }
+
+  async getBarOverviews(): Promise<BarOverview[]> {
+    return this.prisma.barOverview.findMany();
   }
 
   async downloadBars(params: DownloadParams): Promise<number> {
@@ -360,5 +369,11 @@ export class MarketDataService {
     }
 
     return allCount;
+  }
+
+  async deleteBarOverview(params: DeleteBarOverviewParams): Promise<{ id: number }> {
+    const { id } = params;
+    await this.prisma.barOverview.delete({ where: { id } });
+    return { id };
   }
 }

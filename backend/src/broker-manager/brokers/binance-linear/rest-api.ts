@@ -34,7 +34,13 @@ export class RestApi {
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
-    this.client = axios.create();
+    this.client = axios.create({
+      proxy: {
+        host: '127.0.0.1',
+        port: 7890,
+        protocol: 'http'
+      }
+    });
   }
 
   /**

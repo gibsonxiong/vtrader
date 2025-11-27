@@ -13,6 +13,14 @@ const routes: RouteRecordRaw[] = [
     path: '/market-data',
     children: [
       {
+        name: 'Overview',
+        path: 'overview',
+        component: () => import('#/views/market-data/overview/index.vue'),
+        meta: {
+          title: $t('数据大纲'),
+        },
+      },
+      {
         name: 'List',
         path: 'list',
         component: () => import('#/views/market-data/list/index.vue'),

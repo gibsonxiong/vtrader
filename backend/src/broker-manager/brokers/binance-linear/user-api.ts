@@ -4,6 +4,9 @@ import type { BinanceLinearBroker } from './broker';
 import WebSocket from 'ws';
 
 import { binance2direction, binance2offset, binance2ordertype, binance2status } from './constants';
+import { SocksProxyAgent } from 'socks-proxy-agent';
+
+const agent = new SocksProxyAgent('socks5://127.0.0.1:7890');
 
 /**
  * 用户数据API客户端
@@ -22,7 +25,9 @@ export class UserApi {
   public async connect(listenKey: string): Promise<void> {
     // const wsUrl = `${server === 'REAL' ? REAL_USER_HOST : TESTNET_USER_HOST}${listenKey}`;
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(`${this.broker.USER_HOST}/${listenKey}`);
+      this.ws = new WebSocket(`${this.broker.USER_HOST}/${listenKey}`, {
+        agent
+      });
 
       this.ws.on('open', () => {
         this.broker.writeLog('用户数据WebSocket连接成功');

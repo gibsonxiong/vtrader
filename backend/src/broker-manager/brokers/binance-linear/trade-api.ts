@@ -1,11 +1,14 @@
 import type { BinanceLinearBroker } from './broker';
 
 import WebSocket from 'ws';
+import { SocksProxyAgent  } from 'socks-proxy-agent';
 import * as crypto from 'node:crypto';
 
 import { OrderStatus, Direction, Offset, OrderType, OrderData } from '@vtrader/shared';
 import { CancelOrderRequest, SendOrderRequest } from '@vtrader/shared';
 import { DIRECTION_OFFSET2BINANCE, ORDERTYPE_VT2BINANCE, formatFloat } from './constants';
+
+const agent = new SocksProxyAgent('socks5://127.0.0.1:7890');
 
 /**
  * 交易API客户端
@@ -40,7 +43,9 @@ export class TradeApi {
     // const wsUrl = server === 'REAL' ? REAL_TRADE_HOST : TESTNET_TRADE_HOST;
 
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(this.broker.TRADE_HOST);
+      this.ws = new WebSocket(this.broker.TRADE_HOST, {
+        agent,
+      });
 
       this.ws.on('open', () => {
         this.broker.writeLog('交易WebSocket连接成功');
