@@ -5,8 +5,6 @@ import WebSocket from 'ws';
 import { BarData, Interval, TickData } from '@vtrader/shared';
 import { SubscribeRequest } from '@vtrader/shared';
 import { SocksProxyAgent  } from 'socks-proxy-agent';
-
-const agent = new SocksProxyAgent('socks5://127.0.0.1:7890');
 /**
  * 市场数据API客户端
  */
@@ -32,7 +30,7 @@ export class MdApi {
 
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket(this.broker.DATA_HOST, {
-        agent
+        agent: new SocksProxyAgent('socks5h://127.0.0.1:7890')
       });
 
       this.ws.on('open', () => {

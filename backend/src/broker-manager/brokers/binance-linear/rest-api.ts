@@ -17,6 +17,10 @@ import {
   binance2status
 } from './constants';
 import { HistoryRequest } from '@vtrader/shared';
+import { HttpProxyAgent  } from 'http-proxy-agent';
+import { SocksProxyAgent  } from 'socks-proxy-agent';
+import { HttpsProxyAgent } from 'https-proxy-agent';
+import { createHttp, Http } from 'src/client/http';
 
 /**
  * REST API客户端
@@ -25,22 +29,14 @@ export class RestApi {
   public userStreamKey: string = '';
   private apiKey: string = '';
   private apiSecret: string = '';
-  private client: AxiosInstance;
+  private client: Http;
   private broker: BinanceLinearBroker;
   private keepAliveCount: number = 0;
-  private server: string = '';
 
-  private host: string = '';
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
-    this.client = axios.create({
-      proxy: {
-        host: '127.0.0.1',
-        port: 7890,
-        protocol: 'http'
-      }
-    });
+    
   }
 
   /**
@@ -55,16 +51,13 @@ export class RestApi {
   ): Promise<void> {
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
-    // this.server = server;
 
     // const baseURL = server === 'REAL' ? REAL_REST_HOST : TESTNET_REST_HOST;
-    this.client = axios.create({
+    this.client = createHttp({
       baseURL: this.broker.REST_HOST,
-      // proxy: proxyHost && proxyPort ? {
-      //   host: proxyHost,
-      //   port: proxyPort,
-      //   protocol: 'http'
-      // } : undefined,
+      proxy: false,
+      httpAgent: new HttpProxyAgent('http://127.0.0.1:7890'),
+      httpsAgent: new HttpsProxyAgent('http://127.0.0.1:7890')
     });
 
     // 查询服务器时间
@@ -135,62 +128,67 @@ export class RestApi {
       //   params.endTime = dayjs(req.endDate).valueOf();
       // }
 
+      let data;
       try {
-        const response = await this.client.get('/fapi/v1/klines', { params });
-        const data = response.data;
-
-        if (!data || data.length === 0) {
-          const msg = `未接收到K线历史数据，起始时间: ${startTime}`;
-          this.broker.writeLog(msg);
-          break;
-        }
-
-        const buf: BarData[] = [];
-
-        for (const row of data) {
-          const bar: BarData = {
-            symbol: req.symbol,
-            timestamp: row[0],
-            interval: req.interval,
-            volume: Number.parseFloat(row[5]),
-            open: Number.parseFloat(row[1]),
-            high: Number.parseFloat(row[2]),
-            low: Number.parseFloat(row[3]),
-            close: Number.parseFloat(row[4]),
-          };
-          buf.push(bar);
-        }
-
-        const begin = dayjs(buf[0].timestamp).format('YYYY-MM-DD HH:mm:ss');
-        const end = dayjs(buf[buf.length - 1].timestamp).format('YYYY-MM-DD HH:mm:ss');
-
-        history.push(...buf);
-
-        if (callback) {
-          callback(buf);
-        }
-
-        this.broker.writeLog(`K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`);
-
-        const lastTimestamp = buf[buf.length - 1].timestamp;
-        // Break the loop if the latest data received
-        if (
-          data.length < limit ||
-          (lastTimestamp >= endTime)
-        ) {
-          break;
-        }
-
-        // Update query start time
-       
-        startTime = this.getNextStartTime(lastTimestamp, req.interval);
-
-        // Wait to meet request flow limit
-        await new Promise((resolve) => setTimeout(resolve, 500));
+        const response = await this.client.request({
+          url: '/fapi/v1/klines',
+          params, 
+          retryCount: 10,
+        });
+        data = response.data;
       } catch (error) {
-        this.broker.writeLog(`K线历史数据查询失败: ${error}`);
+        throw new Error(`K线历史数据查询失败: ${error}`);
+      }
+
+      if (!data || data.length === 0) {
+        const msg = `未接收到K线历史数据，起始时间: ${startTime}`;
+        this.broker.writeLog(msg);
         break;
       }
+
+      const buf: BarData[] = [];
+
+      for (const row of data) {
+        const bar: BarData = {
+          symbol: req.symbol,
+          timestamp: row[0],
+          interval: req.interval,
+          volume: Number.parseFloat(row[5]),
+          open: Number.parseFloat(row[1]),
+          high: Number.parseFloat(row[2]),
+          low: Number.parseFloat(row[3]),
+          close: Number.parseFloat(row[4]),
+        };
+        buf.push(bar);
+      }
+
+      const begin = dayjs(buf[0].timestamp).format('YYYY-MM-DD HH:mm:ss');
+      const end = dayjs(buf[buf.length - 1].timestamp).format('YYYY-MM-DD HH:mm:ss');
+
+      history.push(...buf);
+
+      if (callback) {
+        callback(buf);
+      }
+
+      this.broker.writeLog(`K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`);
+
+      const lastTimestamp = buf[buf.length - 1].timestamp;
+      // Break the loop if the latest data received
+      if (
+        data.length < limit ||
+        (lastTimestamp >= endTime)
+      ) {
+        break;
+      }
+
+      // Update query start time
+      
+      startTime = this.getNextStartTime(lastTimestamp, req.interval);
+
+      // Wait to meet request flow limit
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      
     }
 
     this.broker.writeLog(`K线历史数据查询完成，共${history.length}条数据`);
@@ -325,7 +323,9 @@ export class RestApi {
    */
   private async queryContract(): Promise<void> {
     try {
-      const response = await this.client.get('/fapi/v1/exchangeInfo');
+      const response = await this.client.request({
+        url: '/fapi/v1/exchangeInfo'
+      });
       const data = response.data;
 
       for (const symbolData of data.symbols) {
@@ -364,7 +364,9 @@ export class RestApi {
    */
   private async queryTime(): Promise<void> {
     try {
-      const response = await this.client.get('/fapi/v1/time');
+      const response = await this.client.request({
+        url: '/fapi/v1/time'
+      });
       const serverTime = response.data.serverTime;
       const localTime = Date.now();
       this.broker.timeOffset = localTime - serverTime;

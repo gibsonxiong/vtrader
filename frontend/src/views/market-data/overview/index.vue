@@ -2,6 +2,7 @@
 import { Page } from '@vtrader/common-ui';
 import { Table, Tag, message, Form, DatePicker, Select, Space, Button, Modal, SelectOptGroup, SelectOption } from 'ant-design-vue';
 import { ref, onMounted, h, reactive, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import dayjs, { Dayjs } from 'dayjs';
 import { batchDownloadBarsApi, getContractsApi, type MarketDataApi } from '#/api';
 import { Interval } from '@vtrader/shared';
@@ -27,6 +28,7 @@ type TableNode = {
 
 const loading = ref(false);
 const overviews = ref<BarOverviewItem[]>([]);
+const router = useRouter();
 const treeData = computed<TableNode[]>(() => {
   const brokerMap = new Map<string, Map<string, BarOverviewItem[]>>();
   overviews.value.forEach((o) => {
@@ -44,6 +46,8 @@ const treeData = computed<TableNode[]>(() => {
         id: it.id,
         interval: it.interval,
         ranges: it.ranges,
+        symbol: sym,
+        brokerName: bname,
       }));
       symbols.push({
         id: `symbol-${bname}-${sym}`,
@@ -77,7 +81,6 @@ function handleExpandedRowsChange(keys: (string | number)[]) {
 const batchModalOpen = ref(false);
 const downloading = ref(false);
 const brokerGroups = ref<{ label: string; options: { label: string; value: string }[] }[]>([]);
-const brokerId2Name = ref<Record<string, string>>({});
 const contracts = ref<MarketDataApi.ContractData[]>([]);
 
 const defaultDateRange = {
@@ -90,13 +93,14 @@ const formState = reactive<{
   symbols: string[];
   intervals: string[];
   startDate: Dayjs;
-  endDate: Dayjs | null;
+  endDate: Dayjs;
 }>({
   brokerId: '',
   symbols: [],
   intervals: [
     Interval.MINUTE_1,
     Interval.MINUTE_5,
+    Interval.MINUTE_15,
   ],
   startDate: defaultDateRange.startDate,
   endDate: defaultDateRange.endDate,
@@ -124,12 +128,28 @@ const columns = [
     dataIndex: 'ranges',
     key: 'ranges',
     width: 480,
-    customRender: ({ text }: any) => {
+    customRender: ({ text, record }: any) => {
       const arr = Array.isArray(text) ? text : [];
       return h(
         'div',
         { style: 'display:flex; flex-wrap:wrap; gap:6px;' },
-        arr.map((r: [string, string]) => h(Tag, null, { default: () => `${r[0]} ~ ${r[1]}` }))
+        arr.map((r: [string, string]) => h(
+          Tag,
+          { 
+            style: 'cursor:pointer', 
+            onClick: () => router.push({ 
+              path: '/market-data/list', 
+              query: {
+                brokerName: record?.brokerName,
+                symbol: record?.symbol,
+                interval: record?.interval,
+                startDate: r[0],
+                endDate: r[1],
+              }
+            })
+          },
+          { default: () => `${r[0]} ~ ${r[1]}` }
+        ))
       );
     },
   },
@@ -175,9 +195,8 @@ async function fetchBrokerConfigs() {
       id2name[c.id] = c.brokerName;
     });
     brokerGroups.value = Object.values(groupsMap);
-    brokerId2Name.value = id2name;
     if (!formState.brokerId && brokerGroups.value.length) {
-      const first = brokerGroups.value[0]?.options?.[0];
+      const first = brokerGroups.value[1]?.options?.[0];
       if (first) formState.brokerId = first.value;
     }
   } catch (err: any) {
@@ -209,9 +228,9 @@ async function submitBatchDownload() {
       brokerId: formState.brokerId,
       symbols: formState.symbols,
       intervals: formState.intervals,
-      startDate: formState.startDate?.format('YYYY-MM-DD') || '',
+      startDate: formState.startDate.format('YYYY-MM-DD'),
+      endDate: formState.endDate.format('YYYY-MM-DD'),
     };
-    if (formState.endDate) params.endDate = formState.endDate.format('YYYY-MM-DD');
     const { data } = await batchDownloadBarsApi(params);
     message.success(`批量下载完成，新增 ${data.count} 条记录`);
     batchModalOpen.value = false;

@@ -20,6 +20,8 @@ export interface GetBarsParams {
   symbol: string;
   preload?: number;
   source: 'broker' | 'db';
+  currentPage?: number;
+  pageSize?: number;
 }
 
 export interface DownloadParams {
@@ -42,6 +44,95 @@ export interface DeleteBarOverviewParams {
   id: number;
 }
 
+
+function sortRanges(ranges: [string, string][]): [dayjs.Dayjs, dayjs.Dayjs][] {
+  return ranges
+    .map(([s, e]) => [dayjs(s), dayjs(e)] as [dayjs.Dayjs, dayjs.Dayjs])
+    .sort((a, b) => a[0].valueOf() - b[0].valueOf());
+}
+
+function formatDate(d: dayjs.Dayjs): string {
+  return d.format('YYYY-MM-DD');
+}
+
+// 计算补集
+function calculateComplement(
+  existingIntervals: [string, string][],
+  targetInterval: [string, string]
+): [string, string][] {
+  const end = dayjs(targetInterval[1]);
+  let currentStart = dayjs(targetInterval[0]);
+
+  const sorted = sortRanges(existingIntervals);
+
+  const complement: [string, string][] = [];
+
+  for (const [exStart, exEnd] of sorted) {
+    if (exEnd.isBefore(currentStart)) continue;
+    if (exStart.isAfter(end)) break;
+
+    if (currentStart.isBefore(exStart)) {
+      const gapEnd = exStart.subtract(1, 'day');
+      const clampedEnd = gapEnd.isAfter(end) ? end : gapEnd;
+      if (currentStart.isSame(clampedEnd) || currentStart.isBefore(clampedEnd)) {
+        complement.push([
+          formatDate(currentStart),
+          formatDate(clampedEnd),
+        ]);
+      }
+    }
+
+    const nextStart = exEnd.add(1, 'day');
+    if (currentStart.isBefore(nextStart)) currentStart = nextStart;
+    if (currentStart.isAfter(end)) break;
+  }
+
+  if (currentStart.isSame(end) || currentStart.isBefore(end)) {
+    complement.push([
+      formatDate(currentStart),
+      formatDate(end),
+    ]);
+  }
+
+  return complement;
+}
+
+// 计算并集
+function calculateUnion(
+  existingIntervals: [string, string][],
+  newInterval: [string, string]
+): [string, string][] {
+  const ranges = [...existingIntervals, newInterval];
+  if (ranges.length === 0) return [];
+
+  const sorted = sortRanges(ranges);
+
+  const merged: [string, string][] = [];
+  let [start, end] = sorted[0];
+
+  for (let i = 1; i < sorted.length; i++) {
+    const [nextStart, nextEnd] = sorted[i];
+    const boundary = end.add(1, 'day');
+    if (nextStart.isBefore(boundary) || nextStart.isSame(boundary)) {
+      if (nextEnd.isAfter(end)) end = nextEnd;
+    } else {
+      merged.push([formatDate(start), formatDate(end)]);
+      start = nextStart;
+      end = nextEnd;
+    }
+  }
+
+  merged.push([formatDate(start), formatDate(end)]);
+
+  return merged;
+}
+
+// // 示例用法
+// const existing = [['2025-10-10', '2025-10-18'], ['2025-11-01', '2025-11-28']] as [string, string][];
+// const target = ['2025-10-01','2025-10-09'] as [string, string];
+// console.log('######1', calculateComplement(existing, target));
+// console.log('######2', calculateUnion(existing, target));
+
 @Injectable()
 export class MarketDataService {
   constructor(
@@ -56,15 +147,15 @@ export class MarketDataService {
     return broker.getAllContracts();
   }
 
-  getBars(params: GetBarsParams): Promise<BarData[]> {
+  getBars(params: GetBarsParams): Promise<{ list: BarData[]; total: number }> {
     if (params.source === 'broker') {
       return this.getBarsFromBroker(params);
     }
     return this.getBarsFromDb(params);
   }
 
-  async getBarsFromBroker(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
-    const { brokerId, startDate, endDate, interval, symbol, preload } = params;
+  async getBarsFromBroker(params: Omit<GetBarsParams, 'source'>): Promise<{ list: BarData[]; total: number }> {
+    const { brokerId, startDate, endDate, interval, symbol, preload, currentPage, pageSize } = params;
     let startTime = dayjs(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss');
     const endTime = dayjs(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
@@ -75,16 +166,24 @@ export class MarketDataService {
       startTime = dayjs(startDate).subtract(preload * n, unit).format('YYYY-MM-DD HH:mm:ss');
     }
 
-    return broker.queryHistory({
+    const bars = await broker.queryHistory({
       startDate: startTime,
       endDate: endTime,
       interval,
       symbol,
     });
+    const total = bars.length;
+    let list = bars;
+    if (currentPage && pageSize && currentPage > 0 && pageSize > 0) {
+      const skip = (currentPage - 1) * pageSize;
+      const end = skip + pageSize;
+      list = bars.slice(skip, end);
+    }
+    return { list, total };
   }
 
-  async getBarsFromDb(params: Omit<GetBarsParams, 'source'>): Promise<BarData[]> {
-    const { brokerId, startDate, endDate, interval, symbol, preload } = params;
+  async getBarsFromDb(params: Omit<GetBarsParams, 'source'>): Promise<{ list: BarData[]; total: number }> {
+    const { brokerId, startDate, endDate, interval, symbol, preload, currentPage, pageSize } = params;
     let startTime = dayjs(startDate).startOf('day').valueOf();
     const endTime = dayjs(endDate).endOf('day').valueOf();
 
@@ -103,31 +202,50 @@ export class MarketDataService {
       startTime = dayjs(startTime).subtract(preload * n, unit).valueOf();
     }
 
-    const bars = await this.prisma.bar.findMany({
-      where: {
-        timestamp: {
-          gte: startTime,
-          lte: endTime,
-        },
-        brokerName: brokerConfig.brokerName,
-        interval,
-        symbol,
-      },
-      orderBy: {
-        timestamp: 'asc',
-      },
-    });
+    const pagination: { skip?: number; take?: number } = {};
+    if (currentPage && pageSize && currentPage > 0 && pageSize > 0) {
+      pagination.skip = (currentPage - 1) * pageSize;
+      pagination.take = pageSize;
+    }
 
-    return bars.map((bar) => ({
-      symbol: bar.symbol,
+    const where = {
+      timestamp: {
+        gte: startTime,
+        lte: endTime,
+      },
+      brokerName: brokerConfig.brokerName,
+      interval,
+      symbol,
+    };
+
+    const total = await this.prisma.bar.count({ where });
+
+    const bars = await this.prisma.bar.findMany({
+      select: {
+        timestamp: true,
+        open: true,
+        high: true,
+        low: true,
+        close: true,
+        volume: true,
+      },
+      where,
+      orderBy: {
+        timestamp: 'desc',
+      },
+      ...pagination,
+    });
+    const list = bars.map((bar) => ({
+      symbol: symbol,
+      interval: interval,
       timestamp: Number(bar.timestamp),
-      interval: bar.interval as Interval,
       open: bar.open.toNumber(),
       high: bar.high.toNumber(),
       low: bar.low.toNumber(),
       close: bar.close.toNumber(),
       volume: bar.volume.toNumber(),
     }));
+    return { list, total };
   }
 
   async getBarOverview(params: {
@@ -157,13 +275,22 @@ export class MarketDataService {
     return this.prisma.barOverview.findMany();
   }
 
+  async deleteBarOverview(params: DeleteBarOverviewParams): Promise<{ id: number }> {
+    const { id } = params;
+    await this.prisma.barOverview.delete({ where: { id } });
+    return { id };
+  }
+
   async downloadBars(params: DownloadParams): Promise<number> {
-    const { brokerId, startDate, endDate, interval, symbol } = params;
+    let { endDate } = params;
+    const { brokerId, startDate, interval, symbol } = params;
     const brokerConfig = await this.brokerMgr.getBrokerConfig(brokerId);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
     }
+
+    endDate = endDate ?? formatDate(dayjs());
 
     const barOverview = await this.getBarOverview({
       brokerId,
@@ -174,10 +301,9 @@ export class MarketDataService {
 
     // 如果之前下载过的日期就不下了，只下载没下载的
     // 计算需要下载的缺失区间
-    const missingRanges = this.computeMissingRanges(
+    const missingRanges = calculateComplement(
       ranges,
-      startDate,
-      endDate || dayjs().format('YYYY-MM-DD')
+      [startDate, endDate]
     );
 
     // 如果没有需要下载的区间，直接返回 0
@@ -197,7 +323,7 @@ export class MarketDataService {
       });
 
       const { count } = await this.prisma.bar.createMany({
-        data: bars.map((bar) => ({
+        data: bars.list.map((bar) => ({
           ...bar,
           brokerName: brokerConfig.brokerName,
         })),
@@ -208,10 +334,10 @@ export class MarketDataService {
     }
 
     // 更新 barOverview
-    const newRanges = this.mergeRanges([
-      ...ranges,
-      ...missingRanges,
-    ]);
+    const newRanges = calculateUnion(
+      ranges,
+      [startDate, endDate]
+    );
 
     if (!barOverview) {
       await this.prisma.barOverview.create({
@@ -231,123 +357,6 @@ export class MarketDataService {
 
     return totalCount;
   }
-
-    /**
-   * 计算缺失的日期区间
-   */
-  private computeMissingRanges(
-    existingRanges: [string, string][],
-    startDate: string,
-    endDate: string
-  ): [string, string][] {
-    if (existingRanges.length === 0) {
-      return [[startDate, endDate]];
-    }
-
-    const missing: [string, string][] = [];
-    let currentStart = dayjs(startDate);
-    const end = dayjs(endDate);
-
-    // 按开始时间排序
-    const sorted = existingRanges
-      .map(([s, e]) => [dayjs(s), dayjs(e)] as [dayjs.Dayjs, dayjs.Dayjs])
-      .sort((a, b) => a[0].valueOf() - b[0].valueOf());
-
-    for (const [exStart, exEnd] of sorted) {
-      if (currentStart.isBefore(exStart)) {
-        missing.push([
-          currentStart.format('YYYY-MM-DD'),
-          exStart.subtract(1, 'day').format('YYYY-MM-DD'),
-        ]);
-      }
-      if (currentStart.isBefore(exEnd.add(1, 'day'))) {
-        currentStart = exEnd.add(1, 'day');
-      }
-      if (currentStart.isAfter(end)) {
-        break;
-      }
-    }
-
-    if (currentStart.isSame(end) || currentStart.isBefore(end)) {
-      missing.push([
-        currentStart.format('YYYY-MM-DD'),
-        end.format('YYYY-MM-DD'),
-      ]);
-    }
-
-    return missing;
-  }
-
-  /**
-   * 合并重叠或相邻的区间
-   */
-  private mergeRanges(ranges: [string, string][]): [string, string][] {
-    if (ranges.length === 0) return [];
-
-    const sorted = ranges
-      .map(([s, e]) => [dayjs(s), dayjs(e)] as [dayjs.Dayjs, dayjs.Dayjs])
-      .sort((a, b) => a[0].valueOf() - b[0].valueOf());
-
-    const merged: [string, string][] = [];
-    let [start, end] = sorted[0];
-
-    for (let i = 1; i < sorted.length; i++) {
-      const [nextStart, nextEnd] = sorted[i];
-      if (nextStart.isSame(end) || nextStart.isBefore(end)) {
-        if (nextEnd.isAfter(end)) {
-          end = nextEnd;
-        }
-      } else {
-        merged.push([
-          start.format('YYYY-MM-DD'),
-          end.format('YYYY-MM-DD'),
-        ]);
-        start = nextStart;
-        end = nextEnd;
-      }
-    }
-
-    merged.push([
-      start.format('YYYY-MM-DD'),
-      end.format('YYYY-MM-DD'),
-    ]);
-
-    return merged;
-  }
-
-
-
-
-  //   const bars = await this.getBarsFromBroker({
-  //     brokerId,
-  //     startDate,
-  //     endDate,
-  //     interval,
-  //     symbol,
-  //   });
-
-  //   const { count } = await this.prisma.bar.createMany({
-  //     data: bars.map((bar) => ({
-  //       ...bar,
-  //       brokerName: brokerConfig.brokerName,
-  //     })),
-  //     skipDuplicates: true,
-  //   });
-
-  //   // 保存baroverview
-  //   if (!barOverview) {
-  //     await this.prisma.barOverview.create({
-  //       data: {
-  //         brokerName: brokerConfig.brokerName,
-  //         symbol,
-  //         interval,
-  //         ranges: [[startDate, endDate ? endDate : dayjs().format('YYYY-MM-DD')]] as [string, string][],
-  //       }
-  //     });
-  //   }
-
-  //   return count;
-  // }
 
   // 批量下载
   async batchDownloadBars(params: BatchDownloadBarsParams): Promise<number> {
@@ -369,11 +378,5 @@ export class MarketDataService {
     }
 
     return allCount;
-  }
-
-  async deleteBarOverview(params: DeleteBarOverviewParams): Promise<{ id: number }> {
-    const { id } = params;
-    await this.prisma.barOverview.delete({ where: { id } });
-    return { id };
   }
 }

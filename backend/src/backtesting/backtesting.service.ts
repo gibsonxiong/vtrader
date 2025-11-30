@@ -76,6 +76,8 @@ export class BacktestingService implements StrategyEngine {
   }
 
   async initBroker(setting: BacktestingSetting): Promise<void> {
+    const brokerConfig = this.broker
+
     this.broker = new MockBroker({
       commissionRate: setting.commissionRate,
       assetBalance: setting.balance,
@@ -146,7 +148,7 @@ export class BacktestingService implements StrategyEngine {
       //   bars = ethData as BarData[];
       // }
 
-      this.historyData = this.historyData.concat(bars);
+      this.historyData = this.historyData.concat(bars.list);
     }
 
     this.historyData.sort((a, b) => {

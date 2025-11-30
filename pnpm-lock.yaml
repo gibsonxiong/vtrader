@@ -514,6 +514,9 @@ importers:
       http-proxy-agent:
         specifier: ^7.0.2
         version: 7.0.2
+      https-proxy-agent:
+        specifier: ^7.0.6
+        version: 7.0.6
       socks-proxy-agent:
         specifier: ^8.0.5
         version: 8.0.5

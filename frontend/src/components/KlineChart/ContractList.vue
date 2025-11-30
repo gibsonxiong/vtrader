@@ -13,7 +13,6 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   selectedSymbol: '',
-  brokerId: 'binance_test',
 });
 
 const emit = defineEmits<{

@@ -25,6 +25,14 @@ export namespace MarketDataApi {
     startDate?: string;
     endDate?: string;
     source: 'broker' | 'db';
+    currentPage?: number;
+    pageSize?: number;
+  }
+
+  /** 分页响应 */
+  export interface PagedBarsResponse {
+    list: BarData[];
+    total: number;
   }
 
   /** 数据下载参数 */
@@ -63,7 +71,7 @@ export async function getContractsApi(brokerId: string) {
  * 获取K线数据
  */
 export async function getBarsApi(params: MarketDataApi.BarQueryParams) {
-  return tradeRequestClient.post<BarData[]>('/market-data/getBars', params);
+  return tradeRequestClient.post<MarketDataApi.PagedBarsResponse>('/market-data/getBars', params);
 }
 
 /**

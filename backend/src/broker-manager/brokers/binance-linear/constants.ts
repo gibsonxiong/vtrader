@@ -4,15 +4,15 @@ import { Direction, Interval, Offset, OrderStatus, Product } from '@vtrader/shar
 import { OrderType } from '@vtrader/shared';
 
 // 服务器地址常量
-export const REAL_REST_HOST = 'https://fapi.binance.com';
-export const REAL_TRADE_HOST = 'wss://ws-fapi.binance.com/ws-fapi/v1';
-export const REAL_USER_HOST = 'wss://fstream.binance.com/ws/';
-export const REAL_DATA_HOST = 'wss://fstream.binance.com/stream';
+// export const REAL_REST_HOST = 'https://fapi.binance.com';
+// export const REAL_TRADE_HOST = 'wss://ws-fapi.binance.com/ws-fapi/v1';
+// export const REAL_USER_HOST = 'wss://fstream.binance.com/ws/';
+// export const REAL_DATA_HOST = 'wss://fstream.binance.com/stream';
 
-export const TESTNET_REST_HOST = 'https://testnet.binancefuture.com';
-export const TESTNET_TRADE_HOST = 'wss://testnet.binancefuture.com/ws-fapi/v1';
-export const TESTNET_USER_HOST = 'wss://stream.binancefuture.com/ws/';
-export const TESTNET_DATA_HOST = 'wss://stream.binancefuture.com/stream';
+// export const TESTNET_REST_HOST = 'https://testnet.binancefuture.com';
+// export const TESTNET_TRADE_HOST = 'wss://testnet.binancefuture.com/ws-fapi/v1';
+// export const TESTNET_USER_HOST = 'wss://stream.binancefuture.com/ws/';
+// export const TESTNET_DATA_HOST = 'wss://stream.binancefuture.com/stream';
 
 // 状态映射
 export const STATUS_BINANCE2VT: Record<string, OrderStatus> = {

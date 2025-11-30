@@ -7,8 +7,7 @@ import * as crypto from 'node:crypto';
 import { OrderStatus, Direction, Offset, OrderType, OrderData } from '@vtrader/shared';
 import { CancelOrderRequest, SendOrderRequest } from '@vtrader/shared';
 import { DIRECTION_OFFSET2BINANCE, ORDERTYPE_VT2BINANCE, formatFloat } from './constants';
-
-const agent = new SocksProxyAgent('socks5://127.0.0.1:7890');
+import { createWs } from 'src/client/ws';
 
 /**
  * 交易API客户端
@@ -43,26 +42,26 @@ export class TradeApi {
     // const wsUrl = server === 'REAL' ? REAL_TRADE_HOST : TESTNET_TRADE_HOST;
 
     return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(this.broker.TRADE_HOST, {
-        agent,
-      });
+      this.ws = createWs({
+        url: this.broker.TRADE_HOST,
+        agent: new SocksProxyAgent('socks5h://127.0.0.1:7890'),
+        onOpen: () => {
+          this.broker.writeLog('交易WebSocket连接成功');
+          resolve();
+        },
 
-      this.ws.on('open', () => {
-        this.broker.writeLog('交易WebSocket连接成功');
-        resolve();
-      });
+        onMessage: (data: WebSocket.Data) => {
+          this.onMessage(data.toString());
+        },
 
-      this.ws.on('message', (data: WebSocket.Data) => {
-        this.onMessage(data.toString());
-      });
+        onError: (error) => {
+          this.broker.writeLog(`交易WebSocket错误: ${error}`);
+          reject(error);
+        },
 
-      this.ws.on('error', (error) => {
-        this.broker.writeLog(`交易WebSocket错误: ${error}`);
-        reject(error);
-      });
-
-      this.ws.on('close', () => {
-        this.broker.writeLog('交易WebSocket连接关闭');
+        onClose: () => {
+          this.broker.writeLog('交易WebSocket连接关闭');
+        }
       });
     });
   }

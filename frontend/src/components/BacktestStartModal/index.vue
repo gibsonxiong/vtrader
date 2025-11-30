@@ -25,7 +25,7 @@ const router = useRouter();
 const formState = reactive({
   strategyName: '',
   symbols: ['BTCUSDT:USDT'],
-  interval: Interval.MINUTE_1,
+  interval: Interval.MINUTE_15,
   startDate: dayjs().subtract(4, 'day'),
   endDate: dayjs(),
   commissionRate: 0.0005,

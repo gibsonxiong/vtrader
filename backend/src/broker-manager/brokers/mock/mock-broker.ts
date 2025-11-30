@@ -85,15 +85,15 @@ export class MockBroker extends Broker {
   }
 
   public getContractByName(name: string): ContractData | undefined {
-    return undefined;
+    return this.broker.getContractByName(name);
   }
 
   public getContractBySymbol(symbol: string): ContractData | undefined {
-    return undefined;
+    return this.broker.getContractBySymbol(symbol);
   }
 
   public queryHistory(req: HistoryRequest): Promise<BarData[]> {
-    return Promise.resolve([]);
+    return this.broker.queryHistory(req);
   }
 
   public async sendOrder(req: SendOrderRequest): Promise<string> {

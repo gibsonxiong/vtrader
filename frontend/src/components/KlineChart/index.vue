@@ -22,31 +22,35 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  brokerId: 'binance_test',
   trades: () => [],
 });
 
 const emit = defineEmits<{
+  (e: 'update:symbol', symbol: string): void;
+  (e: 'update:interval', interval: Interval): void;
+  (e: 'update:startDate', startDate: Dayjs): void;
+  (e: 'update:endDate', endDate: Dayjs): void;
 }>();
 
-const innerProps = reactive({
-  brokerId: props.brokerId,
-  symbol: props.symbol,
-  interval: props.interval,
-  startDate: props.startDate,
-  endDate: props.endDate,
-})
+// const innerProps = reactive({
+//   brokerId: props.brokerId,
+//   symbol: props.symbol,
+//   interval: props.interval,
+//   startDate: props.startDate,
+//   endDate: props.endDate,
+// })
 const loading = ref(false);
 const showContractModal = ref(false);
 const contractListRef = ref<InstanceType<typeof ContractList> | null>(null);
 
 const scrollPanelOpen = ref(false);
+const scrollOffset = 20;
 function onScrollLeft() {
-  klineChart?.scrollToDataIndex(0, 300);
+  klineChart?.scrollToDataIndex(scrollOffset, 300);
 }
 
 function onScrollRight() {
-  klineChart?.scrollToDataIndex(klineChart.getDataList().length - 1, 300);
+  klineChart?.scrollToDataIndex(klineChart.getDataList().length - 1 + scrollOffset, 300);
 }
 
 function onScrollCustom(date: string) {
@@ -75,8 +79,6 @@ const isFullscreen = ref(false)
 const chartDivRef = ref<HTMLDivElement | null>(null);
 let klineChart: Chart | null = null;
 let resizeObserver: ResizeObserver | null = null;
-// 记录最近一次加载的数据长度，用于滚动到最右边
-const lastDataIndex = ref<number>(0);
 
 // 交易信号类型
 interface TradeSignal {
@@ -93,32 +95,47 @@ function showContractSelector() {
 
 // 选择合约
 function onContractSelected(contract: ContractData) {
-  innerProps.symbol = contract.symbol;
+  emit('update:symbol', contract.symbol);
   showContractModal.value = false;
 }
 
-// 周期切换
-function changeInterval(interval: Interval) {
-  innerProps.interval = interval;
+function onIntervalChange(interval: any) {
+  emit('update:interval', interval as Interval);
 }
+
+function onStartDateChange(startDate: Dayjs | string) {
+  emit('update:startDate', startDate as Dayjs);
+}
+
+function onEndDateChange(endDate: Dayjs | string) {
+  emit('update:endDate', endDate as Dayjs);
+}
+
+// 监听改变
+watch(() => props.symbol, (newSymbol) => {
+  klineChart?.setSymbol({ ticker: newSymbol });
+})
+
+watch(() => props.interval, (newInterval) => {
+  const period = intervalToPeriod(newInterval);
+  klineChart?.setPeriod(period);
+})
+
+watch(() => props.startDate, (newStartDate) => {
+  klineChart?.resetData();
+})
+
+watch(() => props.endDate, (newEndDate) => {
+  klineChart?.resetData();
+})
+
+
 
 // 全屏切换
 function toggleFullscreen() {
   isFullscreen.value = !isFullscreen.value;
   // 这里可以添加实际的全屏逻辑
 }
-
-// 工具按钮处理函数
-function handleIndicators() {
-  message.info('指标功能开发中...');
-}
-
-function handleSettings() {
-  message.info('设置功能开发中...');
-}
-
-
-
 
 function mapBarsToKLineData(list: BarData[]) {
   return list.map((b) => ({
@@ -272,37 +289,10 @@ async function fetchBars() {
   //   return;
   // }
 
-  const period = intervalToPeriod(innerProps.interval);
-  // 设置交易对与周期，v10 推荐通过 setDataLoader 提供数据
-  klineChart?.setSymbol({ ticker: innerProps.symbol });
-  klineChart?.setPeriod(period);
   klineChart?.resetData();
 }
 
-
-
-// 监听props变化
-watch(() => props, () => {
-  Object.assign(innerProps, props);
-}, {
-  deep: true,
-});
-
-watch(() => innerProps.symbol, () => {
-  klineChart?.setSymbol({ ticker: innerProps.symbol });
-})
-
-watch(() => innerProps.interval, () => {
-  const period = intervalToPeriod(innerProps.interval);
-  klineChart?.setPeriod(period);
-})
-
-// watch(() => innerProps.startDate, () => {
-//   klineChart?.resetData();
-// })
-
-
-onMounted(() => {
+function initChart(): void {
   if (!chartDivRef.value) return;
 
   klineChart = init(chartDivRef.value, {
@@ -334,23 +324,42 @@ onMounted(() => {
 
   if (!klineChart) return;
 
+  let currentPage = 1;
+  const pageSize = 500; 
+
   klineChart.setDataLoader({
     getBars: async ({ callback, type }) => {
       loading.value = true;
       console.log('getBars type', type)
+
+      if (type === 'init') {
+        currentPage = 1;
+      } else if (type === 'forward') {
+        currentPage++;
+      }
+
       try {
         const params: MarketDataApi.BarQueryParams = {
-          brokerId: innerProps.brokerId,
-          symbol: innerProps.symbol,
-          interval: innerProps.interval as any,
-          startDate: innerProps.startDate.format('YYYY-MM-DD'),
-          endDate: innerProps.endDate.format('YYYY-MM-DD'),
+          brokerId: props.brokerId,
+          symbol: props.symbol,
+          interval: props.interval as any,
+          startDate: props.startDate.format('YYYY-MM-DD'),
+          endDate: props.endDate.format('YYYY-MM-DD'),
           source: 'db',
+          currentPage,
+          pageSize,
         };
         
-        const {data} = await getBarsApi(params);
-        callback(mapBarsToKLineData(data));
-        updateTradeSignals(data);
+        const { data } = await getBarsApi(params);
+        const list = data?.list.reverse() || [];
+        
+        let forward = (currentPage * pageSize) < data.total;
+
+        callback(mapBarsToKLineData(list), {
+          backward: false,
+          forward
+        });
+        updateTradeSignals(list);
       } catch (err: any) {
         callback([]);
       } finally {
@@ -386,6 +395,11 @@ onMounted(() => {
 
   });
 
+  // 设置交易对与周期，v10 推荐通过 setDataLoader 提供数据
+  klineChart?.setSymbol({ ticker: props.symbol });
+  const period = intervalToPeriod(props.interval);
+  klineChart?.setPeriod(period);
+
   // 在底部新增成交量指标面板（VOL），高度约 100px
   try {
     klineChart.createIndicator({
@@ -402,9 +416,14 @@ onMounted(() => {
 
   // 设置 ResizeObserver 监听容器大小变化
   setupResizeObserver();
+}
+
+
+onMounted(() => {
+  initChart();
 
   // 首次加载
-  fetchBars();
+  // fetchBars();
 });
 
 onBeforeUnmount(() => {
@@ -429,11 +448,13 @@ defineExpose({
       <!-- 顶部工具栏 -->
       <div class="chart-toolbar">
         <div class="toolbar-left">
+          {{ props.brokerId }}
           <button class="contract-selector-btn" @click="showContractSelector" title="选择合约">
-            {{ innerProps.symbol }}
+            {{ props.symbol }}
           </button>
           <Select
-            v-model:value="innerProps.interval"
+            :value="props.interval"
+            @update:value="onIntervalChange"
             style="width: 100px"
           >
             <SelectOption 
@@ -447,7 +468,8 @@ defineExpose({
           <div class="date-selectors">
             <div class="date-selector-group">
               <DatePicker
-                v-model:value="innerProps.startDate"
+                :value="props.startDate"
+                @update:value="onStartDateChange"
                 format="YYYY-MM-DD"
                 placeholder="选择开始日期"
                 class="date-picker"
@@ -456,7 +478,8 @@ defineExpose({
             </div>
             <div class="date-selector-group">
               <DatePicker
-                v-model:value="innerProps.endDate"
+                :value="props.endDate"
+                @update:value="onEndDateChange"
                 format="YYYY-MM-DD"
                 placeholder="选择结束日期"
                 class="date-picker"
@@ -469,12 +492,6 @@ defineExpose({
           <button class="tool-btn" @click="openScrollPanel" title="滚动">
             滚动
           </button>
-          <button class="tool-btn" @click="handleIndicators" title="指标">
-            指标
-          </button>
-          <button class="tool-btn" @click="handleSettings" title="设置">
-            设置
-          </button>
           <button class="tool-btn" @click="toggleFullscreen" title="全屏">
             全屏
           </button>
@@ -483,11 +500,11 @@ defineExpose({
       
       <!-- K线图容器 -->
       <div ref="chartDivRef" class="chart-content">
-        <!-- 加载中提示 -->
-        <div v-if="loading" class="chart-loading">
-          <div class="loading-spinner"></div>
-          <div class="loading-text">加载中...</div>
-        </div>
+      </div>
+      <!-- 加载中提示 -->
+      <div v-if="loading" class="chart-loading">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">加载中...</div>
       </div>
       
       <!-- 合约选择模态框 -->
@@ -500,8 +517,8 @@ defineExpose({
       >
         <ContractList
           ref="contractListRef"
-          :broker-id="innerProps.brokerId"
-          :selectedSymbol="innerProps.symbol"
+          :broker-id="props.brokerId"
+          :selectedSymbol="props.symbol"
           @contractSelected="onContractSelected"
         />
       </Modal>
