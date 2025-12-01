@@ -3,9 +3,10 @@ import type { Interval, TradeData } from '@vtrader/shared';
 import KlineChart from '#/components/KlineChart/index.vue';
 import TradingTable from './TradingTable.vue';
 import type { Dayjs } from 'dayjs';
+import { watch } from 'vue';
 
 interface TradingAnalysisProps {
-  backtestId?: number;
+  brokerId: string;
   symbol: string;
   interval: Interval;
   start: Dayjs;
@@ -14,12 +15,22 @@ interface TradingAnalysisProps {
 }
 
 const props = defineProps<TradingAnalysisProps>();
+
+watch(() => props.symbol, (start) => {
+  debugger;
+});
+
+watch(() => props.start, (start) => {
+  debugger;
+});
+
 </script>
 
 <template>
   <div class="trading-analysis">
     <!-- K线图表组件 -->
-    <KlineChart 
+    <KlineChart
+      :brokerId="props.brokerId"
       :symbol="props.symbol" 
       :interval="props.interval" 
       :startDate="props.start" 

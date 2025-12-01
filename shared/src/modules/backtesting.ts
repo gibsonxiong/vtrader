@@ -4,6 +4,7 @@ import { Interval } from './common';
  * 回测设置接口
  */
 export interface BacktestingSetting {
+  brokerId: string;
   startDate: string;
   endDate: string;
   symbols: string | string[];

@@ -122,6 +122,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.BacktestingScalarFieldEnum = {
   id: 'id',
+  brokerId: 'brokerId',
   strategyName: 'strategyName',
   symbol: 'symbol',
   interval: 'interval',
@@ -178,6 +179,7 @@ exports.Prisma.QueryMode = {
 };
 
 exports.Prisma.BacktestingOrderByRelevanceFieldEnum = {
+  brokerId: 'brokerId',
   strategyName: 'strategyName',
   symbol: 'symbol',
   interval: 'interval',

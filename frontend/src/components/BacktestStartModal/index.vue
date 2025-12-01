@@ -1,11 +1,12 @@
 <script lang="ts" setup>
-import { Form, Input, Button, DatePicker, Select, InputNumber, Modal, Checkbox, message, Tag, Progress } from 'ant-design-vue';
+import { Form, Input, Button, DatePicker, Select, SelectOptGroup, SelectOption, InputNumber, Modal, Checkbox, message, Tag, Progress } from 'ant-design-vue';
 import { reactive, onMounted, ref, watch, onUnmounted } from 'vue';
 import dayjs, { Dayjs } from 'dayjs';
 import { useRouter } from 'vue-router';
 import type { BacktestingSetting } from '@vtrader/shared';
 import { Interval } from '@vtrader/shared';
 import { getStrategyClassesApi, getStrategyClassByNameApi, createBacktestApi, getJobStatusApi } from '#/api';
+import { tradeRequestClient } from '#/api/request';
 
 interface Props {
   open: boolean;
@@ -23,11 +24,12 @@ const router = useRouter();
 
 // 修改：表单状态使用 Dayjs 对象用于 DatePicker 绑定
 const formState = reactive({
+  brokerId: 'binance',
   strategyName: '',
   symbols: ['BTCUSDT:USDT'],
   interval: Interval.MINUTE_15,
-  startDate: dayjs().subtract(4, 'day'),
-  endDate: dayjs(),
+  startDate: dayjs('2025-01-01'),
+  endDate: dayjs('2025-11-25'),
   commissionRate: 0.0005,
   balance: 100_000,
 });
@@ -35,6 +37,7 @@ const formState = reactive({
 // 新增：转换表单数据为 API 格式
 function convertFormStateToApiFormat(): BacktestingSetting {
   return {
+    brokerId: formState.brokerId,
     strategy: {
       strategyName: formState.strategyName,
       strategySetting: strategyParamsForm.value,
@@ -267,6 +270,7 @@ const fetchStrategyList = async () => {
 watch(() => props.open, (newVal) => {
   if (newVal) {
     fetchStrategyList();
+    fetchBrokerConfigs();
   }
 });
 
@@ -363,6 +367,29 @@ const handleCancel = () => {
   }
 };
 
+const brokerGroups = ref<{ label: string; options: { label: string; value: string }[] }[]>([]);
+
+async function fetchBrokerConfigs() {
+  try {
+    const { data } = await tradeRequestClient.post('/broker-manager/getConfigs');
+    const groupsMap: Record<string, { label: string; options: { label: string; value: string }[] }> = {};
+    (data || []).forEach((c: any) => {
+      const key = c.brokerName;
+      if (!groupsMap[key]) {
+        groupsMap[key] = { label: key, options: [] };
+      }
+      groupsMap[key].options.push({ label: c.id, value: c.id });
+    });
+    brokerGroups.value = Object.values(groupsMap);
+    if (!formState.brokerId && brokerGroups.value.length) {
+      const first = brokerGroups.value[0]?.options?.[0];
+      if (first) formState.brokerId = first.value;
+    }
+  } catch (err: any) {
+    message.error('获取Broker配置失败：' + (err?.response?.data?.message || err?.message || '未知错误'));
+  }
+}
+
 // 组件卸载时清理
 onUnmounted(() => {
   clearStatusCheck();
@@ -394,17 +421,28 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <Form
-        :model="formState"
-        name="backtestForm"
+  <Form
+    :model="formState"
+    name="backtestForm"
         layout="horizontal"
         :label-col="{ span: 6 }"
         :wrapper-col="{ span: 18 }"
         class="compact-form"
         @finish="onFinish"
-        @finishFailed="onFinishFailed"
-        :disabled="taskState.isRunning"
-      >
+    @finishFailed="onFinishFailed"
+    :disabled="taskState.isRunning"
+  >
+    <Form.Item
+      label="Broker"
+      name="brokerId"
+      :rules="[{ required: true, message: '请选择Broker!' }]"
+    >
+      <Select v-model:value="formState.brokerId" placeholder="请选择Broker">
+        <SelectOptGroup v-for="group in brokerGroups" :key="group.label" :label="group.label">
+          <SelectOption v-for="opt in group.options" :key="opt.value" :value="opt.value">{{ opt.label }}</SelectOption>
+        </SelectOptGroup>
+      </Select>
+    </Form.Item>
         <Form.Item
           label="交易策略"
           name="strategyName"

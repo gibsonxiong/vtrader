@@ -4,6 +4,7 @@ import type { BrokerSettings } from '@vtrader/shared';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear/broker';
 import BinanceLinearTestnetBroker from 'src/broker-manager/brokers/binance-linear-testnet/broker';
 import config from 'src/config';
+import { MockBroker, MockBrokerProps } from './brokers/mock/mock-broker';
 
 export interface BrokerConfig {
   id: string;
@@ -59,5 +60,27 @@ export class BrokerManagerService {
       });
     }
     return this.instances[brokerId];
+  }
+
+  async createMockBroker(props: MockBrokerProps): Promise<MockBroker> {
+    const { brokerId } = props;
+    const brokerConfig = this.getBrokerConfig(brokerId);
+
+    if (!brokerConfig) {
+      throw new Error(`未找到id为[${brokerId}]的broker`);
+    }
+
+    const brokerClass = this.brokerClassMap[brokerConfig.brokerName];
+
+    if (!brokerClass) {
+      throw new Error(`未找到id为[${brokerId}]的broker`);
+    }
+
+    console.log('生成mock broker中');
+    
+    const broker = new brokerClass();
+    const mockBroker = new MockBroker(props);
+
+    return mockBroker;
   }
 }

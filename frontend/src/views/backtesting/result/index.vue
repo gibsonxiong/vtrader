@@ -149,9 +149,7 @@ const combinedRows = computed(() => {
   // const result = buildResultRows();
   return [...basic];
 });
-onMounted(() => {
-  fetchBacktestResult();
-});
+
 // 差异高亮辅助：返回箭头和颜色
 const diffArrow = (current: number | null, compare: number | null) => {
   if (current == null || compare == null) return '';
@@ -164,6 +162,10 @@ const diffColor = (current: number | null, compare: number | null): string | und
   // 按用户规则：更优红色，更差绿色
   return compare > current ? '#ff4d4f' : '#52c41a';
 };
+
+onMounted(() => {
+  fetchBacktestResult();
+});
 </script>
 
 <template>
@@ -181,7 +183,7 @@ const diffColor = (current: number | null, compare: number | null): string | und
               <!-- 交易分析内容 -->
               <TradingAnalysis
                 v-if="state.data"
-                :backtest-id="state.data?.id" 
+                :broker-id="state.data?.brokerId"
                 :symbol="state.data?.symbol"
                 :interval="state.data?.interval"
                 :start="dayjs(state.data?.startDate)"

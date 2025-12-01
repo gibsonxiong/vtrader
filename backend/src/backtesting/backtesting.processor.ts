@@ -2,8 +2,12 @@ import { Processor, Process, OnQueueCompleted, OnQueueFailed } from '@nestjs/bul
 import { Job } from 'bull';
 import { Injectable, Logger } from '@nestjs/common';
 import { BacktestingSetting } from '@vtrader/shared';
-import { BacktestingService } from './backtesting.service';
+import { MarketDataService } from '../market-data/market-data.service';
+import { StrategyService } from '../strategy/strategy.service';
+import { BrokerManagerService } from '../broker-manager/broker-manager.service';
+import { PrismaService } from '../prisma.service';
 import { NotificationService, BacktestNotificationData } from '../notification/notification.service';
+import { Backtesting } from './backtesting';
 
 @Injectable()
 @Processor('backtesting')
@@ -11,7 +15,11 @@ export class BacktestingProcessor {
   private readonly logger = new Logger(BacktestingProcessor.name);
 
   constructor(
-    private readonly backtestingService: BacktestingService,
+    // private readonly backtestingService: BacktestingService,
+    private readonly marketDataService: MarketDataService,
+    private readonly strategyService: StrategyService,
+    private readonly brokerManagerService: BrokerManagerService,
+    private readonly prisma: PrismaService,
     private readonly notificationService: NotificationService,
   ) {}
 
@@ -25,23 +33,29 @@ export class BacktestingProcessor {
     await job.progress(0);
     
     try {
+      const backtesting = new Backtesting(
+        this.marketDataService,
+        this.strategyService,
+        this.brokerManagerService,
+        this.prisma,
+      );
       // 设置回测参数
-      await this.backtestingService.setSetting(data);
+      await backtesting.setSetting(data);
       await job.progress(20);
       this.logger.log(`任务 ${job.id}: 参数设置完成`);
       
       // 加载数据
-      await this.backtestingService.loadData();
+      await backtesting.loadData();
       await job.progress(50);
       this.logger.log(`任务 ${job.id}: 数据加载完成`);
       
       // 运行回测
-      await this.backtestingService.runBacktesting();
+      await backtesting.runBacktesting();
       await job.progress(80);
       this.logger.log(`任务 ${job.id}: 回测运行完成`);
       
       // 计算结果
-      const resultId = await this.backtestingService.calculateResult();
+      const resultId = await backtesting.calculateResult();
       await job.progress(100);
       this.logger.log(`任务 ${job.id}: 结果计算完成，结果ID: ${resultId}`);
       

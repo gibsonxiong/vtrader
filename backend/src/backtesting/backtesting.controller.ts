@@ -21,7 +21,7 @@ export class BacktestingController {
    */
   @Post('create')
   async create(@Body() request: BacktestingApi.CreateRequest): Promise<Response<{ jobId: string; message: string }>> {
-    const result = await this.backtestingService.backtesting(request);
+    const result = await this.backtestingService.createBacktesting(request);
 
     return response(result);
   }

@@ -11,7 +11,8 @@ import { Broker, type BrokerName } from 'src/broker-manager/broker';
 import BinanceLinearBroker from '../binance-linear/broker';
 let tradeCount: number = 0;
 
-interface MockBrokerProps {
+export interface MockBrokerProps {
+  brokerId: string;
   commissionRate: number;
   // BrokerClass: new () => Broker;
   assetName?: string;

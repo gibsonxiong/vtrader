@@ -1061,6 +1061,7 @@ export namespace Prisma {
 
   export type BacktestingMinAggregateOutputType = {
     id: number | null
+    brokerId: string | null
     strategyName: string | null
     symbol: string | null
     interval: string | null
@@ -1076,6 +1077,7 @@ export namespace Prisma {
 
   export type BacktestingMaxAggregateOutputType = {
     id: number | null
+    brokerId: string | null
     strategyName: string | null
     symbol: string | null
     interval: string | null
@@ -1091,6 +1093,7 @@ export namespace Prisma {
 
   export type BacktestingCountAggregateOutputType = {
     id: number
+    brokerId: number
     strategyName: number
     symbol: number
     interval: number
@@ -1130,6 +1133,7 @@ export namespace Prisma {
 
   export type BacktestingMinAggregateInputType = {
     id?: true
+    brokerId?: true
     strategyName?: true
     symbol?: true
     interval?: true
@@ -1145,6 +1149,7 @@ export namespace Prisma {
 
   export type BacktestingMaxAggregateInputType = {
     id?: true
+    brokerId?: true
     strategyName?: true
     symbol?: true
     interval?: true
@@ -1160,6 +1165,7 @@ export namespace Prisma {
 
   export type BacktestingCountAggregateInputType = {
     id?: true
+    brokerId?: true
     strategyName?: true
     symbol?: true
     interval?: true
@@ -1264,6 +1270,7 @@ export namespace Prisma {
 
   export type BacktestingGroupByOutputType = {
     id: number
+    brokerId: string
     strategyName: string
     symbol: string
     interval: string
@@ -1300,6 +1307,7 @@ export namespace Prisma {
 
   export type BacktestingSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
+    brokerId?: boolean
     strategyName?: boolean
     symbol?: boolean
     interval?: boolean
@@ -1319,6 +1327,7 @@ export namespace Prisma {
 
   export type BacktestingSelectScalar = {
     id?: boolean
+    brokerId?: boolean
     strategyName?: boolean
     symbol?: boolean
     interval?: boolean
@@ -1334,13 +1343,14 @@ export namespace Prisma {
     trades?: boolean
   }
 
-  export type BacktestingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "strategyName" | "symbol" | "interval" | "startDate" | "endDate" | "startBalance" | "endBalance" | "maxDrawdown" | "maxDrawdownPercent" | "totalNetPnl" | "totalReturnPercent" | "dailyResults" | "trades", ExtArgs["result"]["backtesting"]>
+  export type BacktestingOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "brokerId" | "strategyName" | "symbol" | "interval" | "startDate" | "endDate" | "startBalance" | "endBalance" | "maxDrawdown" | "maxDrawdownPercent" | "totalNetPnl" | "totalReturnPercent" | "dailyResults" | "trades", ExtArgs["result"]["backtesting"]>
 
   export type $BacktestingPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Backtesting"
     objects: {}
     scalars: $Extensions.GetPayloadResult<{
       id: number
+      brokerId: string
       strategyName: string
       symbol: string
       interval: string
@@ -1724,6 +1734,7 @@ export namespace Prisma {
    */
   interface BacktestingFieldRefs {
     readonly id: FieldRef<"Backtesting", 'Int'>
+    readonly brokerId: FieldRef<"Backtesting", 'String'>
     readonly strategyName: FieldRef<"Backtesting", 'String'>
     readonly symbol: FieldRef<"Backtesting", 'String'>
     readonly interval: FieldRef<"Backtesting", 'String'>
@@ -3966,6 +3977,7 @@ export namespace Prisma {
 
   export const BacktestingScalarFieldEnum: {
     id: 'id',
+    brokerId: 'brokerId',
     strategyName: 'strategyName',
     symbol: 'symbol',
     interval: 'interval',
@@ -4043,6 +4055,7 @@ export namespace Prisma {
 
 
   export const BacktestingOrderByRelevanceFieldEnum: {
+    brokerId: 'brokerId',
     strategyName: 'strategyName',
     symbol: 'symbol',
     interval: 'interval',
@@ -4133,6 +4146,7 @@ export namespace Prisma {
     OR?: BacktestingWhereInput[]
     NOT?: BacktestingWhereInput | BacktestingWhereInput[]
     id?: IntFilter<"Backtesting"> | number
+    brokerId?: StringFilter<"Backtesting"> | string
     strategyName?: StringFilter<"Backtesting"> | string
     symbol?: StringFilter<"Backtesting"> | string
     interval?: StringFilter<"Backtesting"> | string
@@ -4150,6 +4164,7 @@ export namespace Prisma {
 
   export type BacktestingOrderByWithRelationInput = {
     id?: SortOrder
+    brokerId?: SortOrder
     strategyName?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
@@ -4171,6 +4186,7 @@ export namespace Prisma {
     AND?: BacktestingWhereInput | BacktestingWhereInput[]
     OR?: BacktestingWhereInput[]
     NOT?: BacktestingWhereInput | BacktestingWhereInput[]
+    brokerId?: StringFilter<"Backtesting"> | string
     strategyName?: StringFilter<"Backtesting"> | string
     symbol?: StringFilter<"Backtesting"> | string
     interval?: StringFilter<"Backtesting"> | string
@@ -4188,6 +4204,7 @@ export namespace Prisma {
 
   export type BacktestingOrderByWithAggregationInput = {
     id?: SortOrder
+    brokerId?: SortOrder
     strategyName?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
@@ -4213,6 +4230,7 @@ export namespace Prisma {
     OR?: BacktestingScalarWhereWithAggregatesInput[]
     NOT?: BacktestingScalarWhereWithAggregatesInput | BacktestingScalarWhereWithAggregatesInput[]
     id?: IntWithAggregatesFilter<"Backtesting"> | number
+    brokerId?: StringWithAggregatesFilter<"Backtesting"> | string
     strategyName?: StringWithAggregatesFilter<"Backtesting"> | string
     symbol?: StringWithAggregatesFilter<"Backtesting"> | string
     interval?: StringWithAggregatesFilter<"Backtesting"> | string
@@ -4361,6 +4379,7 @@ export namespace Prisma {
   }
 
   export type BacktestingCreateInput = {
+    brokerId: string
     strategyName: string
     symbol: string
     interval: string
@@ -4378,6 +4397,7 @@ export namespace Prisma {
 
   export type BacktestingUncheckedCreateInput = {
     id?: number
+    brokerId: string
     strategyName: string
     symbol: string
     interval: string
@@ -4394,6 +4414,7 @@ export namespace Prisma {
   }
 
   export type BacktestingUpdateInput = {
+    brokerId?: StringFieldUpdateOperationsInput | string
     strategyName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
@@ -4411,6 +4432,7 @@ export namespace Prisma {
 
   export type BacktestingUncheckedUpdateInput = {
     id?: IntFieldUpdateOperationsInput | number
+    brokerId?: StringFieldUpdateOperationsInput | string
     strategyName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
@@ -4428,6 +4450,7 @@ export namespace Prisma {
 
   export type BacktestingCreateManyInput = {
     id?: number
+    brokerId: string
     strategyName: string
     symbol: string
     interval: string
@@ -4444,6 +4467,7 @@ export namespace Prisma {
   }
 
   export type BacktestingUpdateManyMutationInput = {
+    brokerId?: StringFieldUpdateOperationsInput | string
     strategyName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
@@ -4461,6 +4485,7 @@ export namespace Prisma {
 
   export type BacktestingUncheckedUpdateManyInput = {
     id?: IntFieldUpdateOperationsInput | number
+    brokerId?: StringFieldUpdateOperationsInput | string
     strategyName?: StringFieldUpdateOperationsInput | string
     symbol?: StringFieldUpdateOperationsInput | string
     interval?: StringFieldUpdateOperationsInput | string
@@ -4681,6 +4706,7 @@ export namespace Prisma {
 
   export type BacktestingCountOrderByAggregateInput = {
     id?: SortOrder
+    brokerId?: SortOrder
     strategyName?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
@@ -4708,6 +4734,7 @@ export namespace Prisma {
 
   export type BacktestingMaxOrderByAggregateInput = {
     id?: SortOrder
+    brokerId?: SortOrder
     strategyName?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder
@@ -4723,6 +4750,7 @@ export namespace Prisma {
 
   export type BacktestingMinOrderByAggregateInput = {
     id?: SortOrder
+    brokerId?: SortOrder
     strategyName?: SortOrder
     symbol?: SortOrder
     interval?: SortOrder

@@ -135,6 +135,7 @@ export class AppService {
   async backtesting(): Promise<void> {
     // 1. 设置回测参数
     const setting: BacktestingSetting = {
+      brokerId,
       startDate: '2025-07-08',
       endDate: '2025-07-23',
       symbols: ['BTCUSDT:USDT', 'ETHUSDT:USDT'],
@@ -149,7 +150,7 @@ export class AppService {
       },
     };
 
-    this.backtestingService.backtesting(setting);
+    this.backtestingService.createBacktesting(setting);
   }
 
   async createStrategy(): Promise<void> {

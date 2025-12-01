@@ -16,6 +16,7 @@ datasource db {
 
 model Backtesting {
   id    Int     @default(autoincrement()) @id
+  brokerId String
   strategyName String
   symbol String
   interval String
