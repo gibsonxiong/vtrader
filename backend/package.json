@@ -39,7 +39,9 @@
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.1",
     "technicalindicators": "^3.1.0",
-    "ws": "^8.18.3"
+    "ws": "^8.18.3",
+    "apache-arrow": "^14.0.2",
+    "parquet-wasm": "^0.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

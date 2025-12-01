@@ -16,6 +16,8 @@ import axios from 'axios';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
+import * as fs from 'fs';
+import * as path from 'path';
 
 // 
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
@@ -30,7 +32,7 @@ export class AppService {
     private readonly brokerMgrService: BrokerManagerService,
     private readonly strategyService: StrategyService,
   ) {
-    this.testBroker();
+    this.getBars();
   }
 
     async testBroker(): Promise<void> {
@@ -107,15 +109,83 @@ export class AppService {
 
   // 获取K线
   async getBars(): Promise<void> {
-    const bars = await this.marketDataService.getBarsFromDb({
+    const barsRes = await this.marketDataService.getBarsFromDb({
       brokerId,
-      startDate: '2022-01-01',
-      endDate: '2025-01-02',
-      interval: Interval.MINUTE_15,
+      startDate: '2020-01-01',
+      endDate: '2025-05-28',
+      interval: Interval.MINUTE_1,
       symbol: 'BTCUSDT:USDT',
     });
+    const list = barsRes.list;
+    const symbol = 'BTCUSDT:USDT';
+    const interval = Interval.MINUTE_1;
 
-    console.log(bars);
+    const arrow = await import('apache-arrow');
+    const { tableFromArrays, tableToIPC } = arrow as any;
+    const parquet = await import('parquet-wasm/esm/parquet_wasm.js');
+    const { initSync, Table, writeParquet, WriterPropertiesBuilder, Compression } = parquet as any;
+    const wasmPath = require.resolve('parquet-wasm/esm/parquet_wasm_bg.wasm');
+    const wasmBuffer = fs.readFileSync(wasmPath);
+    initSync(wasmBuffer);
+
+    const timestamps = list.map((b) => new Date(b.timestamp));
+    const opens = Float64Array.from(list.map((b) => b.open));
+    const highs = Float64Array.from(list.map((b) => b.high));
+    const lows = Float64Array.from(list.map((b) => b.low));
+    const closes = Float64Array.from(list.map((b) => b.close));
+    const volumes = Float64Array.from(list.map((b) => b.volume));
+    const symbols = list.map((b) => b.symbol);
+    const intervals = list.map((b) => b.interval);
+
+    const arrowTable = tableFromArrays({
+      symbol: symbols,
+      interval: intervals,
+      timestamp: timestamps,
+      open: opens,
+      high: highs,
+      low: lows,
+      close: closes,
+      volume: volumes,
+    });
+
+    if (!list.length) {
+      return;
+    }
+    const wasmTable = Table.fromIPCStream(tableToIPC(arrowTable, 'stream'));
+    const writerProps = new WriterPropertiesBuilder()
+      .setCompression(Compression.SNAPPY)
+      .build();
+    const parquetBytes = writeParquet(wasmTable, writerProps);
+
+    const dataDir = path.resolve(process.cwd(), 'src', 'data');
+    fs.mkdirSync(dataDir, { recursive: true });
+    const safeSymbol = symbol.replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const filePath = path.resolve(dataDir, `${safeSymbol}_${interval}.parquet`);
+    fs.writeFileSync(filePath, Buffer.from(parquetBytes));
+  }
+
+  async readFile(): Promise<void> {
+    const t0 = Date.now();
+    const filePath = 'd:\\Projects\\trade\\vtrader\\backend\\src\\data\\BTCUSDT_USDT_15m.parquet';
+    try {
+      const parquet = await import('parquet-wasm/esm/parquet_wasm.js');
+      const { initSync, readParquet } = parquet as any;
+      const wasmPath = require.resolve('parquet-wasm/esm/parquet_wasm_bg.wasm');
+      const wasmBuffer = fs.readFileSync(wasmPath);
+      initSync(wasmBuffer);
+      const arrow = await import('apache-arrow');
+      const { tableFromIPC } = arrow as any;
+      const buf = fs.readFileSync(filePath);
+      const wasmTable = readParquet(new Uint8Array(buf));
+      const table = tableFromIPC(wasmTable.intoIPCStream());
+      const dt = Date.now() - t0;
+      console.log('parquet open time(ms):', dt);
+      console.table(table.select(['open','close','high','low','volume']).toArray());
+    } catch (e) {
+      const dt = Date.now() - t0;
+      console.log('parquet open failed time(ms):', dt);
+      console.error(e);
+    }
   }
 
   // 下载K线
