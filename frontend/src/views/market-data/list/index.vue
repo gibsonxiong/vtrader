@@ -11,7 +11,7 @@ import { Interval, type BarData } from '@vtrader/shared';
 import { globalTableConfig } from '#/config/table';
 
 const defaultState = {
-  brokerId: 'binance_test',
+  brokerId: 'binance',
   symbol: 'BTCUSDT:USDT', 
   interval: Interval.MINUTE_15,
   startDate: dayjs().subtract(4, 'day'),

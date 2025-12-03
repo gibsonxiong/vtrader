@@ -9,16 +9,19 @@ import {
   OrderType,
 } from '@vtrader/shared';
 import dayjs from 'dayjs';
+import { ModuleRef } from '@nestjs/core';
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { BacktestingSetting } from '@vtrader/shared';
 import { PrismaService } from '../prisma.service';
 import type { Backtesting, Prisma } from '@vtrader/shared/prismaClient';
+import { BacktestingRumTime } from './backtesting.runtime';
 
 @Injectable()
 export class BacktestingService {
   constructor(
+    private moduleRef: ModuleRef,
     @InjectQueue('backtesting') private readonly backtestingQueue: Queue,
     private readonly prisma: PrismaService,
   ) {}
@@ -36,6 +39,31 @@ export class BacktestingService {
       jobId: job.id.toString(),
       message: '回测任务已提交，正在后台处理...',
     };
+  }
+
+  async createBacktestingSync(setting: BacktestingSetting): Promise<void> {
+    try {
+      const backtesting = await this.moduleRef.resolve(BacktestingRumTime);
+      // 设置回测参数
+      await backtesting.setSetting(setting);
+      console.log(`参数设置完成`);
+      
+      // 加载数据
+      await backtesting.loadData();
+      console.log(`数据加载完成`);
+      
+      // 运行回测
+      await backtesting.runBacktesting();
+      console.log(`回测运行完成`);
+      
+      // 计算结果
+      const result = await backtesting.calculateResult2();
+      console.log(`结果计算完成，结果: `, result);
+      
+    } catch (error) {
+      console.error(`执行失败: ${error.message}`, error.stack);
+      throw new Error(`回测失败: ${error.message}`);
+    }
   }
 
   getBacktestingResult(id: number): Promise<Backtesting | null> {

@@ -325,7 +325,7 @@ function initChart(): void {
   if (!klineChart) return;
 
   let currentPage = 1;
-  const pageSize = 500; 
+  const pageSize = 1000; 
 
   klineChart.setDataLoader({
     getBars: async ({ callback, type }) => {

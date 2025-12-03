@@ -11,6 +11,7 @@ import { BacktestingProcessor } from './backtesting.processor';
 import { BacktestingCleanupService } from './backtesting-cleanup.service';
 import { BrokerManagerModule } from 'src/broker-manager/broker-manager.module';
 import { NotificationModule } from '../notification/notification.module';
+import { BacktestingRumTime } from './backtesting.runtime';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { NotificationModule } from '../notification/notification.module';
     }),
   ],
   controllers: [BacktestingController],
-  providers: [BacktestingService, BacktestingProcessor, BacktestingCleanupService, PrismaService],
+  providers: [BacktestingService, BacktestingProcessor, BacktestingCleanupService, PrismaService, BacktestingRumTime],
   exports: [BacktestingService],
 })
 export class BacktestingModule {}

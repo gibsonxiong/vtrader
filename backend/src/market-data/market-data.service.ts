@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear/constants';
 import type { BarOverview } from '@vtrader/shared/prismaClient';
+import { readBars, writeBars } from 'src/utils';
 
 export interface GetAllContractsParams {
   brokerId: string;
@@ -202,50 +203,63 @@ export class MarketDataService {
       startTime = dayjs(startTime).subtract(preload * n, unit).valueOf();
     }
 
-    const pagination: { skip?: number; take?: number } = {};
+    // const pagination: { skip?: number; take?: number } = {};
+    // if (currentPage && pageSize && currentPage > 0 && pageSize > 0) {
+    //   pagination.skip = (currentPage - 1) * pageSize;
+    //   pagination.take = pageSize;
+    // }
+
+    // const where = {
+    //   timestamp: {
+    //     gte: startTime,
+    //     lte: endTime,
+    //   },
+    //   brokerName: brokerConfig.brokerName,
+    //   interval,
+    //   symbol,
+    // };
+
+    // const total = await this.prisma.bar.count({ where });
+
+    // const bars = await this.prisma.bar.findMany({
+    //   select: {
+    //     timestamp: true,
+    //     open: true,
+    //     high: true,
+    //     low: true,
+    //     close: true,
+    //     volume: true,
+    //   },
+    //   where,
+    //   orderBy: {
+    //     timestamp: 'desc',
+    //   },
+    //   ...pagination,
+    // });
+    // const list = bars.map((bar) => ({
+    //   symbol: symbol,
+    //   interval: interval,
+    //   timestamp: Number(bar.timestamp),
+    //   open: bar.open.toNumber(),
+    //   high: bar.high.toNumber(),
+    //   low: bar.low.toNumber(),
+    //   close: bar.close.toNumber(),
+    //   volume: bar.volume.toNumber(),
+    // }));
+
+    let bars = await readBars(brokerConfig.brokerName, symbol, interval, startTime, endTime);
+    const total = bars.length;
+
     if (currentPage && pageSize && currentPage > 0 && pageSize > 0) {
-      pagination.skip = (currentPage - 1) * pageSize;
-      pagination.take = pageSize;
+      const skip = (currentPage - 1) * pageSize;
+      const end = skip + pageSize;
+      bars = bars.slice(skip, end);
     }
 
-    const where = {
-      timestamp: {
-        gte: startTime,
-        lte: endTime,
-      },
-      brokerName: brokerConfig.brokerName,
-      interval,
-      symbol,
+    return { 
+      list: bars,
+      total,
     };
-
-    const total = await this.prisma.bar.count({ where });
-
-    const bars = await this.prisma.bar.findMany({
-      select: {
-        timestamp: true,
-        open: true,
-        high: true,
-        low: true,
-        close: true,
-        volume: true,
-      },
-      where,
-      orderBy: {
-        timestamp: 'desc',
-      },
-      ...pagination,
-    });
-    const list = bars.map((bar) => ({
-      symbol: symbol,
-      interval: interval,
-      timestamp: Number(bar.timestamp),
-      open: bar.open.toNumber(),
-      high: bar.high.toNumber(),
-      low: bar.low.toNumber(),
-      close: bar.close.toNumber(),
-      volume: bar.volume.toNumber(),
-    }));
-    return { list, total };
   }
 
   async getBarOverview(params: {
@@ -322,13 +336,16 @@ export class MarketDataService {
         symbol,
       });
 
-      const { count } = await this.prisma.bar.createMany({
-        data: bars.list.map((bar) => ({
-          ...bar,
-          brokerName: brokerConfig.brokerName,
-        })),
-        skipDuplicates: true,
-      });
+      // const { count } = await this.prisma.bar.createMany({
+      //   data: bars.list.map((bar) => ({
+      //     ...bar,
+      //     brokerName: brokerConfig.brokerName,
+      //   })),
+      //   skipDuplicates: true,
+      // });
+
+      // 写入文件
+      const { count } = await writeBars(brokerConfig.brokerName, symbol, interval, bars.list);
 
       totalCount += count;
     }
