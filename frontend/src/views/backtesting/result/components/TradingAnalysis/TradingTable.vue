@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Card, Table, Tag } from 'ant-design-vue';
+import { Card, Table, Tag, Button } from 'ant-design-vue';
 import dayjs from 'dayjs';
 import type { TradeData } from '@vtrader/shared';
 import { globalTableConfig } from '#/config/table';
@@ -9,6 +9,9 @@ interface TradingTableProps {
 }
 
 const props = defineProps<TradingTableProps>();
+const emit = defineEmits<{
+  (e: 'locate', trade: TradeData): void;
+}>();
 
 // 表格列定义
 const columns = [
@@ -54,6 +57,12 @@ const columns = [
     key: 'commission',
     width: 120,
   },
+  {
+    title: '操作',
+    key: 'actions',
+    width: 100,
+    fixed: 'right',
+  },
 ];
 
 // 格式化数字
@@ -86,6 +95,10 @@ const getOffsetText = (offset: 'open' | 'close') => {
   return offset === 'open' ? '开仓' : '平仓';
 };
 
+function handleLocate(record: TradeData) {
+  emit('locate', record);
+}
+
 </script>
 
 <template>
@@ -102,7 +115,6 @@ const getOffsetText = (offset: 'open' | 'close') => {
       }"
       row-key="tradeId"
       size="middle"
-      @row-click="handleRowClick"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'direction'">
@@ -126,6 +138,9 @@ const getOffsetText = (offset: 'open' | 'close') => {
         </template>
         <template v-else-if="column.key === 'time'">
           <span>{{ formatTime(record.time) }}</span>
+        </template>
+        <template v-else-if="column.key === 'actions'">
+          <Button type="link" size="small" @click="handleLocate(record)">定位</Button>
         </template>
       </template>
     </Table>

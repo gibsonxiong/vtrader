@@ -58,6 +58,10 @@ function onScrollCustom(date: string) {
   klineChart?.scrollToTimestamp(timestamp, 300);
 }
 
+function scrollToTimestamp(ts: number) {
+  klineChart?.scrollToTimestamp(ts, 300);
+}
+
 function openScrollPanel() {
   scrollPanelOpen.value = true;
 }
@@ -438,6 +442,7 @@ onBeforeUnmount(() => {
 
 defineExpose({
   fetchBars,
+  scrollToTimestamp,
 });
 
 </script>

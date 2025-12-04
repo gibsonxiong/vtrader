@@ -3,7 +3,7 @@ import type { Interval, TradeData } from '@vtrader/shared';
 import KlineChart from '#/components/KlineChart/index.vue';
 import TradingTable from './TradingTable.vue';
 import type { Dayjs } from 'dayjs';
-import { watch } from 'vue';
+import { ref, watch } from 'vue';
 
 interface TradingAnalysisProps {
   brokerId: string;
@@ -16,13 +16,12 @@ interface TradingAnalysisProps {
 
 const props = defineProps<TradingAnalysisProps>();
 
-watch(() => props.symbol, (start) => {
-  debugger;
-});
+const klineRef = ref<InstanceType<typeof KlineChart> | null>(null);
 
-watch(() => props.start, (start) => {
-  debugger;
-});
+function handleTableLocate(trade: TradeData) {
+  const ts = new Date(trade.time).getTime();
+  klineRef.value?.scrollToTimestamp?.(ts);
+}
 
 </script>
 
@@ -30,6 +29,7 @@ watch(() => props.start, (start) => {
   <div class="trading-analysis">
     <!-- K线图表组件 -->
     <KlineChart
+      ref="klineRef"
       :brokerId="props.brokerId"
       :symbol="props.symbol" 
       :interval="props.interval" 
@@ -38,7 +38,7 @@ watch(() => props.start, (start) => {
       :trades="props.trades || []"
     />
     <!-- 交易明细表格组件 -->
-    <TradingTable class="mt-2" :trades="props.trades || []" />
+    <TradingTable class="mt-2" :trades="props.trades || []" @locate="handleTableLocate" />
   </div>
 </template>
 
