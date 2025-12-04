@@ -15,8 +15,8 @@ import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 import { BacktestingSetting } from '@vtrader/shared';
 import { PrismaService } from '../prisma.service';
-import type { Backtesting, Prisma } from '@vtrader/shared/prismaClient';
-import { BacktestingRumTime } from './backtesting.runtime';
+import type { Backtesting as BacktestingModel, Prisma } from '@vtrader/shared/prismaClient';
+import { BacktestingEngine } from './backtesting-engine';
 
 @Injectable()
 export class BacktestingService {
@@ -28,11 +28,11 @@ export class BacktestingService {
   // 新的异步回测方法，使用队列
   async createBacktesting(setting: BacktestingSetting): Promise<{ jobId: string; message: string }> {
     const job = await this.backtestingQueue.add('run-backtest', setting, {
-      attempts: 2,
-      backoff: {
-        type: 'exponential',
-        delay: 2000,
-      },
+      // attempts: 2,
+      // backoff: {
+      //   type: 'exponential',
+      //   delay: 2000,
+      // },
     });
 
     return {
@@ -43,7 +43,7 @@ export class BacktestingService {
 
   async createBacktestingSync(setting: BacktestingSetting): Promise<void> {
     try {
-      const backtesting = await this.moduleRef.resolve(BacktestingRumTime);
+      const backtesting = await this.moduleRef.resolve(BacktestingEngine);
       // 设置回测参数
       await backtesting.setSetting(setting);
       console.log(`参数设置完成`);
@@ -57,7 +57,7 @@ export class BacktestingService {
       console.log(`回测运行完成`);
       
       // 计算结果
-      const result = await backtesting.calculateResult2();
+      const result = await backtesting.calculateResult();
       console.log(`结果计算完成，结果: `, result);
       
     } catch (error) {
@@ -66,7 +66,7 @@ export class BacktestingService {
     }
   }
 
-  getBacktestingResult(id: number): Promise<Backtesting | null> {
+  getBacktestingResult(id: number): Promise<BacktestingModel | null> {
     return this.prisma.backtesting.findUnique({
       where: {
         id,
@@ -74,7 +74,7 @@ export class BacktestingService {
     });
   }
 
-  async getBacktestingResults(params: Prisma.BacktestingFindManyArgs): Promise<{ data: Backtesting[], total: number }> {
+  async getBacktestingResults(params: Prisma.BacktestingFindManyArgs): Promise<{ data: BacktestingModel[], total: number }> {
     const { where, skip, take, orderBy } = params;
 
     console.log(where)

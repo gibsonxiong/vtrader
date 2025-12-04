@@ -42,7 +42,7 @@ export default class RSIStrategy extends Strategy {
       this.currentOrderId = '';
     }
 
-    console.log(`全部：${ctx.wallet.total} 可用：${ctx.wallet.available}`);
+    console.log(`[${ctx.asset.name}] ${ctx.asset.balance} / ${ctx.asset.available}`);
     console.log('');
   }
 
@@ -59,17 +59,17 @@ export default class RSIStrategy extends Strategy {
 
     if (this.currentOrderId) return;
     
-    if (ctx.longHolding.pos === 0 && rsiResult[rsiResult.length - 1] <= 20) {
+    if (ctx.longPos.size === 0 && rsiResult[rsiResult.length - 1] <= 20) {
       this.currentOrderId = await ctx.buy({
         price: bar.close,
-        volume: (ctx.wallet.available * 0.95) / bar.close
+        volume: (ctx.asset.available * 0.95) / bar.close
       });
     }
 
-    if (ctx.longHolding.pos > 0 && rsiResult[rsiResult.length - 1] >= 80) {
+    if (ctx.longPos.size > 0 && rsiResult[rsiResult.length - 1] >= 80) {
       this.currentOrderId = await ctx.sell({
         price: bar.close, 
-        volume: ctx.longHolding.pos
+        volume: ctx.longPos.size
       });
     }
   }

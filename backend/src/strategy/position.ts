@@ -83,9 +83,6 @@ export class Position {
 
   updateByPrice(newPrice: number): void {
     this.newPrice = newPrice;
-
-    if (this.size === 0) return;
-
     this.pnlAndRoi(newPrice);
   }
 
@@ -152,6 +149,6 @@ export class Position {
   }
 
   public toString(): string {
-    return `均价: ${this.avgPrice}, 持仓: ${this.size}, 交易盈亏: ${this.pnl}`;
+    return `[${this.symbol}](${this.direction}) 均价: ${this.avgPrice}, 持仓: ${this.size}`;
   }
 }

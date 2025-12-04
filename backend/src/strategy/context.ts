@@ -1,39 +1,34 @@
 import { Direction, Offset } from '@vtrader/shared';
 import { SendOrderParams, CancelOrderParams } from '@vtrader/shared';
-import { LongHolding, ShortHolding } from './holding';
-import { Wallet } from './wallet';
 import { Strategy } from './strategy';
 import { ArrayManger } from 'src/strategy/array-manager';
 import { Position } from './position';
+import { Asset } from './asset';
 
 export interface ContextProps {
   strategy: Strategy;
   symbol: string;
-  wallet: Wallet;
-  amLength: number;
+  asset: Asset;
+  longPos: Position;
+  shortPos: Position;
+  am: ArrayManger;
 }
 
 export class Context {
   strategy: Strategy;
   symbol: string;
-  wallet: Wallet;
-  longHolding: LongHolding;
-  shortHolding: ShortHolding;
+  asset: Asset;
   longPos: Position;
   shortPos: Position;
   am: ArrayManger;
 
-  [key: string]: any;
-
   constructor(props: ContextProps) {
     this.strategy = props.strategy;
     this.symbol = props.symbol;
-    this.wallet = props.wallet;
-    this.longHolding = new LongHolding(props.symbol);
-    this.shortHolding = new ShortHolding(props.symbol);
-    this.longPos = new Position(props.symbol, Direction.LONG);
-    this.shortPos = new Position(props.symbol, Direction.SHORT);
-    this.am = new ArrayManger(props.amLength);
+    this.longPos = props.longPos;
+    this.shortPos = props.shortPos;
+    this.asset = props.asset;
+    this.am = props.am;
   }
 
   sendOrder(params: Omit<SendOrderParams, 'orderId' | 'symbol'>): Promise<string> {

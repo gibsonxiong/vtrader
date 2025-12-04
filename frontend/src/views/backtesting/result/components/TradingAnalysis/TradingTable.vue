@@ -102,6 +102,7 @@ const getOffsetText = (offset: 'open' | 'close') => {
       }"
       row-key="tradeId"
       size="middle"
+      @row-click="handleRowClick"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'direction'">

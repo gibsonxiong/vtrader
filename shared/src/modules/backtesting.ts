@@ -1,4 +1,4 @@
-import { Interval } from './common';
+import { Interval, type TradeData } from './common';
 
 /**
  * 回测设置接口
@@ -18,7 +18,18 @@ export interface BacktestingSetting {
   };
 }
 
+export interface DailyResultItem {
+  date: string;
+  trades: TradeData[];
+  netPnl: number;
+  accumNetPnl: number;
+}
+
 export interface BacktestingResult {
+  brokerId: string;
+  symbol: string;
+  strategyName: string;
+  interval: Interval;
   startDate: string;
   endDate: string;
   startBalance: number;
@@ -27,4 +38,6 @@ export interface BacktestingResult {
   totalReturnPercent: number;
   maxDrawdown: number;
   maxDrawdownPercent: number;
+  dailyResults: Record<string, DailyResultItem>;
+  trades: TradeData[];
 }

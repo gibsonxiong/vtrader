@@ -232,8 +232,8 @@ function mapTradesToSignals(trades: TradeData[], data: BarData[]): TradeSignal[]
 function addTradeSignalsToChart(signals: TradeSignal[]) {
   if (!klineChart) return;
 
-  // 清除之前的交易信号覆盖层
-  klineChart.removeOverlay();
+  // // 清除之前的交易信号覆盖层
+  // klineChart.removeOverlay();
 
   // 为每个信号创建覆盖层
   signals.forEach((signal, index) => {

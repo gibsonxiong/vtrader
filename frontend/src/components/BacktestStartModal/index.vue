@@ -27,7 +27,7 @@ const formState = reactive({
   brokerId: 'binance',
   strategyName: '',
   symbols: ['BTCUSDT:USDT'],
-  interval: Interval.MINUTE_15,
+  interval: Interval.MINUTE_1,
   startDate: dayjs('2025-01-01'),
   endDate: dayjs('2025-11-25'),
   commissionRate: 0.0005,

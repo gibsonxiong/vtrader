@@ -1,31 +1,13 @@
 import dayjs from 'dayjs';
-import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from '@vtrader/shared';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus, DailyResultItem } from '@vtrader/shared';
 import { StrategyEngine, SendOrderParams, CancelOrderParams } from '@vtrader/shared';
 import { Context } from './context';
-import { LongHolding, ShortHolding } from './holding';
-import { Wallet } from './wallet';
 import { genOrderId, canOrderCancel, roundTo, calculateStd } from 'src/utils';
 import { BigNumber } from 'bignumber.js';
 import 'reflect-metadata';
-
-
-export interface RecordData {
-  date: string;
-  timestamp: number;
-  netPnl: number;
-}
-
-export interface DailyResultItem {
-  date: string;
-  trades: TradeData[];
-  netPnl: number;
-  accumNetPnl: number;
-  // holdingPnl: number;
-  // tradeCount: number;
-  // tradingPnl: number;
-  // commission: number;
-  // turnover: number;
-}
+import { Asset } from './asset';
+import { Position } from './position';
+import { ArrayManger } from './array-manager';
 
 export interface StrategyProps {
   engine: StrategyEngine;
@@ -33,6 +15,13 @@ export interface StrategyProps {
   assetBalance: number;
   assetName: string;
   setting?: Record<string, any>;
+}
+
+export interface RecordData {
+  date: string;
+  timestamp: number;
+  // netPnl: number;
+  totalValue: number;
 }
 
 export interface ParamConfig {
@@ -63,8 +52,10 @@ export function param(paramConfig: ParamConfig) {
  * 策略模板基类
  */
 export abstract class Strategy {
-  public wallet: Wallet;
   public symbols: string[];
+  public positions: Position[] = [];
+  public assets: Asset[] = [];
+  public ctxs: Map<string, Context>;
 
   public inited: boolean = false;
   public trading: boolean = false;
@@ -72,11 +63,12 @@ export abstract class Strategy {
   // 引擎和基本信息
   protected engine: StrategyEngine;
   
-  public ctxs: Map<string, Context>;
   public orders: Map<string, OrderData> = new Map();
   public trades: TradeData[] = [];
   public records: Map<string, RecordData> = new Map();
   public dailyResults: Map<string, DailyResultItem> = new Map();
+
+  public startTotalValue: number = 0;
 
   preloadCount(): number {
     return 0;
@@ -93,32 +85,42 @@ export abstract class Strategy {
 
     // 从设置中更新参数
     this.initParams(props.setting);
+    this.initCtxs(props);
 
-    this.initWallet(props);
-    this.initContexts();
+    this.startTotalValue = this.calcTotalValue();
   }
+  initCtxs(props: StrategyProps): void {
+    const asset = new Asset(props.assetName, props.assetBalance);
+    this.assets.push(asset);
 
-  initContexts(): void {
     for (let symbol of this.symbols) {
+      const longPos = new Position(symbol, Direction.LONG);
+      const shortPos = new Position(symbol, Direction.SHORT);
+      const am = new ArrayManger(this.amLength());
+
       const ctx = new Context({
         strategy: this,
         symbol,
-        wallet: this.wallet,
-        amLength: this.amLength(),
+        longPos,
+        shortPos,
+        asset,     // TODO 支持多资产
+        am,
       });
 
+      this.positions.push(longPos);
+      this.positions.push(shortPos);
       this.ctxs.set(symbol, ctx);
 
       this.onInitContext(ctx);
     }
   }
 
-  initWallet(props: StrategyProps) {
-    this.wallet = new Wallet({
-      total: props.assetBalance,
-      assetName: props.assetName,
-    });
-  }
+  // initWallet(props: StrategyProps) {
+  //   this.wallet = new Wallet({
+  //     total: props.assetBalance,
+  //     assetName: props.assetName,
+  //   });
+  // }
 
   onInitContext(ctx: Context) {}
 
@@ -173,6 +175,20 @@ export abstract class Strategy {
   }
   public onStart(): void {}
 
+  private calcTotalValue(): number {
+    let totalValue = 0;
+
+    for (const position of this.positions) {
+      totalValue += position.value;
+    }
+
+    for (const asset of this.assets) {
+      totalValue += asset.balance;
+    }
+
+    return totalValue;
+  }
+
   /**
    * 策略停止
    */
@@ -215,9 +231,7 @@ export abstract class Strategy {
     
     this.orders.set(order.orderId, newOrder);
 
-    ctx.wallet.updateByOrder(newOrder);
-    ctx.longHolding.update(newOrder);
-    ctx.shortHolding.update(newOrder);
+    ctx.asset.updateByOrder(newOrder);
     ctx.longPos.updateByOrder(newOrder);
     ctx.shortPos.updateByOrder(newOrder);
 
@@ -242,8 +256,11 @@ export abstract class Strategy {
     }
 
     this.trades.push(trade);
+
+    ctx.asset.updateByTrade(trade);
     ctx.longPos.updateByTrade(trade);
     ctx.shortPos.updateByTrade(trade);
+
     this.onTrade(trade, ctx);
   }
 
@@ -318,29 +335,29 @@ export abstract class Strategy {
     }
 
     if (offset === Offset.OPEN && 
-      ctx.wallet.available < fixedAmount
+      ctx.asset.available < fixedAmount
     ) {
       // console.error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}]`);
       // return '';
-      throw new Error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}] [可用资金：${ctx.wallet.available}， 下单金额：${fixedAmount}]`);
+      throw new Error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}] [可用资金：${ctx.asset.available}， 下单金额：${fixedAmount}]`);
     }
 
     if (
       offset === Offset.CLOSE &&
-      direction === Direction.LONG && ctx.longHolding.available < fixedVolume
+      direction === Direction.LONG && ctx.longPos.available < fixedVolume
     ) {
       // console.error(`可用仓位不足，无法下单[平${direction === Direction.LONG ? '多' : '空'}]`);
       // return '';
-      throw new Error(`可用仓位不足，无法下单[平多] [可用数量：${ctx.longHolding.available}， 下单数量：${fixedVolume}]`);
+      throw new Error(`可用仓位不足，无法下单[平多] [可用数量：${ctx.longPos.available}， 下单数量：${fixedVolume}]`);
     }
 
     if (
       offset === Offset.CLOSE &&
-      direction === Direction.SHORT && ctx.shortHolding.available < fixedVolume
+      direction === Direction.SHORT && ctx.shortPos.available < fixedVolume
     ) {
       // console.error(`可用仓位不足，无法下单[平${direction === Direction.LONG ? '多' : '空'}]`);
       // return '';
-      throw new Error(`可用仓位不足，无法下单[平空] [可用资金：${ctx.shortHolding.available}， 下单数量：${fixedVolume}]`);
+      throw new Error(`可用仓位不足，无法下单[平空] [可用资金：${ctx.shortPos.available}， 下单数量：${fixedVolume}]`);
     }
 
     const orderId = genOrderId();
@@ -403,34 +420,48 @@ export abstract class Strategy {
   }
 
   doRecord(timestamp: number, price: number): void {
-    let tradingPnl = 0;
-    let holdingPnl = 0;
-    let netPnl = 0;
-    let commission = 0;
+    // let tradingPnl = 0;
+    // let holdingPnl = 0;
+    // let netPnl = 0;
+    // let commission = 0;
+    
 
-    for (let [symbol, ctx] of this.ctxs) {
-      const { longHolding, shortHolding } = ctx;
-      const _tradingPnl = longHolding.accumTradingPnl + shortHolding.accumTradingPnl;
-      const _holdingPnl = longHolding.getHoldingPnl(price) + shortHolding.getHoldingPnl(price);
+    // for (const [symbol, ctx] of this.ctxs) {
+    //   const { longHolding, shortHolding } = ctx;
+    //   const _tradingPnl = longHolding.accumTradingPnl + shortHolding.accumTradingPnl;
+    //   const _holdingPnl = longHolding.getHoldingPnl(price) + shortHolding.getHoldingPnl(price);
 
-      tradingPnl += _tradingPnl;
-      holdingPnl += _holdingPnl;
-      commission += longHolding.commission + shortHolding.commission;
-      netPnl += _tradingPnl + _holdingPnl - commission;
-    }
+    //   tradingPnl += _tradingPnl;
+    //   holdingPnl += _holdingPnl;
+    //   commission += longHolding.commission + shortHolding.commission;
+    //   netPnl += _tradingPnl + _holdingPnl - commission;
+    // }
 
+
+    // let totalValue = 0;
+    // for (const position of this.positions) {
+    //   totalValue += position.value;
+    // }
+
+    // for (const asset of this.assets) {
+    //   totalValue += asset.balance;
+    // }
+
+    const totalValue = this.calcTotalValue();
     const date = dayjs(timestamp).format('YYYY-MM-DD');
     const recordData = this.records.get(date);
   
     if (recordData) {
       // 更新当日收盘价
       recordData.timestamp = timestamp;
-      recordData.netPnl = netPnl;
+      // recordData.netPnl = netPnl;
+      recordData.totalValue = totalValue;
     } else {
       this.records.set(date, {
         date,
         timestamp,
-        netPnl,
+        // netPnl,
+        totalValue,
       });
     }
   }
@@ -452,7 +483,6 @@ export abstract class Strategy {
     }
 
     // 计算累计收益
-    let accumNetPnl = 0;
     let prevRecord: RecordData | null = null;
     const dates = [...this.records.keys()].sort();
 
@@ -477,18 +507,17 @@ export abstract class Strategy {
       //   ? record.turnover - prevRecord.turnover
       //   : record.turnover;
 
-      const netPnl = prevRecord 
-        ? record.netPnl - prevRecord.netPnl
-        : record.netPnl;
+      const netPnl = prevRecord
+        ? record.totalValue - prevRecord.totalValue
+        : record.totalValue - this.startTotalValue;
 
-      // 累计总盈亏
-      // accumNetPnl += record.netPnl;
+      const accumNetPnl = record.totalValue - this.startTotalValue;
 
       this.dailyResults.set(date, {
         date,
         trades: dayTrades,
         netPnl,
-        accumNetPnl: record.netPnl,
+        accumNetPnl,
       });
 
       prevRecord = record;
@@ -499,14 +528,16 @@ export abstract class Strategy {
    * 写入日志
    */
   protected writeLog(msg: string | string[]): void {
-    if (Array.isArray(msg)) {
-      console.log(`[${this.constructor.name}]`);
-      msg.forEach((m) => {
-        console.log(m);
-      });
-    } else {
-      console.log(`[${this.constructor.name}] ${msg}`);
-    }
+    // if (Array.isArray(msg)) {
+    //   console.log(`[${this.constructor.name}]`);
+    //   msg.forEach((m) => {
+    //     console.log(m);
+    //   });
+    // } else {
+    //   console.log(`[${this.constructor.name}] ${msg}`);
+    // }
 
   }
 }
+export { DailyResultItem };
+

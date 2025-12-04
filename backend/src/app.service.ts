@@ -27,7 +27,7 @@ export class AppService {
     private readonly brokerMgrService: BrokerManagerService,
     private readonly strategyService: StrategyService,
   ) {
-    this.testBroker();
+    // this.backtesting();
   }
 
   async testFile(): Promise<void> {
@@ -144,16 +144,23 @@ export class AppService {
     // 1. 设置回测参数
     const setting: BacktestingSetting = {
       brokerId,
-      startDate: '2025-08-01',
-      endDate: '2025-11-25',
+      startDate: '2024-01-01',
+      endDate: '2025-12-01',
       symbols: ['BTCUSDT:USDT'],
-      interval: Interval.MINUTE_15,
+      interval: Interval.MINUTE_1,
       balance: 100_000,
       commissionRate: 0.0005,
       strategy: {
         strategyName: 'GridStrategy',
         strategySetting: {
-          // rsiWindow: 20,
+          temaLength: 20,
+          bbDev: 2,
+          bbLength: 20,
+          minVolume: 0.001,
+          gridStep: 0.008,
+          gridSize: 20,
+          basePosCount: 8,
+          useAdjustGrid: true,
         },
       },
     };

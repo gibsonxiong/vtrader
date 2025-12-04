@@ -8,14 +8,15 @@ import { Table, tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
 
 let orderCount: number = 0;
 
+let parquet;
 let parquetWasmInited = false;
 async function initParquetWasm() {
-  const parquet = await import('parquet-wasm/esm/parquet_wasm.js');
   if (!parquetWasmInited) {
+    parquet = await import('parquet-wasm/esm/parquet_wasm.js');
     const wasmPath = require.resolve('parquet-wasm/esm/parquet_wasm_bg.wasm');
-    const { initSync } = parquet as any;
+    const { initSync } = parquet;
     const wasmBuffer = fs.readFileSync(wasmPath);
-    initSync(wasmBuffer);
+    initSync({ module: wasmBuffer });
     parquetWasmInited = true;
   }
   return parquet as any;

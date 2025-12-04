@@ -3,7 +3,7 @@ import { Response } from '@vtrader/shared';
 import { BacktestingApi } from '@vtrader/shared';
 
 import { BacktestingService } from './backtesting.service';
-import { BacktestingCleanupService } from './backtesting-cleanup.service';
+// import { BacktestingCleanupService } from './backtesting-cleanup.service';
 
 import { response } from 'src/utils';
 
@@ -13,7 +13,7 @@ import { response } from 'src/utils';
 export class BacktestingController {
   constructor(
     private readonly backtestingService: BacktestingService,
-    private readonly cleanupService: BacktestingCleanupService,
+    // private readonly cleanupService: BacktestingCleanupService,
   ) { }
 
   /**
@@ -66,39 +66,39 @@ export class BacktestingController {
   /**
    * 手动清理过期任务
    */
-  @Delete('cleanup')
-  async cleanup(@Query('beforeDate') beforeDate?: string): Promise<Response<{ deletedResults: number; deletedJobs: number }>> {
-    try {
-      let cleanupDate: Date;
+  // @Delete('cleanup')
+  // async cleanup(@Query('beforeDate') beforeDate?: string): Promise<Response<{ deletedResults: number; deletedJobs: number }>> {
+  //   try {
+  //     let cleanupDate: Date;
       
-      if (beforeDate) {
-        cleanupDate = new Date(beforeDate);
-        if (isNaN(cleanupDate.getTime())) {
-          throw new Error('无效的日期格式');
-        }
-      } else {
-        // 默认清理7天前的数据
-        cleanupDate = new Date();
-        cleanupDate.setDate(cleanupDate.getDate() - 7);
-      }
+  //     if (beforeDate) {
+  //       cleanupDate = new Date(beforeDate);
+  //       if (isNaN(cleanupDate.getTime())) {
+  //         throw new Error('无效的日期格式');
+  //       }
+  //     } else {
+  //       // 默认清理7天前的数据
+  //       cleanupDate = new Date();
+  //       cleanupDate.setDate(cleanupDate.getDate() - 7);
+  //     }
 
-      const result = await this.cleanupService.cleanupTasksBefore(cleanupDate);
-      return response(result);
-    } catch (error) {
-      return response({ deletedResults: 0, deletedJobs: 0 }, error.message);
-    }
-  }
+  //     const result = await this.cleanupService.cleanupTasksBefore(cleanupDate);
+  //     return response(result);
+  //   } catch (error) {
+  //     return response({ deletedResults: 0, deletedJobs: 0 }, error.message);
+  //   }
+  // }
 
-  /**
-   * 获取清理统计信息
-   */
-  @Get('cleanup/stats')
-  async getCleanupStats(): Promise<Response<any>> {
-    try {
-      const stats = await this.cleanupService.getCleanupStats();
-      return response(stats);
-    } catch (error) {
-      return response(null, error.message);
-    }
-  }
+  // /**
+  //  * 获取清理统计信息
+  //  */
+  // @Get('cleanup/stats')
+  // async getCleanupStats(): Promise<Response<any>> {
+  //   try {
+  //     const stats = await this.cleanupService.getCleanupStats();
+  //     return response(stats);
+  //   } catch (error) {
+  //     return response(null, error.message);
+  //   }
+  // }
 }

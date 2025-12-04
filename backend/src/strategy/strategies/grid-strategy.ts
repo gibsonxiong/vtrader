@@ -51,16 +51,16 @@ export default class GridStrategy extends Strategy {
   bbDev!: number;
 
   // 网格参数
-  @param({ type: Number, default: 0.001 })
+  @param({ type: Number, default: 0.005 })
   gridStep!: number;
 
-  @param({ type: Number, default: 10 })
+  @param({ type: Number, default: 20 })
   gridSize!: number;
 
   @param({ type: Number, default: 0.001 })
   minVolume!: number;
 
-  @param({ type: Number, default: 20 })
+  @param({ type: Number, default: 8 })
   basePosCount!: number;
 
   @param({ type: Boolean, default: true })
@@ -100,7 +100,7 @@ export default class GridStrategy extends Strategy {
     ctx.enterLong = false;
     ctx.enterShort = false;
     ctx.bg = new BarGenerator({
-      interval: Interval.MINUTE_5,
+      interval: Interval.HOUR_1,
       callback: (bar: BarData) => {
         this.on1HourBar(bar, ctx);
       }
@@ -349,8 +349,8 @@ export default class GridStrategy extends Strategy {
     if (longGrid.length > 0 && longGrid[0].symbol !== ctx.symbol) return;
     if (shortGrid.length > 0 && shortGrid[0].symbol !== ctx.symbol) return; 
 
-    this.writeLog(``);
-    this.writeLog(`网格交易逻辑，价格：${price} ${ctx.symbol}`);
+    // this.writeLog(``);
+    // this.writeLog(`网格交易逻辑，价格：${price} ${ctx.symbol}`);
 
     // 多头网格处理
     if (longGrid.length === 0) {
@@ -507,7 +507,7 @@ export default class GridStrategy extends Strategy {
    * 获取网格交易数量
    */
   private getVolume(price: number): number {
-    let volume = this.wallet.available / this.gridSize / price / 2;
+    let volume = this.assets[0].available / this.gridSize / price / 2;
     // volume = Math.floor(volume / this.minVolume) * this.minVolume;
     return Math.max(volume, this.minVolume);
   }
@@ -525,11 +525,11 @@ export default class GridStrategy extends Strategy {
   private async removeGrid(price: number, isLong: boolean, ctx: Context): Promise<void> {
     if (isLong) {
       // 平掉所有多头仓位
-      if (ctx.longHolding.pos > 0) {
+      if (ctx.longPos.size > 0) {
         try {
           const orderId = await ctx.sell({
             price: price,
-            volume: ctx.longHolding.pos
+            volume: ctx.longPos.size
           });
           this.longRemoveOrderId = orderId;
         } catch (error) {
@@ -549,11 +549,11 @@ export default class GridStrategy extends Strategy {
       this.longCount = 0;
     } else {
       // 平掉所有空头仓位
-      if (ctx.shortHolding.pos > 0) {
+      if (ctx.shortPos.size > 0) {
         try {
           const orderId = await ctx.cover({
             price: price,
-            volume: ctx.shortHolding.pos
+            volume: ctx.shortPos.size
           });
           this.shortRemoveOrderId = orderId;
         } catch (error) {

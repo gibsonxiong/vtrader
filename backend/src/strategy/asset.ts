@@ -5,14 +5,16 @@ import { BigNumber } from 'bignumber.js';
 export class Asset {
   name: string;
   balance: number;
-  frozen: number = 0;
-  available: number = 0;
+  frozen: number;
+  available: number;
 
   frozenMap: Record<string, number> = {};
 
   constructor(name: string, balance: number) {
     this.name = name;
     this.balance = balance;
+    this.available = balance;
+    this.frozen = 0;
   }
 
   updateByOrder(order: OrderData): void {
@@ -46,10 +48,9 @@ export class Asset {
 
   updateByTrade(trade: TradeData): void {
     const { offset, price, volume, commission, orderId } = trade;
+    const tradeAmount = BigNumber(price).times(volume);
 
     if (offset === Offset.OPEN) {
-      const tradeAmount = BigNumber(price).times(volume);
-
       this.balance = BigNumber(this.balance).minus(tradeAmount).minus(commission).toNumber();
 
       if (this.frozenMap[orderId]) {
@@ -58,7 +59,7 @@ export class Asset {
       }
 
     } else {
-      this.balance = BigNumber(this.balance).plus(price).times(volume).minus(commission).toNumber();
+      this.balance = BigNumber(this.balance).plus(tradeAmount).minus(commission).toNumber();
     }
 
     this.frozen = this.getFrozen();
@@ -74,6 +75,6 @@ export class Asset {
   }
 
   public toString(): string {
-    return `余额：${this.balance} 可用：${this.available} 冻结：${this.frozen}`;
+    return `[${this.name}] ${this.balance} / ${this.available}`;
   }
 }

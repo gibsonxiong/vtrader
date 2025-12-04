@@ -7,13 +7,14 @@ import {
   Interval,
   OrderStatus,
   OrderType,
+  type DailyResultItem,
 } from '@vtrader/shared';
 import dayjs from 'dayjs';
 import { Injectable, Scope } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bull';
 import { Queue } from 'bull';
 
-import { Strategy, DailyResultItem, RecordData } from '../strategy/strategy';
+import { Strategy, RecordData } from '../strategy/strategy';
 import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
 import { BrokerManagerService } from '../broker-manager/broker-manager.service';
@@ -31,7 +32,7 @@ import { PrismaService } from '../prisma.service';
 @Injectable({
   scope: Scope.TRANSIENT
 })
-export class BacktestingRumTime implements StrategyEngine {
+export class BacktestingEngine implements StrategyEngine {
   private brokderId: string;
   private symbols: string[];
   private interval: Interval;
@@ -236,15 +237,15 @@ export class BacktestingRumTime implements StrategyEngine {
   }
 
   // 原有的同步回测方法，重命名为内部方法
-  async backtestingSync(setting: BacktestingSetting): Promise<number> {
-    await this.setSetting(setting);
+  // async backtestingSync(setting: BacktestingSetting): Promise<number> {
+  //   await this.setSetting(setting);
 
-    await this.loadData();
+  //   await this.loadData();
 
-    await this.runBacktesting();
+  //   await this.runBacktesting();
 
-    return this.calculateResult();
-  }
+  //   return this.calculateResult();
+  // }
 
   handleOrder(order: OrderData): void {
     this.strategy.handleOrder(order);
@@ -302,7 +303,68 @@ export class BacktestingRumTime implements StrategyEngine {
   /**
    * 统计回测结果
    */
-  async calculateResult(): Promise<number> {
+  // async calculateResultOld(): Promise<void> {
+  //   this.writeLog('开始统计回测结果');
+
+  //   // 计算统计指标
+  //   const startBalance = this.balance;
+  //   const dailyResults: DailyResultItem[] = [];
+  //   let totalNetPnl = 0;
+
+  //   this.strategy.calculateDailyResult();
+
+  //   dailyResults.push(...this.strategy.dailyResults.values());
+
+  //   dailyResults.forEach((result) => {
+  //     totalNetPnl += result.netPnl;
+  //   });
+
+  //   // 计算最大回撤
+  //   let maxDrawdown = 0;
+  //   let maxDrawdownPercent = 0;
+  //   let peak = startBalance;
+
+  //   // 计算最大回撤
+  //   for (const result of dailyResults) {
+  //     const balance = startBalance + result.netPnl;
+  //     if (balance > peak) {
+  //       peak = balance;
+  //     }
+
+  //     const drawdown = balance - peak;
+  //     const drawdownPercent = drawdown / peak;
+
+  //     maxDrawdown = Math.min(maxDrawdown, drawdown);
+  //     maxDrawdownPercent = Math.min(maxDrawdownPercent, drawdownPercent);
+
+  //     // if (drawdown > maxDrawdown) {
+  //     //   maxDrawdown = drawdown;
+  //     // }
+
+  //     // if (drawdownPercent > maxDrawdownPercent) {
+  //     //   maxDrawdownPercent = drawdownPercent;
+  //     // }
+  //   }
+
+
+  //   const endBalance = startBalance + totalNetPnl;
+  //   const totalReturnPercent = totalNetPnl / startBalance;
+
+  //   // const backtestingResult: BacktestingResult = {
+  //   //   startDate: this.startDate,
+  //   //   endDate: this.endDate,
+  //   //   startBalance,
+  //   //   endBalance,
+  //   //   maxDrawdown,
+  //   //   maxDrawdownPercent,
+  //   //   totalNetPnl,
+  //   //   totalReturnPercent,
+  //   // };
+
+    
+  // }
+
+  async calculateResult(): Promise<BacktestingResult> {
     this.writeLog('开始统计回测结果');
 
     // 计算统计指标
@@ -321,124 +383,25 @@ export class BacktestingRumTime implements StrategyEngine {
     // 计算最大回撤
     let maxDrawdown = 0;
     let maxDrawdownPercent = 0;
+    let balance = startBalance;
     let peak = startBalance;
 
     // 计算最大回撤
     for (const result of dailyResults) {
-      const balance = startBalance + result.netPnl;
+      balance = balance + result.netPnl;
       if (balance > peak) {
         peak = balance;
       }
 
-      const drawdown = balance - peak;
+      const drawdown = peak - balance;
       const drawdownPercent = drawdown / peak;
 
-      maxDrawdown = Math.min(maxDrawdown, drawdown);
-      maxDrawdownPercent = Math.min(maxDrawdownPercent, drawdownPercent);
-
-      // if (drawdown > maxDrawdown) {
-      //   maxDrawdown = drawdown;
-      // }
-
-      // if (drawdownPercent > maxDrawdownPercent) {
-      //   maxDrawdownPercent = drawdownPercent;
-      // }
+      maxDrawdown = Math.max(maxDrawdown, drawdown);
+      maxDrawdownPercent = Math.max(maxDrawdownPercent, drawdownPercent);
     }
-
-
+    
     const endBalance = startBalance + totalNetPnl;
     const totalReturnPercent = totalNetPnl / startBalance;
-
-    // const backtestingResult: BacktestingResult = {
-    //   startDate: this.startDate,
-    //   endDate: this.endDate,
-    //   startBalance,
-    //   endBalance,
-    //   maxDrawdown,
-    //   maxDrawdownPercent,
-    //   totalNetPnl,
-    //   totalReturnPercent,
-    // };
-
-    const backtesting = await this.prisma.backtesting.create({
-      data: {
-        brokerId: this.brokderId,
-        symbol: this.symbols.join(','),
-        strategyName: this.strategyName,
-        interval: this.interval,
-        startDate: this.startDate,
-        endDate: this.endDate,
-        startBalance,
-        endBalance,
-        maxDrawdown,
-        maxDrawdownPercent,
-        totalNetPnl,
-        totalReturnPercent,
-        dailyResults: dailyResults as object,
-        trades: this.strategy.trades as any[],
-      }
-    });
-
-    return backtesting.id;
-  }
-
-  async calculateResult2(): Promise<any> {
-    this.writeLog('开始统计回测结果');
-
-    // 计算统计指标
-    const startBalance = this.balance;
-    const dailyResults: DailyResultItem[] = [];
-    let totalNetPnl = 0;
-
-    this.strategy.calculateDailyResult();
-
-    dailyResults.push(...this.strategy.dailyResults.values());
-
-    dailyResults.forEach((result) => {
-      totalNetPnl += result.netPnl;
-    });
-
-    // 计算最大回撤
-    let maxDrawdown = 0;
-    let maxDrawdownPercent = 0;
-    let peak = startBalance;
-
-    // 计算最大回撤
-    for (const result of dailyResults) {
-      const balance = startBalance + result.netPnl;
-      if (balance > peak) {
-        peak = balance;
-      }
-
-      const drawdown = balance - peak;
-      const drawdownPercent = drawdown / peak;
-
-      maxDrawdown = Math.min(maxDrawdown, drawdown);
-      maxDrawdownPercent = Math.min(maxDrawdownPercent, drawdownPercent);
-
-      // if (drawdown > maxDrawdown) {
-      //   maxDrawdown = drawdown;
-      // }
-
-      // if (drawdownPercent > maxDrawdownPercent) {
-      //   maxDrawdownPercent = drawdownPercent;
-      // }
-    }
-
-
-    const endBalance = startBalance + totalNetPnl;
-    const totalReturnPercent = totalNetPnl / startBalance;
-
-    // const backtestingResult: BacktestingResult = {
-    //   startDate: this.startDate,
-    //   endDate: this.endDate,
-    //   startBalance,
-    //   endBalance,
-    //   maxDrawdown,
-    //   maxDrawdownPercent,
-    //   totalNetPnl,
-    //   totalReturnPercent,
-    // };
 
     return {
       brokerId: this.brokderId,
@@ -449,12 +412,12 @@ export class BacktestingRumTime implements StrategyEngine {
       endDate: this.endDate,
       startBalance,
       endBalance,
-      maxDrawdown,
-      maxDrawdownPercent,
       totalNetPnl,
       totalReturnPercent,
-      dailyResults: dailyResults as object,
-      trades: this.strategy.trades as any[],
+      maxDrawdown: -maxDrawdown,
+      maxDrawdownPercent: -maxDrawdownPercent,
+      dailyResults: dailyResults,
+      trades: this.strategy.trades,
     };
   }
 
