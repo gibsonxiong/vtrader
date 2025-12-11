@@ -28,6 +28,9 @@ export class AppService {
     private readonly strategyService: StrategyService,
   ) {
     // this.backtesting();
+    // this.backtesting();
+    // this.backtesting();
+    // this.backtesting();
   }
 
   async testFile(): Promise<void> {
@@ -165,7 +168,7 @@ export class AppService {
       },
     };
 
-    this.backtestingService.createBacktestingSync(setting);
+    this.backtestingService.createBacktesting(setting);
   }
 
   async createStrategy(): Promise<void> {

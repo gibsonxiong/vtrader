@@ -58,7 +58,6 @@ export class BacktestingEngine implements StrategyEngine {
     private readonly marketDataService: MarketDataService,
     private readonly strategyService: StrategyService,
     private readonly brokerManagerService: BrokerManagerService,
-    private readonly prisma: PrismaService,
   ) {
   }
 
