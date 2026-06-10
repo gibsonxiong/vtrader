@@ -11,20 +11,14 @@ import {
 } from '@vtrader/shared';
 import dayjs from 'dayjs';
 import { Injectable, Scope } from '@nestjs/common';
-import { InjectQueue } from '@nestjs/bull';
-import { Queue } from 'bull';
-
 import { Strategy, RecordData } from '../strategy/strategy';
-import { MarketDataService } from '../market-data/market-data.service';
 import { StrategyService } from '../strategy/strategy.service';
 import { BrokerManagerService } from '../broker-manager/broker-manager.service';
 import { SendOrderParams, CancelOrderParams, StrategyEngine } from '@vtrader/shared';
 import { BacktestingSetting, BacktestingResult } from '@vtrader/shared';
 import { SendOrderRequest, CancelOrderRequest, HistoryRequest } from '@vtrader/shared';
 import { MockBroker } from '../broker-manager/brokers/mock/mock-broker';
-
 import { Broker } from '../broker-manager/broker';
-import { PrismaService } from '../prisma.service';
 
 /**
  * 回测引擎
@@ -33,14 +27,9 @@ import { PrismaService } from '../prisma.service';
   scope: Scope.TRANSIENT
 })
 export class BacktestingEngine implements StrategyEngine {
-  private brokderId: string;
+  public setting: BacktestingSetting;
+
   private symbols: string[];
-  private interval: Interval;
-  private strategyName: string;
-  private startDate: string;
-  private endDate: string;
-  private balance: number;
-  private assetName: string;
 
   private broker!: MockBroker;
   private strategy!: Strategy;
@@ -55,7 +44,6 @@ export class BacktestingEngine implements StrategyEngine {
   private logs: string[] = [];
 
   constructor(
-    private readonly marketDataService: MarketDataService,
     private readonly strategyService: StrategyService,
     private readonly brokerManagerService: BrokerManagerService,
   ) {
@@ -64,37 +52,21 @@ export class BacktestingEngine implements StrategyEngine {
   /**
    * 设置回测参数
    */
-  async setSetting(setting: BacktestingSetting): Promise<void> {
-    const { strategyName, strategySetting } = setting.strategy;
+  async init(setting: BacktestingSetting): Promise<void> {
+    this.setting = setting;
+    this.symbols =  setting.symbol.split(',');
 
-    this.brokderId = setting.brokerId;
-    this.startDate = setting.startDate;
-    this.endDate = setting.endDate;
-    this.strategyName = setting.strategy.strategyName;
-    this.symbols =  Array.isArray(setting.symbols) ? setting.symbols : [setting.symbols];
-    this.interval = setting.interval;
-    this.balance = setting.balance;
-    this.assetName = setting.assetName || 'USDT';
-
-    await this.initBroker(setting);
-    await this.initStrategy(strategyName, strategySetting);
+    await this.initBroker();
+    await this.initStrategy();
   }
 
-  async initBroker(setting: BacktestingSetting): Promise<void> {
+  async initBroker(): Promise<void> {
     this.broker = await this.brokerManagerService.createMockBroker({
-      brokerId: setting.brokerId,
-      assetName: setting.assetName,
-      assetBalance: setting.balance,
-      commissionRate: setting.commissionRate,
+      brokerId: this.setting.brokerId,
+      assetName: this.setting.assetName,
+      assetBalance: this.setting.assetBalance,
+      commissionRate: this.setting.commissionRate,
     });
-    // await this.broker.connect({
-    //   apiKey: string;
-    //   apiSecret: string;
-    //   klineStream: boolean;
-    //   proxyHost?: string;
-    //   proxyPort?: number;
-    //   server: 'REAL' | 'TESTNET';
-    // });
 
     this.broker.watchOrder((order: OrderData) => {
       this.handleOrder(order);
@@ -106,22 +78,27 @@ export class BacktestingEngine implements StrategyEngine {
   }
 
   /**
-   * 添加策略
+   * 初始化策略
    */
-  async initStrategy(strategyName: string, setting: Record<string, any> | undefined): Promise<void> {
-    const strategy = await this.strategyService.createInstance(strategyName, {
+  async initStrategy(): Promise<void> {
+    const strategy = await this.strategyService.createInstance({
       engine: this,
       symbols: this.symbols,
-      setting,
-      assetBalance: this.balance,
-      assetName: this.assetName,
+      name: this.setting.strategyName,
+      setting: this.setting.strategySetting,
+      assetBalance: this.setting.assetBalance,
+      assetName: this.setting.assetName,
     });
 
     if (!strategy) {
-      throw new Error('未找到该策略，策略创建失败');
+      throw new Error('策略为空，回测失败');
     }
 
     this.strategy = strategy;
+
+    // 调用策略初始化
+    this.strategy.init();
+    this.writeLog('策略初始化完成');
   }
 
   /**
@@ -130,30 +107,18 @@ export class BacktestingEngine implements StrategyEngine {
   async loadData(): Promise<void> {
     this.writeLog('开始加载历史数据');
 
+    const { data, dataLoader, interval } = this.setting;
+
     this.historyData = [];
 
-    const preloadCount = this.strategy.preloadCount();
-
-    // 从数据库加载K线数据
-    for (let symbol of this.symbols) {
-      const bars = await this.marketDataService.getBarsFromDb({
-        brokerId: this.brokderId,
-        symbol: symbol,
-        interval: this.interval,
-        startDate: this.startDate,
-        endDate: this.endDate,
-        preload: preloadCount,
-      });
-
-      // let bars: BarData[] = [];
-
-      // if (symbol === 'BTCUSDT:USDT') {
-      //   bars = btcData as BarData[];
-      // } else if (symbol === 'ETHUSDT:USDT') {
-      //   bars = ethData as BarData[];
-      // }
-
-      this.historyData = this.historyData.concat(bars.list);
+    if (data) {
+      this.historyData = data;
+    } else if (dataLoader) {
+      const preloadCount = this.strategy.preloadCount();
+      for (let symbol of this.symbols) {
+        const bars = await dataLoader(symbol, interval, preloadCount);
+        this.historyData = this.historyData.concat(bars);
+      }
     }
 
     this.historyData.sort((a, b) => {
@@ -169,37 +134,46 @@ export class BacktestingEngine implements StrategyEngine {
   async runBacktesting(): Promise<void> {
     this.writeLog('开始运行回测');
 
-    if (this.strategy === undefined) {
-      this.writeLog('请先添加策略');
-      return;
-    }
+    await this.loadData();
 
     if (this.historyData.length === 0) {
-      this.writeLog('请先加载历史数据');
-      return;
+      throw new Error('历史数据为空，回测结束');
     }
-
-    // 调用策略初始化
-    this.strategy.init();
-    this.writeLog('策略初始化完成');
 
     // 调用策略启动
     this.strategy.start();
     this.writeLog('策略启动完成');
 
-    this.writeLog('开始回放历史数据');
+    this.writeLog('回放历史数据中...');
 
     // 遍历历史数据
     for (const data of this.historyData) {
       this.broker.refresh(data);
-      await this.newBar(data as BarData);
+      await this.handleBar(data as BarData);
     }
 
     // 调用策略停止
     this.strategy.stop();
-    this.writeLog('回放历史数据结束');
+    this.writeLog('回放历史数据完成');
 
     // this.handleBacktestingEnd();
+  }
+
+  /**
+   * 处理新的K线数据
+   */
+  private async handleBar(bar: BarData): Promise<void> {
+    const barTime = dayjs(bar.timestamp);
+    const startDate = this.setting.startDate;
+    this.bar = bar;
+    this.datetime = new Date(bar.timestamp);
+
+    await this.strategy.handleBar(bar);
+
+    // 如果时间小于开始时间则不记录
+    if (barTime.isSame(startDate) || barTime.isAfter(startDate)) {
+      this.strategy.doRecord(bar.timestamp, bar.close);
+    }
   }
 
   // 回测回访结束，清仓
@@ -281,93 +255,12 @@ export class BacktestingEngine implements StrategyEngine {
       symbol,
     });
   }
-
-  /**
-   * 处理新的K线数据
-   */
-  private async newBar(bar: BarData): Promise<void> {
-    this.bar = bar;
-    this.datetime = new Date(bar.timestamp);
-
-    await this.strategy.handleBar(bar);
-
-    // 如果时间小于开始时间则不记录
-    if (dayjs(bar.timestamp).isBefore(this.startDate)) {
-      return;
-    }
-    this.strategy.doRecord(bar.timestamp, bar.close);
-    
-  }
   
-  /**
-   * 统计回测结果
-   */
-  // async calculateResultOld(): Promise<void> {
-  //   this.writeLog('开始统计回测结果');
-
-  //   // 计算统计指标
-  //   const startBalance = this.balance;
-  //   const dailyResults: DailyResultItem[] = [];
-  //   let totalNetPnl = 0;
-
-  //   this.strategy.calculateDailyResult();
-
-  //   dailyResults.push(...this.strategy.dailyResults.values());
-
-  //   dailyResults.forEach((result) => {
-  //     totalNetPnl += result.netPnl;
-  //   });
-
-  //   // 计算最大回撤
-  //   let maxDrawdown = 0;
-  //   let maxDrawdownPercent = 0;
-  //   let peak = startBalance;
-
-  //   // 计算最大回撤
-  //   for (const result of dailyResults) {
-  //     const balance = startBalance + result.netPnl;
-  //     if (balance > peak) {
-  //       peak = balance;
-  //     }
-
-  //     const drawdown = balance - peak;
-  //     const drawdownPercent = drawdown / peak;
-
-  //     maxDrawdown = Math.min(maxDrawdown, drawdown);
-  //     maxDrawdownPercent = Math.min(maxDrawdownPercent, drawdownPercent);
-
-  //     // if (drawdown > maxDrawdown) {
-  //     //   maxDrawdown = drawdown;
-  //     // }
-
-  //     // if (drawdownPercent > maxDrawdownPercent) {
-  //     //   maxDrawdownPercent = drawdownPercent;
-  //     // }
-  //   }
-
-
-  //   const endBalance = startBalance + totalNetPnl;
-  //   const totalReturnPercent = totalNetPnl / startBalance;
-
-  //   // const backtestingResult: BacktestingResult = {
-  //   //   startDate: this.startDate,
-  //   //   endDate: this.endDate,
-  //   //   startBalance,
-  //   //   endBalance,
-  //   //   maxDrawdown,
-  //   //   maxDrawdownPercent,
-  //   //   totalNetPnl,
-  //   //   totalReturnPercent,
-  //   // };
-
-    
-  // }
-
   async calculateResult(): Promise<BacktestingResult> {
     this.writeLog('开始统计回测结果');
 
     // 计算统计指标
-    const startBalance = this.balance;
+    const startBalance = this.setting.assetBalance;
     const dailyResults: DailyResultItem[] = [];
     let totalNetPnl = 0;
 
@@ -403,12 +296,12 @@ export class BacktestingEngine implements StrategyEngine {
     const totalReturnPercent = totalNetPnl / startBalance;
 
     return {
-      brokerId: this.brokderId,
-      symbol: this.symbols.join(','),
-      strategyName: this.strategyName,
-      interval: this.interval,
-      startDate: this.startDate,
-      endDate: this.endDate,
+      brokerId: this.setting.brokerId,
+      symbol: this.setting.symbol,
+      strategyName: this.setting.strategyName,
+      interval: this.setting.interval,
+      startDate: this.setting.startDate,
+      endDate: this.setting.endDate,
       startBalance,
       endBalance,
       totalNetPnl,
@@ -419,40 +312,6 @@ export class BacktestingEngine implements StrategyEngine {
       trades: this.strategy.trades,
     };
   }
-
-  /**
-   * 显示回测结果
-   */
-  // outputBacktestingResult(strategy: Strategy, result: BacktestingResult): void {
-  //   if (!result) {
-  //     return;
-  //   }
-
-  //   this.output('='.repeat(50));
-  //   this.output(`[${strategy.constructor.name}]回测结果`);
-  //   this.output('='.repeat(50));
-  //   this.output(`开始日期：\t${result.startDate}`);
-  //   this.output(`结束日期：\t${result.endDate}`);
-  //   this.output(`总交易日：\t${result.totalDays}`);
-  //   this.output(`盈利交易日：\t${result.profitDays}`);
-  //   this.output(`亏损交易日：\t${result.lossDays}`);
-  //   this.output('');
-  //   this.output(`起始资金：\t${result.startBalance.toFixed(2)}`);
-  //   this.output(`结束资金：\t${result.endBalance.toFixed(2)}`);
-  //   this.output(`总收益率：\t${(result.totalReturn * 100).toFixed(2)}%`);
-  //   this.output(`年化收益率：\t${(result.annualReturn * 100).toFixed(2)}%`);
-  //   this.output(`最大回撤：\t${result.maxDrawdown.toFixed(2)}`);
-  //   this.output(`最大回撤百分比：\t${(result.maxDrawdownPercent * 100).toFixed(2)}%`);
-  //   this.output('');
-  //   this.output(`总盈亏：\t${result.totalNetPnl.toFixed(2)}`);
-  //   this.output(`总手续费：\t${result.totalCommission.toFixed(2)}`);
-  //   this.output(`总成交金额：\t${result.totalTurnover.toFixed(2)}`);
-  //   this.output(`总成交笔数：\t${result.totalTradeCount}`);
-  //   this.output('');
-  //   this.output(`收益标准差：\t${(result.returnStd * 100).toFixed(2)}%`);
-  //   this.output(`夏普比率：\t${result.sharpeRatio.toFixed(2)}`);
-  //   this.output(`收益回撤比：\t${result.returnDrawdownRatio.toFixed(2)}`);
-  // }
 
   /**
    * 输出信息

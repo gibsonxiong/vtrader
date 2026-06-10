@@ -4,7 +4,11 @@ import { pathToFileURL } from 'node:url';
 import { Injectable } from '@nestjs/common';
 import { Strategy, StrategyProps, ParamConfig } from './strategy';
 
-export interface StrategyInfo {
+
+export interface CreateInstanceParam extends StrategyProps {
+  name: string;
+}
+export interface StrategyConfig {
   name: string;
   strategyClass: new (props: StrategyProps) => Strategy;
   paramConfigs: Record<string, ParamConfig>;
@@ -46,11 +50,11 @@ export default async function loadStrategyClasses() {
 
 @Injectable()
 export class StrategyService {
-  list: StrategyInfo[] = [];
+  list: StrategyConfig[] = [];
 
-  async getStategies(): Promise<StrategyInfo[]> {
+  async getStategieConfigs(): Promise<StrategyConfig[]> {
     if (this.list.length === 0) {
-      const list: StrategyInfo[] = [];
+      const list: StrategyConfig[] = [];
       const maps = await loadStrategyClasses();
 
       for (const [name, StrategyClass] of Object.entries(maps)) {
@@ -74,15 +78,16 @@ export class StrategyService {
     return this.list;
   }
 
-  async createInstance(name: string, props: StrategyProps): Promise<Strategy | null> {
-    const strategyInfos = await this.getStategies();
-    const strategyInfo = strategyInfos.find((item) => item.name === name);
-    if (!strategyInfo) {
+  async createInstance(param: CreateInstanceParam): Promise<Strategy | null> {
+    const { name } = param;
+    const strategyConfigs = await this.getStategieConfigs();
+    const strategyConfig = strategyConfigs.find((item) => item.name === name);
+    if (!strategyConfig) {
       return null;
     }
 
-    const StrategyClass = strategyInfo.strategyClass;
-    const instance = new StrategyClass(props);
+    const StrategyClass = strategyConfig.strategyClass;
+    const instance = new StrategyClass(param);
 
     return instance;
   }

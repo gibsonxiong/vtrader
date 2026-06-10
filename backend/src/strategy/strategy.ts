@@ -52,19 +52,20 @@ export function param(paramConfig: ParamConfig) {
  * 策略模板基类
  */
 export abstract class Strategy {
+  // 引擎
+  protected engine: StrategyEngine;
+
   public symbols: string[];
   public positions: Position[] = [];
   public assets: Asset[] = [];
-  public ctxs: Map<string, Context>;
+  public orders: Map<string, OrderData> = new Map();
+  public trades: TradeData[] = [];
 
+  public ctxs: Map<string, Context>;
+  
   public inited: boolean = false;
   public trading: boolean = false;
 
-  // 引擎和基本信息
-  protected engine: StrategyEngine;
-  
-  public orders: Map<string, OrderData> = new Map();
-  public trades: TradeData[] = [];
   public records: Map<string, RecordData> = new Map();
   public dailyResults: Map<string, DailyResultItem> = new Map();
 
@@ -174,20 +175,6 @@ export abstract class Strategy {
     this.trading = true;
   }
   public onStart(): void {}
-
-  private calcTotalValue(): number {
-    let totalValue = 0;
-
-    for (const position of this.positions) {
-      totalValue += position.value;
-    }
-
-    for (const asset of this.assets) {
-      totalValue += asset.balance;
-    }
-
-    return totalValue;
-  }
 
   /**
    * 策略停止
@@ -419,34 +406,21 @@ export abstract class Strategy {
     }
   }
 
+  private calcTotalValue(): number {
+    let totalValue = 0;
+
+    for (const position of this.positions) {
+      totalValue += position.value;
+    }
+
+    for (const asset of this.assets) {
+      totalValue += asset.balance;
+    }
+
+    return totalValue;
+  }
+
   doRecord(timestamp: number, price: number): void {
-    // let tradingPnl = 0;
-    // let holdingPnl = 0;
-    // let netPnl = 0;
-    // let commission = 0;
-    
-
-    // for (const [symbol, ctx] of this.ctxs) {
-    //   const { longHolding, shortHolding } = ctx;
-    //   const _tradingPnl = longHolding.accumTradingPnl + shortHolding.accumTradingPnl;
-    //   const _holdingPnl = longHolding.getHoldingPnl(price) + shortHolding.getHoldingPnl(price);
-
-    //   tradingPnl += _tradingPnl;
-    //   holdingPnl += _holdingPnl;
-    //   commission += longHolding.commission + shortHolding.commission;
-    //   netPnl += _tradingPnl + _holdingPnl - commission;
-    // }
-
-
-    // let totalValue = 0;
-    // for (const position of this.positions) {
-    //   totalValue += position.value;
-    // }
-
-    // for (const asset of this.assets) {
-    //   totalValue += asset.balance;
-    // }
-
     const totalValue = this.calcTotalValue();
     const date = dayjs(timestamp).format('YYYY-MM-DD');
     const recordData = this.records.get(date);
@@ -490,23 +464,6 @@ export abstract class Strategy {
       const record = this.records.get(date)!;
       const dayTrades = tradesByDate.get(date) || [];
 
-      // 计算持仓盈亏（基于收盘价变化）
-      // const tradingPnl = prevRecord
-      //   ? record.tradingPnl - prevRecord.tradingPnl
-      //   : record.tradingPnl;
-
-      // const holdingPnl = prevRecord
-      //   ? record.holdingPnl - prevRecord.holdingPnl
-      //   : record.holdingPnl;
-
-      // const commission = prevRecord
-      //   ? record.commission - prevRecord.commission
-      //   : record.commission;
-
-      // const turnover = prevRecord 
-      //   ? record.turnover - prevRecord.turnover
-      //   : record.turnover;
-
       const netPnl = prevRecord
         ? record.totalValue - prevRecord.totalValue
         : record.totalValue - this.startTotalValue;
@@ -539,5 +496,4 @@ export abstract class Strategy {
 
   }
 }
-export { DailyResultItem };
 

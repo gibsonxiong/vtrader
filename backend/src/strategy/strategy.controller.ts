@@ -21,14 +21,14 @@ export class StrategyController {
   // GET /strategy/strategy_class
   @Get('strategy_class')
   async getStrategyClasses(): Promise<string[]> {
-    const list = await this.strategyService.getStategies();
+    const list = await this.strategyService.getStategieConfigs();
     return list.map((i) => i.name);
   }
 
   // GET /strategy/strategy_class/:strategyName
   @Get('strategy_class/:name')
   async getStrategyParams(@Param('name') name: string): Promise<StrategyParamDTO> {
-    const strategies = await this.strategyService.getStategies();
+    const strategies = await this.strategyService.getStategieConfigs();
     const s = strategies.find((i) => i.name === name);
     if (!s) return {};
 

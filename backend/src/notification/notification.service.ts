@@ -12,7 +12,7 @@ export interface BacktestNotificationData extends NotificationData {
   jobId: string;
   resultId?: string;
   strategyName: string;
-  symbols: string[];
+  symbol: string;
   startDate: string;
   endDate: string;
 }

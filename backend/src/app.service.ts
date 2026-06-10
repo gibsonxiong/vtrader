@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { Direction, Interval, Offset, OrderStatus } from '@vtrader/shared';
 import type { BarData, OrderData, TradeData } from '@vtrader/shared';
 import { MarketDataService } from './market-data/market-data.service';
-import { BacktestingService } from './backtesting/backtesting.service';
+import { BacktestingService, type OptimizerSetting } from './backtesting/backtesting.service';
 import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
@@ -13,11 +13,12 @@ import { test } from './optimization/index';
 import type { BacktestingSetting } from '@vtrader/shared';
 import config from './config';
 import { readBars, writeBars } from './utils';
+import { testWork } from './test-work';
 
 // 
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
-const brokerId = config.brokers[1].id;
+const brokerId = config.brokers[0].id;
 
 @Injectable()
 export class AppService {
@@ -27,10 +28,8 @@ export class AppService {
     private readonly brokerMgrService: BrokerManagerService,
     private readonly strategyService: StrategyService,
   ) {
-    // this.backtesting();
-    // this.backtesting();
-    // this.backtesting();
-    // this.backtesting();
+    // this.optimization();
+    // this.optimization();
   }
 
   async testFile(): Promise<void> {
@@ -147,24 +146,23 @@ export class AppService {
     // 1. 设置回测参数
     const setting: BacktestingSetting = {
       brokerId,
-      startDate: '2024-01-01',
+      startDate: '2024-11-01',
       endDate: '2025-12-01',
-      symbols: ['BTCUSDT:USDT'],
+      symbol: 'BTCUSDT:USDT',
       interval: Interval.MINUTE_1,
-      balance: 100_000,
+      assetBalance: 100_000,
+      assetName: 'USDT',
       commissionRate: 0.0005,
-      strategy: {
-        strategyName: 'GridStrategy',
-        strategySetting: {
-          temaLength: 20,
-          bbDev: 2,
-          bbLength: 20,
-          minVolume: 0.001,
-          gridStep: 0.008,
-          gridSize: 20,
-          basePosCount: 8,
-          useAdjustGrid: true,
-        },
+      strategyName: 'GridStrategy',
+      strategySetting: {
+        temaLength: 20,
+        bbDev: 2,
+        bbLength: 20,
+        minVolume: 0.001,
+        gridStep: 0.008,
+        gridSize: 20,
+        basePosCount: 8,
+        useAdjustGrid: true,
       },
     };
 
@@ -172,8 +170,9 @@ export class AppService {
   }
 
   async createStrategy(): Promise<void> {
-    const strategy = await this.strategyService.createInstance('MyStrategy', {
+    const strategy = await this.strategyService.createInstance({
       engine: {} as any,
+      name: 'MyStrategy',
       symbols: ['BTCUSDT:USDT'],
       assetBalance: 1000,
       assetName: 'USDT',
@@ -202,11 +201,55 @@ export class AppService {
   }
 
   async getStategies(): Promise<void> {
-    const stategies = await this.strategyService.getStategies();
+    const stategies = await this.strategyService.getStategieConfigs();
     console.log('stategies', stategies);
   }
 
   async optimization(): Promise<void> {
-    test();
+    // test();
+
+    // 1. 设置回测参数
+    const setting: OptimizerSetting = {
+      brokerId,
+      startDate: '2025-10-01',
+      endDate: '2025-12-01',
+      symbol: 'BTCUSDT:USDT',
+      interval: Interval.MINUTE_1,
+      assetBalance: 100_000,
+      assetName: 'USDT',
+      commissionRate: 0.0005,
+      strategyName: 'GridStrategy',
+      // strategySetting: {
+      //   temaLength: 20,
+      //   bbDev: 2,
+      //   bbLength: 20,
+      //   minVolume: 0.001,
+      //   gridStep: 0.008,
+      //   gridSize: 20,
+      //   basePosCount: 8,
+      //   useAdjustGrid: true,
+      // },
+      hyperparameters: [
+        {
+          name: 'temaLength',
+          type: 'continuous',
+          range: [10, 20, 5],
+        },
+        {
+          name: 'gridSize',
+          type: 'continuous',
+          range: [15, 25, 1],
+        },
+      ],
+      maxTrials: 100,
+      direction: 'maximize',
+    };
+
+    this.backtestingService.optimization(setting);
+  }
+
+  testWork(): void {
+    testWork('test.txt');
+    testWork('test2.txt');
   }
 }

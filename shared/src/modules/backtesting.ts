@@ -1,4 +1,4 @@
-import { Interval, type TradeData } from './common';
+import { Interval, type BarData, type TradeData } from './common';
 
 /**
  * 回测设置接口
@@ -7,15 +7,15 @@ export interface BacktestingSetting {
   brokerId: string;
   startDate: string;
   endDate: string;
-  symbols: string | string[];
+  symbol: string; // 多个用逗号分隔
   interval: Interval;
-  balance: number;
   commissionRate: number;
-  assetName?: string;
-  strategy: {
-    strategyName: string;
-    strategySetting?: Record<string, any>;
-  };
+  assetBalance: number;
+  assetName: string;
+  strategyName: string;
+  strategySetting?: Record<string, any>;
+  data?: BarData[];
+  dataLoader?: (symbol: string, interval: Interval, preloadCount: number) => Promise<BarData[]>;
 }
 
 export interface DailyResultItem {
@@ -38,6 +38,6 @@ export interface BacktestingResult {
   totalReturnPercent: number;
   maxDrawdown: number;
   maxDrawdownPercent: number;
-  dailyResults: Record<string, DailyResultItem>;
+  dailyResults: DailyResultItem[];
   trades: TradeData[];
 }

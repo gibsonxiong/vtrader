@@ -5,13 +5,13 @@ interface Hyperparameter {
   range: number[] | string[];
 }
 
-interface TrialResult {
+export interface TrialResult {
   id: number;
   hyperparameters: Record<string, any>;
   score: number;
 }
 
-interface OptimizerConfig {
+export interface OptimizerConfig {
   hyperparameters: Hyperparameter[];
   trainModel: (hyperparameters: Record<string, any>) => Promise<number>;
   maxTrials: number;
@@ -77,22 +77,35 @@ abstract class HyperparameterOptimizer {
   // 运行优化过程
   async run() {
     this.currentTrialId = 0;
-    while (!this.shouldStop()) {
-      try {
+    // 将任务切成3个并发执行
+    const paramsGroups: Record<string, any>[][] = [];
+
+    let stop = false;
+    while (!this.shouldStop() && !stop) {
+      const paramsGroup: Record<string, any>[] = [];
+
+      for (let i = 0; i < 3; i++) {
         const params = this.generateNextParameters();
-        if (params === null) break;
-        
-        const score = await this.trainModel(params);
-        this.addTrialResult(params, score);
-        
-        console.log(`Trial ${this.trials.length}: Score = ${score.toFixed(4)}`);
-      } catch (error) {
-        console.error('Trial failed:', error);
+        if (params === null) {
+          stop = true;
+          break;
+        }
+
+        paramsGroup.push(params);
       }
+
+      if (stop) break;
+
+      paramsGroups.push(paramsGroup);
     }
 
-    const bestTrial = this.getBestTrial();
-    console.log('\nBest trial:', bestTrial);
+    for (const paramsGroup of paramsGroups) {
+      await Promise.all(paramsGroup.map(async (params) => {
+        const score = await this.trainModel(params);
+        this.addTrialResult(params, score);
+        console.log(`Trial ${this.trials.length}: Score = ${score.toFixed(4)}`);
+      }));
+    }
   }
 }
 
@@ -158,7 +171,7 @@ class GridSearchOptimizer extends HyperparameterOptimizer {
 
 type OptimizerType = 'grid';
 
-class OptimizerFactory {
+export class OptimizerFactory {
   static createOptimizer(
     type: OptimizerType,
     config: OptimizerConfig
@@ -172,42 +185,42 @@ class OptimizerFactory {
   }
 }
 
-// 创建优化器
-const optimizer = OptimizerFactory.createOptimizer('grid', {
-  hyperparameters: [
-    {
-      name: 'learning_rate',
-      type: 'continuous',
-      range: [0.001, 0.1, 0.05]
-    },
-    {
-      name: 'batch_size',
-      type: 'categorical',
-      range: [32, 64, 128, 256]
-    },
-    {
-      name: 'optimizer',
-      type: 'categorical',
-      range: ['adam', 'sgd', 'rmsprop']
-    }
-  ],
-  maxTrials: 50,
-  direction: 'maximize',
-  // earlyStoppingRounds: 10,
-  trainModel: async (hyperparameters: Record<string, any>): Promise<number> => {
-    console.log(`Training with:`, hyperparameters);
-    
-    // 模拟训练过程
-    await new Promise(resolve => setTimeout(resolve, 100));
-    
-    // 返回模拟的准确率
-    const baseScore = 0.7;
-    const noise = (Math.random() - 0.5) * 0.1;
-    return baseScore + noise;
-  }
-});
-
 export async function test() {
+  // 创建优化器
+  const optimizer = OptimizerFactory.createOptimizer('grid', {
+    hyperparameters: [
+      {
+        name: 'learning_rate',
+        type: 'continuous',
+        range: [0.001, 0.1, 0.05]
+      },
+      {
+        name: 'batch_size',
+        type: 'categorical',
+        range: [32, 64, 128, 256]
+      },
+      {
+        name: 'optimizer',
+        type: 'categorical',
+        range: ['adam', 'sgd', 'rmsprop']
+      }
+    ],
+    maxTrials: 50,
+    direction: 'maximize',
+    // earlyStoppingRounds: 10,
+    trainModel: async (hyperparameters: Record<string, any>): Promise<number> => {
+      console.log(`Training with:`, hyperparameters);
+      
+      // 模拟训练过程
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // 返回模拟的准确率
+      const baseScore = 0.7;
+      const noise = (Math.random() - 0.5) * 0.1;
+      return baseScore + noise;
+    }
+  });
+
   // 执行优化
   const result = await optimizer.run();
 
