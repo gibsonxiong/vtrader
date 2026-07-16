@@ -58,6 +58,7 @@
   },
   "devDependencies": {
     "@types/json-bigint": "catalog:",
+    "less": "^4.6.7",
     "socket.io-client": "^4.8.1"
   }
 }
