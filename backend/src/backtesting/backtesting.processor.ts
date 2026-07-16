@@ -37,7 +37,6 @@ export class BacktestingProcessor {
         this.marketDataService,
         this.strategyService,
         this.brokerManagerService,
-        this.prisma,
       );
       // 设置回测参数
       await backtestingEngie.setSetting(data);

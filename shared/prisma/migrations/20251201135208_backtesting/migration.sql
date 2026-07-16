@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE `backtesting` ADD COLUMN `brokerId` VARCHAR(191) NOT NULL;
+ALTER TABLE `Backtesting` ADD COLUMN `brokerId` VARCHAR(191) NOT NULL;

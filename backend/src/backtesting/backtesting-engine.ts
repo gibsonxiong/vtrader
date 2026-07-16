@@ -415,7 +415,7 @@ export class BacktestingEngine implements StrategyEngine {
       totalReturnPercent,
       maxDrawdown: -maxDrawdown,
       maxDrawdownPercent: -maxDrawdownPercent,
-      dailyResults: dailyResults,
+      dailyResults: Object.fromEntries(this.strategy.dailyResults),
       trades: this.strategy.trades,
     };
   }
