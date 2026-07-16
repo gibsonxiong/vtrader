@@ -52,10 +52,14 @@ export class BrokerManagerService {
     if (!instance) {
       console.log('生成broker中');
       
-      this.instances[brokerId] = new Promise((resolve) => {
+      this.instances[brokerId] = new Promise((resolve, reject) => {
         const broker = new brokerClass();
         broker.connect(brokerConfig.settings).then(() => {
           resolve(broker);
+        }).catch((err) => {
+          console.error(`Broker [${brokerId}] 连接失败:`, err.message);
+          delete this.instances[brokerId];
+          reject(err);
         });
       });
     }

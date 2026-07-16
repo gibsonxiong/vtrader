@@ -17,9 +17,6 @@ import {
   binance2status
 } from './constants';
 import { HistoryRequest } from '@vtrader/shared';
-import { HttpProxyAgent  } from 'http-proxy-agent';
-import { SocksProxyAgent  } from 'socks-proxy-agent';
-import { HttpsProxyAgent } from 'https-proxy-agent';
 import { createHttp, Http } from 'src/client/http';
 
 /**
@@ -56,8 +53,6 @@ export class RestApi {
     this.client = createHttp({
       baseURL: this.broker.REST_HOST,
       proxy: false,
-      httpAgent: new HttpProxyAgent('http://127.0.0.1:7890'),
-      httpsAgent: new HttpsProxyAgent('http://127.0.0.1:7890')
     });
 
     // 查询服务器时间
