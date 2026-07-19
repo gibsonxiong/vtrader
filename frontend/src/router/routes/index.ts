@@ -10,9 +10,14 @@ const dynamicRoutes: RouteRecordRaw[] = [
   ...backtestingRoutes,
 ];
 
+// 动态路由挂载到 Root 布局下
+const rootRoute = coreRoutes.find((r) => r.name === 'Root');
+if (rootRoute && rootRoute.children) {
+  rootRoute.children.push(...dynamicRoutes);
+}
+
 const routes: RouteRecordRaw[] = [
   ...coreRoutes,
-  ...dynamicRoutes,
   fallbackNotFoundRoute,
 ];
 

@@ -24,6 +24,7 @@
     "json-bigint": "catalog:",
     "klinecharts": "10.0.0-alpha9",
     "pinia": "catalog:",
+    "socket.io-client": "^4.8.1",
     "vue": "catalog:",
     "vue-i18n": "catalog:",
     "vue-router": "catalog:"

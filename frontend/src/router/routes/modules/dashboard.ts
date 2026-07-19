@@ -14,7 +14,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       {
         name: 'Analytics',
-        path: '/analytics',
+        path: 'analytics',
         component: () => import('#/views/dashboard/analytics/index.vue'),
         meta: {
           affixTab: true,
@@ -24,7 +24,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'Workspace',
-        path: '/workspace',
+        path: 'workspace',
         component: () => import('#/views/dashboard/workspace/index.vue'),
         meta: {
           icon: 'carbon:workspace',
@@ -33,7 +33,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         name: 'WebSocketTest',
-        path: '/ws-test',
+        path: 'ws-test',
         component: () => import('#/views/dev/ws-test.vue'),
         meta: {
           icon: 'lucide:radio',
