@@ -1,6 +1,5 @@
 <script lang="ts" setup>
-import type { EchartsUIType } from '@vtrader/plugins/echarts';
-import { EchartsUI, useEcharts } from '@vtrader/plugins/echarts';
+import * as echarts from 'echarts';
 import { computed, onMounted, ref, watch } from 'vue';
 
 interface DailyResultItem {
@@ -11,17 +10,22 @@ interface DailyResultItem {
 
 const props = defineProps<{ dailyResults?: DailyResultItem[] }>();
 
-const chartRef = ref<EchartsUIType>();
-const { renderEcharts } = useEcharts(chartRef);
+const chartRef = ref<HTMLDivElement>();
+let chartInstance: echarts.ECharts | null = null;
 
 const dates = computed(() => (props.dailyResults || []).map((d) => d.date));
 const netPnls = computed(() => (props.dailyResults || []).map((d) => d.netPnl));
 const accumNetPnls = computed(() => (props.dailyResults || []).map((d) => d.accumNetPnl));
 
 function render() {
+  if (!chartRef.value) return;
+  if (!chartInstance) {
+    chartInstance = echarts.init(chartRef.value);
+  }
+
   const vals = netPnls.value;
   const accVals = accumNetPnls.value;
-  const pad = 1.1; // 10% 边距
+  const pad = 1.1;
   const maxAbs = vals.length ? Math.max(...vals.map((v) => Math.abs(v))) : 1;
   const maxAbsAccum = accVals.length ? Math.max(...accVals.map((v) => Math.abs(v))) : 1;
   const maxAbsPadded = maxAbs * pad;
@@ -39,10 +43,10 @@ function render() {
   const formatValue = (v: number, unit: Unit) => {
     if (unit === 'percent') return `${(v * 100).toFixed(2)}%`;
     if (unit === 'wan') return `${(v / 10000).toFixed(2)}万`;
-    return `${v.toFixed(2)}`; // yuan
+    return `${v.toFixed(2)}`;
   };
 
-  renderEcharts({
+  chartInstance.setOption({
     grid: { left: '3%', right: '3%', top: '20%', bottom: '3%', containLabel: true },
     legend: {
       data: ['当日收益', '累计收益'],
@@ -60,21 +64,16 @@ function render() {
         const line = params?.find((p: any) => p.seriesName === '累计收益');
         const net = bar ? bar.data : 0;
         const accum = line ? line.data : 0;
-        
-        // 根据收益正负设置颜色：正收益红色，负收益绿色
         const netColor = net >= 0 ? '#ff4d4f' : '#52c41a';
         const accumColor = accum >= 0 ? '#ff4d4f' : '#52c41a';
-        
-        return `${date}<br/>
-                当日收益：<span style="color: ${netColor};">${formatValue(net, unitLeft)}</span><br/>
-                累计收益：<span style="color: ${accumColor};">${formatValue(accum, unitRight)}</span>`;
+        return `${date}<br/>当日收益：<span style="color: ${netColor};">${formatValue(net, unitLeft)}</span><br/>累计收益：<span style="color: ${accumColor};">${formatValue(accum, unitRight)}</span>`;
       },
     },
     xAxis: {
       type: 'category',
       boundaryGap: true,
       axisTick: { show: false },
-      axisLine: { show: true, onZero: true, lineStyle: { color: '#e5e5e5' } },
+      axisLine: { onZero: true, lineStyle: { color: '#e5e5e5' } },
       axisLabel: { color: '#666' },
       data: dates.value,
     },
@@ -87,8 +86,8 @@ function render() {
         splitLine: { show: true },
         min: -maxAbsPadded,
         max: maxAbsPadded,
-        splitNumber: 4, // 设置分割段数为4，显示5个刻度点
-        interval: (maxAbsPadded * 2) / 4, // 明确设置间隔
+        splitNumber: 4,
+        interval: (maxAbsPadded * 2) / 4,
         axisLabel: { formatter: (value: number) => formatValue(value, unitLeft) },
       },
       {
@@ -99,8 +98,8 @@ function render() {
         splitLine: { show: false },
         min: -maxAbsAccumPadded,
         max: maxAbsAccumPadded,
-        splitNumber: 4, // 设置分割段数为4，显示5个刻度点
-        interval: (maxAbsAccumPadded * 2) / 4, // 明确设置间隔
+        splitNumber: 4,
+        interval: (maxAbsAccumPadded * 2) / 4,
         axisLabel: { formatter: (value: number) => formatValue(value, unitRight) },
       },
     ],
@@ -110,7 +109,7 @@ function render() {
         type: 'bar',
         yAxisIndex: 0,
         data: netPnls.value,
-        barMaxWidth: 40, // 设置柱子最大宽度为40px
+        barMaxWidth: 40,
         itemStyle: {
           color: (params: any) => (params.value >= 0 ? '#ff4d4f' : '#52c41a'),
         },
@@ -129,22 +128,14 @@ function render() {
   });
 }
 
-onMounted(() => {
-  render();
-});
+onMounted(() => render());
 
-watch(
-  () => props.dailyResults,
-  () => {
-    render();
-  },
-  { deep: true }
-);
+watch(() => props.dailyResults, () => render(), { deep: true });
 </script>
 
 <template>
   <div>
-    <EchartsUI ref="chartRef" />
+    <div ref="chartRef" style="width:100%;height:400px" />
     <div v-if="!props.dailyResults || props.dailyResults.length === 0" class="text-center text-gray-500 py-4">
       暂无每日收益数据
     </div>

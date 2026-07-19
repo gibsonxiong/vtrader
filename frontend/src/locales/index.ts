@@ -16,7 +16,7 @@ for (const path in modules) {
   if (match) {
     const [, lang, namespace] = match;
     if (!messages[lang]) messages[lang] = {};
-    Object.assign(messages[lang], (modules[path] as any).default);
+    messages[lang][namespace] = (modules[path] as any).default;
   }
 }
 
