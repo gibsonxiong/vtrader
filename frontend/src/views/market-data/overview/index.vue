@@ -17,8 +17,8 @@ const list = ref<BarOverviewItem[]>([]);
 const router = useRouter();
 
 const columns = [
-  { dataIndex: 'symbol', title: '交易对', width: 140 },
-  { dataIndex: 'interval', title: '周期', width: 60 },
+  { dataIndex: 'symbol', title: '交易对', width: 120, ellipsis: true },
+  { dataIndex: 'interval', title: '周期', width: 55 },
   { dataIndex: 'ranges', title: '数据区间', ellipsis: true },
 ];
 
@@ -71,7 +71,7 @@ onMounted(fetchData);
     </div>
     <Table
       :columns="columns" :data-source="list" :loading="loading"
-      :pagination="false" size="small" :scroll="{ x: 600 }"
+      :pagination="false" size="small" :scroll="{ x: 360 }"
     >
       <template #bodyCell="{ column, text }">
         <template v-if="column.dataIndex === 'ranges'">

@@ -35,4 +35,7 @@ defineOptions({ name: 'App' });
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html, body, #app { height: 100%; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
 body { background: #f5f5f5; -webkit-font-smoothing: antialiased; }
+/* 移动端表格自适应 */
+.ant-table-wrapper { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ant-table { min-width: 100%; }
 </style>

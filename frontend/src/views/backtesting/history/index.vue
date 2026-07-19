@@ -15,15 +15,15 @@ const router = useRouter();
 const backtestModalVisible = ref(false);
 
 const columns = [
-  { dataIndex: 'id', title: 'ID', width: 50 },
-  { dataIndex: 'strategyName', title: '策略', width: 100 },
-  { dataIndex: 'symbol', title: '交易对', width: 120 },
-  { dataIndex: 'interval', title: '周期', width: 60 },
-  { dataIndex: 'startDate', title: '开始', width: 90 },
-  { dataIndex: 'endDate', title: '结束', width: 90 },
-  { dataIndex: 'totalReturnPercent', title: '收益率', width: 80 },
-  { dataIndex: 'maxDrawdownPercent', title: '回撤', width: 80 },
-  { dataIndex: 'actions', title: '操作', width: 100, fixed: 'right' },
+  { dataIndex: 'id', title: 'ID', width: 40 },
+  { dataIndex: 'strategyName', title: '策略', width: 60, ellipsis: true },
+  { dataIndex: 'symbol', title: '交易对', width: 110, ellipsis: true },
+  { dataIndex: 'interval', title: '周期', width: 45 },
+  { dataIndex: 'startDate', title: '开始', width: 70 },
+  { dataIndex: 'endDate', title: '结束', width: 70 },
+  { dataIndex: 'totalReturnPercent', title: '收益', width: 65 },
+  { dataIndex: 'maxDrawdownPercent', title: '回撤', width: 65 },
+  { dataIndex: 'actions', title: '操作', width: 70 },
 ];
 
 const fetchData = async () => {
@@ -69,7 +69,7 @@ onMounted(fetchData);
     <Table
       :columns="columns" :data-source="state.data" :loading="state.loading"
       :pagination="{ current: queryParams.current, pageSize: queryParams.pageSize, total: state.total, size: 'small' }"
-      :scroll="{ x: 700 }" size="small" row-key="id" @change="handleTableChange"
+      :scroll="{ x: 550 }" size="small" row-key="id" @change="handleTableChange"
     >
       <template #bodyCell="{ column, record, text }">
         <template v-if="column.dataIndex === 'startDate' || column.dataIndex === 'endDate'">{{ dayjs(text).format('MM-DD') }}</template>

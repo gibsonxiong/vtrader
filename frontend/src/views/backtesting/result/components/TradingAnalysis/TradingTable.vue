@@ -15,54 +15,12 @@ const emit = defineEmits<{
 
 // 表格列定义
 const columns = [
-  {
-    title: '时间',
-    dataIndex: 'time',
-    key: 'time',
-    width: 180,
-  },
-  {
-    title: '合约',
-    dataIndex: 'symbol',
-    key: 'symbol',
-    width: 160,
-  },
-  {
-    title: '方向',
-    dataIndex: 'direction',
-    key: 'direction',
-    width: 100,
-  },
-  {
-    title: '开平',
-    dataIndex: 'offset',
-    key: 'offset',
-    width: 100,
-  },
-  {
-    title: '成交价',
-    dataIndex: 'price',
-    key: 'price',
-    width: 140,
-  },
-  {
-    title: '成交量',
-    dataIndex: 'volume',
-    key: 'volume',
-    width: 120,
-  },
-  {
-    title: '手续费',
-    dataIndex: 'commission',
-    key: 'commission',
-    width: 120,
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 100,
-    fixed: 'right',
-  },
+  { title: '时间', dataIndex: 'time', key: 'time', width: 140, ellipsis: true },
+  { title: '方向', dataIndex: 'direction', key: 'direction', width: 50 },
+  { title: '开平', dataIndex: 'offset', key: 'offset', width: 55 },
+  { title: '成交价', dataIndex: 'price', key: 'price', width: 80 },
+  { title: '量', dataIndex: 'volume', key: 'volume', width: 70 },
+  { title: '操作', key: 'actions', width: 60 },
 ];
 
 // 格式化数字
@@ -106,15 +64,10 @@ function handleLocate(record: TradeData) {
     <Table
       :columns="columns"
       :data-source="props.trades"
-      :pagination="{
-        pageSize: globalTableConfig.pagination.defaultPageSize,
-        showSizeChanger: true,
-        pageSizeOptions: globalTableConfig.pagination.pageSizes.map(String),
-        showQuickJumper: true,
-        showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
-      }"
+      :pagination="{ pageSize: 20, showSizeChanger: false, size: 'small' }"
+      :scroll="{ x: 460 }"
       row-key="tradeId"
-      size="middle"
+      size="small"
     >
       <template #bodyCell="{ column, record }">
         <template v-if="column.key === 'direction'">
