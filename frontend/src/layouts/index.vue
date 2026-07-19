@@ -87,21 +87,21 @@ const backtestSubs = [
 }
 .mobile-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 16px; height: 44px; background: #fff; border-bottom: 1px solid #eee;
+  padding: 0 12px; height: 40px; background: #fff; border-bottom: 1px solid #eee;
   flex-shrink: 0;
 }
-.header-title { font-size: 17px; font-weight: 600; }
-.header-logout { font-size: 14px; color: #999; cursor: pointer; }
+.header-title { font-size: 15px; font-weight: 600; }
+.header-logout { font-size: 13px; color: #999; cursor: pointer; }
 .sub-nav {
   display: flex; background: #fff; border-bottom: 1px solid #eee; flex-shrink: 0; overflow-x: auto;
 }
 .sub-nav-item {
-  flex: 1; text-align: center; padding: 10px 0; font-size: 14px; color: #666; text-decoration: none;
+  flex: 1; text-align: center; padding: 7px 0; font-size: 13px; color: #666; text-decoration: none;
   border-bottom: 2px solid transparent; white-space: nowrap;
 }
 .sub-nav-active { color: #1677ff; border-bottom-color: #1677ff; font-weight: 500; }
 .mobile-content {
-  flex: 1; overflow-y: auto; padding: 12px; -webkit-overflow-scrolling: touch;
+  flex: 1; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch;
 }
 .bottom-tabs {
   display: flex; background: #fff; border-top: 1px solid #eee; flex-shrink: 0;
@@ -109,9 +109,9 @@ const backtestSubs = [
 }
 .tab-item {
   flex: 1; display: flex; flex-direction: column; align-items: center;
-  padding: 8px 0 4px; cursor: pointer; color: #999;
+  padding: 6px 0 3px; cursor: pointer; color: #999;
 }
 .tab-item.active { color: #1677ff; }
-.tab-icon { font-size: 22px; line-height: 1; }
-.tab-label { font-size: 11px; margin-top: 2px; }
+.tab-icon { font-size: 20px; line-height: 1; }
+.tab-label { font-size: 10px; margin-top: 1px; }
 </style>

@@ -47,7 +47,7 @@ const intervalOptions = [
         <Select v-model:value="state.interval" :options="intervalOptions" size="small" />
       </Form.Item>
     </Form>
-    <KlineChart :broker-id="state.brokerId" :symbol="state.symbol" :interval="state.interval" style="height:calc(100vh - 220px)" />
+    <KlineChart :broker-id="state.brokerId" :symbol="state.symbol" :interval="state.interval" />
   </div>
 </template>
 

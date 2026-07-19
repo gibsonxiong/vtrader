@@ -452,54 +452,40 @@ defineExpose({
     <div class="chart-container" :class="{ fullscreen: isFullscreen }">
       <!-- 顶部工具栏 -->
       <div class="chart-toolbar">
-        <div class="toolbar-left">
-          {{ props.brokerId }}
+        <div class="toolbar-row">
           <button class="contract-selector-btn" @click="showContractSelector" title="选择合约">
             {{ props.symbol }}
           </button>
           <Select
             :value="props.interval"
             @update:value="onIntervalChange"
-            style="width: 100px"
+            style="width: 64px"
+            size="small"
           >
-            <SelectOption 
+            <SelectOption
               v-for="period in IntervalOptions"
               :key="period.value"
               :value="period.value"
             >{{ period.label }}</SelectOption>
           </Select>
-          
-          <!-- 日期选择器 -->
-          <div class="date-selectors">
-            <div class="date-selector-group">
-              <DatePicker
-                :value="props.startDate"
-                @update:value="onStartDateChange"
-                format="YYYY-MM-DD"
-                placeholder="选择开始日期"
-                class="date-picker"
-                :allowClear="false"
-              />
-            </div>
-            <div class="date-selector-group">
-              <DatePicker
-                :value="props.endDate"
-                @update:value="onEndDateChange"
-                format="YYYY-MM-DD"
-                placeholder="选择结束日期"
-                class="date-picker"
-                :allowClear="false"
-              />
-            </div>
-          </div>
-        </div>
-        <div class="toolbar-right">
-          <button class="tool-btn" @click="openScrollPanel" title="滚动">
-            滚动
-          </button>
-          <button class="tool-btn" @click="toggleFullscreen" title="全屏">
-            全屏
-          </button>
+          <DatePicker
+            :value="props.startDate"
+            @update:value="onStartDateChange"
+            format="YYYY-MM-DD"
+            placeholder="开始"
+            class="date-picker"
+            size="small"
+            :allowClear="false"
+          />
+          <DatePicker
+            :value="props.endDate"
+            @update:value="onEndDateChange"
+            format="YYYY-MM-DD"
+            placeholder="结束"
+            class="date-picker"
+            size="small"
+            :allowClear="false"
+          />
         </div>
       </div>
       
@@ -541,9 +527,11 @@ defineExpose({
 
 <style scoped>
 .market-data-chart {
-  height: 700px;
+  height: 400px;
   width: 100%;
   background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .chart-container {
@@ -555,89 +543,42 @@ defineExpose({
 }
 
 .chart-toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 16px;
-  /* background: #fff; */
+  padding: 4px 6px;
   border-bottom: 1px solid #e8e8e8;
-  min-height: 48px;
+  flex-shrink: 0;
 }
 
-.toolbar-left {
+.toolbar-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 .contract-selector-btn {
-  padding: 6px 6px;
-  /* border: 1px solid #d9d9d9; */
-  background: white;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: #262626;
-  transition: all 0.2s;
-  min-width: 120px;
-  text-align: center;
-}
-
-.contract-selector-btn:hover {
-  border-color: #40a9ff;
-  color: #40a9ff;
-}
-
-
-.date-selectors {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-}
-
-.date-selector-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.date-label {
-  font-size: 12px;
-  color: #666;
-  white-space: nowrap;
-  margin: 0;
-}
-
-.date-picker {
-  width: 140px;
-}
-
-.toolbar-right {
-  display: flex;
-  gap: 8px;
-}
-
-.tool-btn {
-  padding: 6px 12px;
+  padding: 2px 6px;
   border: 1px solid #d9d9d9;
   background: white;
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
-  color: #666;
-  transition: all 0.2s;
+  font-weight: 600;
+  color: #262626;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  height: 26px;
 }
 
-.tool-btn:hover {
-  border-color: #40a9ff;
-  color: #40a9ff;
+.date-picker {
+  width: 100px;
 }
 
 .chart-content {
   flex: 1;
   width: 100%;
-  height: calc(100% - 48px);
+  min-height: 0;
   position: relative;
 }
 
@@ -651,18 +592,18 @@ defineExpose({
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.5);
   z-index: 10;
 }
 
 .loading-spinner {
-  width: 40px;
-  height: 40px;
+  width: 30px;
+  height: 30px;
   border: 3px solid #f3f3f3;
   border-top: 3px solid #1890ff;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 @keyframes spin {
@@ -672,7 +613,7 @@ defineExpose({
 
 .loading-text {
   color: #666;
-  font-size: 14px;
+  font-size: 12px;
 }
 
 .fullscreen {
