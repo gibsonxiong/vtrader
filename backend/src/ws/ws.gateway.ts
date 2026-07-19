@@ -74,15 +74,20 @@ export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayD
     this.roomCounts.set(room, prevCount + 1);
 
     if (prevCount === 0) {
-      const broker = await this.brokerManager.getBroker(brokerId);
-      broker.subscribeBar({ symbol, interval });
+      try {
+        const broker = await this.brokerManager.getBroker(brokerId);
+        broker.subscribeBar({ symbol, interval });
 
-      if (!this.watchedBrokers.has(brokerId)) {
-        this.watchedBrokers.add(brokerId);
-        broker.on('bar', (bar) => {
-          const roomKey = `kline:${brokerId}:${bar.symbol}:${bar.interval}`;
-          this.server.to(roomKey).emit('bar', bar);
-        });
+        if (!this.watchedBrokers.has(brokerId)) {
+          this.watchedBrokers.add(brokerId);
+          broker.on('bar', (bar) => {
+            const roomKey = `kline:${brokerId}:${bar.symbol}:${bar.interval}`;
+            this.server.to(roomKey).emit('bar', bar);
+          });
+        }
+      } catch (err: any) {
+        client.emit('subscribeError', { brokerId, symbol, interval, message: `Broker连接失败: ${err.message}` });
+        return false;
       }
     }
     client.emit('subscribeOk', { brokerId, symbol, interval, room });

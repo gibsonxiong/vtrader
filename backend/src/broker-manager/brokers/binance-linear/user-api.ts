@@ -21,29 +21,42 @@ export class UserApi {
    * 连接到用户数据API
    */
   public async connect(listenKey: string): Promise<void> {
-    // const wsUrl = `${server === 'REAL' ? REAL_USER_HOST : TESTNET_USER_HOST}${listenKey}`;
-    return new Promise((resolve, reject) => {
-      this.ws = new WebSocket(`${this.broker.USER_HOST}/${listenKey}`, {
-        agent: new SocksProxyAgent('socks5h://127.0.0.1:7890')
-      });
+    return new Promise((resolve) => {
+      try {
+        this.ws = new WebSocket(`${this.broker.USER_HOST}/${listenKey}`, {
+          agent: new SocksProxyAgent('socks5h://127.0.0.1:7890'),
+        });
 
-      this.ws.on('open', () => {
-        this.broker.writeLog('用户数据WebSocket连接成功');
+        const connectTimeout = setTimeout(() => {
+          if (this.ws?.readyState !== WebSocket.OPEN) {
+            this.broker.writeLog('用户数据WebSocket连接超时（将继续运行，账户数据不可用）');
+            resolve();
+          }
+        }, 10_000);
+
+        this.ws.on('open', () => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog('用户数据WebSocket连接成功');
+          resolve();
+        });
+
+        this.ws.on('message', (data: WebSocket.Data) => {
+          this.onMessage(data.toString());
+        });
+
+        this.ws.on('error', (error) => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog(`用户数据WebSocket连接失败: ${error.message}（将继续运行，账户数据不可用）`);
+          resolve();
+        });
+
+        this.ws.on('close', () => {
+          this.broker.writeLog('用户数据WebSocket连接关闭');
+        });
+      } catch (err: any) {
+        this.broker.writeLog(`用户数据WebSocket创建失败: ${err.message}（将继续运行，账户数据不可用）`);
         resolve();
-      });
-
-      this.ws.on('message', (data: WebSocket.Data) => {
-        this.onMessage(data.toString());
-      });
-
-      this.ws.on('error', (error) => {
-        this.broker.writeLog(`用户数据WebSocket错误: ${error}`);
-        reject(error);
-      });
-
-      this.ws.on('close', () => {
-        this.broker.writeLog('用户数据WebSocket连接关闭');
-      });
+      }
     });
   }
 

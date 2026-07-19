@@ -10,7 +10,6 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  // 启用CORS
   app.enableCors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -29,5 +28,17 @@ async function bootstrap() {
   app.useWebSocketAdapter(new IoAdapter(app));
 
   await app.listen(process.env.PORT ?? 3000);
+  console.log(`Application is running on: http://localhost:${process.env.PORT ?? 3000}`);
 }
-bootstrap();
+
+bootstrap().catch((err) => {
+  console.error('Bootstrap failed:', err.message);
+});
+
+// 全局兜底：避免未捕获的异常导致进程崩溃
+process.on('uncaughtException', (err) => {
+  console.error('[uncaughtException]', err.message);
+});
+process.on('unhandledRejection', (reason: any) => {
+  console.error('[unhandledRejection]', reason?.message ?? reason);
+});

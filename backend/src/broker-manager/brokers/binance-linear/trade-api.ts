@@ -28,41 +28,34 @@ export class TradeApi {
   /**
    * 连接到交易API
    */
-  public async connect(
-    apiKey: string,
-    apiSecret: string,
-    // server: string,
-    // proxyHost?: string,
-    // proxyPort?: number,
-  ): Promise<void> {
+  public async connect(apiKey: string, apiSecret: string): Promise<void> {
     this.apiKey = apiKey;
     this.apiSecret = apiSecret;
-    // this.server = server;
 
-    // const wsUrl = server === 'REAL' ? REAL_TRADE_HOST : TESTNET_TRADE_HOST;
-
-    return new Promise((resolve, reject) => {
-      this.ws = createWs({
-        url: this.broker.TRADE_HOST,
-        agent: new SocksProxyAgent('socks5h://127.0.0.1:7890'),
-        onOpen: () => {
-          this.broker.writeLog('交易WebSocket连接成功');
-          resolve();
-        },
-
-        onMessage: (data: WebSocket.Data) => {
-          this.onMessage(data.toString());
-        },
-
-        onError: (error) => {
-          this.broker.writeLog(`交易WebSocket错误: ${error}`);
-          reject(error);
-        },
-
-        onClose: () => {
-          this.broker.writeLog('交易WebSocket连接关闭');
-        }
-      });
+    return new Promise((resolve) => {
+      try {
+        this.ws = createWs({
+          url: this.broker.TRADE_HOST,
+          agent: new SocksProxyAgent('socks5h://127.0.0.1:7890'),
+          onOpen: () => {
+            this.broker.writeLog('交易WebSocket连接成功');
+            resolve();
+          },
+          onMessage: (data: WebSocket.Data) => {
+            this.onMessage(data.toString());
+          },
+          onError: (error) => {
+            this.broker.writeLog(`交易WebSocket连接失败: ${error.message}（将继续运行，交易不可用）`);
+            resolve();
+          },
+          onClose: () => {
+            this.broker.writeLog('交易WebSocket连接关闭');
+          },
+        });
+      } catch (err: any) {
+        this.broker.writeLog(`交易WebSocket创建失败: ${err.message}（将继续运行，交易不可用）`);
+        resolve();
+      }
     });
   }
 

@@ -28,16 +28,12 @@ const authStore = useAuthStore();
 const collapsed = ref(false);
 
 const selectedKeys = computed(() => {
-  const path = route.path;
-  return [path];
+  return [route.name as string];
 });
 
 const openKeys = computed(() => {
-  const parts = route.path.split('/').filter(Boolean);
-  if (parts.length > 1) {
-    return ['/' + parts.slice(0, -1).join('/')];
-  }
-  return [];
+  const matched = route.matched;
+  return matched.filter((r) => r.children?.length).map((r) => r.name as string);
 });
 
 // Convert routes to menu items
@@ -45,7 +41,7 @@ function buildMenuItems(routes: any[]): any[] {
   return routes
     .filter((r) => !r.meta?.hideInMenu)
     .map((r) => ({
-      key: r.path,
+      key: r.name,
       icon: r.meta?.icon ? () => null : undefined,
       label: r.meta?.title || r.name,
       children: r.children ? buildMenuItems(r.children) : undefined,
@@ -59,7 +55,7 @@ const menuItems = computed(() => {
 });
 
 function handleMenuClick({ key }: { key: string }) {
-  router.push(key);
+  router.push({ name: key });
 }
 
 async function handleLogout() {
