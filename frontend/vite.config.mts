@@ -3,7 +3,7 @@ import { defineConfig } from '@vtrader/vite-config';
 export default defineConfig(async () => {
   return {
     application: {
-      nestBackend: false,
+      nestBackend: true,
       nestBackendOptions: {
         port: 3000,
         backendPackage: '@vtrader/backend',
@@ -17,8 +17,7 @@ export default defineConfig(async () => {
           '/api': {
             changeOrigin: true,
             rewrite: (path) => path.replace(/^\/api/, ''),
-            // mock代理目标地址
-            target: 'http://localhost:5320/api',
+            target: 'http://localhost:3000',
             ws: true,
           },
         },

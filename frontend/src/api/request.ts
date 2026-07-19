@@ -124,7 +124,7 @@ export const requestClient = createRequestClient(apiURL, {
 export const baseRequestClient = new RequestClient({ baseURL: apiURL });
 
 export const tradeRequestClient = axios.create({
-  baseURL: 'http://127.0.0.1:3000',
+  baseURL: apiURL,
   responseType: 'json',
 });
 

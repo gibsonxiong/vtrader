@@ -7,7 +7,7 @@ import { BacktestingService, type OptimizerSetting } from './backtesting/backtes
 import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
-import { mockBars } from './mock/bars';
+// import { mockBars } from './mock/bars';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
 import { test } from './optimization/index';
 import type { BacktestingSetting } from '@vtrader/shared';
@@ -187,18 +187,18 @@ export class AppService {
   }
 
 
-  testBarGenerator(): void {
-    const bg = new BarGenerator({
-      interval: Interval.DAILY_1,
-      callback: (bar: BarData) => {
-        console.log(bar);
-      },
-    });
-
-    mockBars.forEach((bar) => {
-      bg.update(bar);
-    });
-  }
+  // testBarGenerator(): void {
+  //   const bg = new BarGenerator({
+  //     interval: Interval.DAILY_1,
+  //     callback: (bar: BarData) => {
+  //       console.log(bar);
+  //     },
+  //   });
+  //
+  //   mockBars.forEach((bar) => {
+  //     bg.update(bar);
+  //   });
+  // }
 
   async getStategies(): Promise<void> {
     const stategies = await this.strategyService.getStategieConfigs();
