@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Page } from '@vtrader/common-ui';
+import PageContainer from '#/components/PageContainer.vue';
 import { Table, Tag, message, Form, DatePicker, Select, Space, Button, Modal, SelectOptGroup, SelectOption } from 'ant-design-vue';
 import { ref, onMounted, h, reactive, computed, watch } from 'vue';
 import { useRouter } from 'vue-router';
@@ -283,7 +283,8 @@ watch(() => formState.brokerId, () => {
 </script>
 
 <template>
-  <Page>
+
+  <PageContainer>
     <div>
       <div class="mb-4">
         <Space>
@@ -346,7 +347,7 @@ watch(() => formState.brokerId, () => {
         <div>确认删除该概览记录？该操作不可恢复。</div>
       </Modal>
     </div>
-  </Page>
+  </PageContainer>
   
 </template>
 

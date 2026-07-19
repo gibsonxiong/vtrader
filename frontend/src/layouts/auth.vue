@@ -1,25 +1,22 @@
 <script lang="ts" setup>
-import { computed } from 'vue';
-
-import { AuthPageLayout } from '@vtrader/layouts';
-import { preferences } from '@vtrader/preferences';
-
-import { $t } from '#/locales';
-
-const appName = computed(() => preferences.app.name);
-const logo = computed(() => preferences.logo.source);
-const clickLogo = () => {};
 </script>
 
 <template>
-  <AuthPageLayout
-    :app-name="appName"
-    :logo="logo"
-    :page-description="$t('authentication.pageDesc')"
-    :page-title="$t('authentication.pageTitle')"
-    :click-logo="clickLogo"
+  <div
+    style="
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f2f5;
+    "
   >
-    <!-- 自定义工具栏 -->
-    <!-- <template #toolbar></template> -->
-  </AuthPageLayout>
+    <div style="width: 400px">
+      <div style="text-align: center; margin-bottom: 24px">
+        <h1 style="font-size: 32px">VTrader</h1>
+        <p style="color: #999">加密货币量化交易平台</p>
+      </div>
+      <RouterView />
+    </div>
+  </div>
 </template>

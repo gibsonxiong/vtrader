@@ -1,141 +1,153 @@
-/**
- * 该文件可自行根据业务逻辑进行调整
- */
-import type { AxiosResponseHeaders, RequestClientOptions } from '@vtrader/request';
-
-import { useAppConfig } from '@vtrader/hooks';
-import { preferences } from '@vtrader/preferences';
-import {
-  authenticateResponseInterceptor,
-  defaultResponseInterceptor,
-  errorMessageResponseInterceptor,
-  RequestClient,
-} from '@vtrader/request';
-import { useAccessStore } from '@vtrader/stores';
-import { cloneDeep } from '@vtrader/utils';
-
+import type { AxiosResponseHeaders } from 'axios';
+import axios from 'axios';
 import { message } from 'ant-design-vue';
 import JSONBigInt from 'json-bigint';
+const cloneDeep = <T>(obj: T): T => JSON.parse(JSON.stringify(obj));
 
-import { useAuthStore } from '#/store';
+const apiURL = import.meta.env.VITE_GLOB_API_URL || '/api';
 
-import { refreshTokenApi } from './core';
-import axios from 'axios';
-
-const { apiURL } = useAppConfig(import.meta.env, import.meta.env.PROD);
-
-function createRequestClient(baseURL: string, options?: RequestClientOptions) {
-  const client = new RequestClient({
-    ...options,
-    baseURL,
-    transformResponse: (data: any, header: AxiosResponseHeaders) => {
-      // storeAsString指示将BigInt存储为字符串，设为false则会存储为内置的BigInt类型
-      return header.getContentType()?.toString().includes('application/json')
-        ? cloneDeep(
-            JSONBigInt({ storeAsString: true, strict: true }).parse(data),
-          )
-        : data;
-    },
-  });
-
-  /**
-   * 重新认证逻辑
-   */
-  async function doReAuthenticate() {
-    console.warn('Access token or refresh token is invalid or expired. ');
-    const accessStore = useAccessStore();
-    const authStore = useAuthStore();
-    accessStore.setAccessToken(null);
-    if (
-      preferences.app.loginExpiredMode === 'modal' &&
-      accessStore.isAccessChecked
-    ) {
-      accessStore.setLoginExpired(true);
-    } else {
-      await authStore.logout();
-    }
-  }
-
-  /**
-   * 刷新token逻辑
-   */
-  async function doRefreshToken() {
-    const accessStore = useAccessStore();
-    const resp = await refreshTokenApi();
-    const newToken = resp.data;
-    accessStore.setAccessToken(newToken);
-    return newToken;
-  }
-
-  function formatToken(token: null | string) {
-    return token ? `Bearer ${token}` : null;
-  }
-
-  // 请求头处理
-  client.addRequestInterceptor({
-    fulfilled: async (config) => {
-      const accessStore = useAccessStore();
-
-      config.headers.Authorization = formatToken(accessStore.accessToken);
-      config.headers['Accept-Language'] = preferences.app.locale;
-      return config;
-    },
-  });
-
-  // 处理返回的响应数据格式
-  client.addResponseInterceptor(
-    defaultResponseInterceptor({
-      codeField: 'code',
-      dataField: 'data',
-      successCode: 0,
-    }),
-  );
-
-  // token过期的处理
-  client.addResponseInterceptor(
-    authenticateResponseInterceptor({
-      client,
-      doReAuthenticate,
-      doRefreshToken,
-      enableRefreshToken: preferences.app.enableRefreshToken,
-      formatToken,
-    }),
-  );
-
-  // 通用的错误处理,如果没有进入上面的错误处理逻辑，就会进入这里
-  client.addResponseInterceptor(
-    errorMessageResponseInterceptor((msg: string, error) => {
-      // 这里可以根据业务进行定制,你可以拿到 error 内的信息进行定制化处理，根据不同的 code 做不同的提示，而不是直接使用 message.error 提示 msg
-      // 当前mock接口返回的错误字段是 error 或者 message
-      const responseData = error?.response?.data ?? {};
-      const errorMessage = responseData?.error ?? responseData?.message ?? '';
-      // 如果没有错误信息，则会根据状态码进行提示
-      message.error(errorMessage || msg);
-    }),
-  );
-
-  return client;
+interface RequestClientOptions {
+  responseReturn?: 'data' | 'raw';
 }
 
-export const requestClient = createRequestClient(apiURL, {
-  responseReturn: 'data',
+class RequestClient {
+  private axiosInstance = axios.create({
+    baseURL: apiURL,
+    timeout: 10000,
+    headers: { 'Content-Type': 'application/json' },
+    transformResponse: [
+      (data: any, header?: AxiosResponseHeaders) => {
+        if (header?.getContentType?.()?.toString().includes('application/json')) {
+          return cloneDeep(JSONBigInt({ storeAsString: true, strict: true }).parse(data));
+        }
+        return data;
+      },
+    ],
+  });
+
+  constructor(public options: RequestClientOptions = {}) {}
+
+  get<T = any>(url: string, config?: any): Promise<T> {
+    return this.request({ ...config, method: 'GET', url });
+  }
+
+  post<T = any>(url: string, data?: any, config?: any): Promise<T> {
+    return this.request({ ...config, method: 'POST', url, data });
+  }
+
+  put<T = any>(url: string, data?: any, config?: any): Promise<T> {
+    return this.request({ ...config, method: 'PUT', url, data });
+  }
+
+  delete<T = any>(url: string, config?: any): Promise<T> {
+    return this.request({ ...config, method: 'DELETE', url });
+  }
+
+  async request<T = any>(config: any): Promise<T> {
+    const response = await this.axiosInstance.request(config);
+    if (this.options.responseReturn === 'data') {
+      const body = response.data;
+      if (body?.code === 0) return body.data as T;
+      throw response;
+    }
+    return response as any;
+  }
+}
+
+const ACCESS_TOKEN_KEY = 'vtrader_access_token';
+
+function getAccessToken(): string | null {
+  return localStorage.getItem(ACCESS_TOKEN_KEY);
+}
+
+function setAccessToken(token: string | null) {
+  if (token) {
+    localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  } else {
+    localStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+}
+
+// --- requestClient (with auth interceptors) ---
+
+export const requestClient = new RequestClient({ responseReturn: 'data' });
+
+requestClient['axiosInstance'].interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
 });
 
-export const baseRequestClient = new RequestClient({ baseURL: apiURL });
+let isRefreshing = false;
+let refreshQueue: Array<{ resolve: (token: string) => void; reject: (err: any) => void }> = [];
+
+async function doRefreshToken(): Promise<string> {
+  const resp = await baseRequestClient.post('/auth/refresh');
+  const newToken = resp.data;
+  setAccessToken(newToken);
+  return newToken;
+}
+
+requestClient['axiosInstance'].interceptors.response.use(
+  (value) => value,
+  async (error) => {
+    const status = error?.response?.status;
+    const originalRequest = error.config;
+
+    if (status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          refreshQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return requestClient['axiosInstance'](originalRequest);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const newToken = await doRefreshToken();
+        refreshQueue.forEach((q) => q.resolve(newToken));
+        refreshQueue = [];
+        originalRequest.headers.Authorization = `Bearer ${newToken}`;
+        return requestClient['axiosInstance'](originalRequest);
+      } catch (refreshError) {
+        refreshQueue.forEach((q) => q.reject(refreshError));
+        refreshQueue = [];
+        setAccessToken(null);
+        window.location.href = '/auth/login';
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    const responseData = error?.response?.data ?? {};
+    const errorMessage = responseData?.error ?? responseData?.message ?? '';
+    message.error(errorMessage || error.message);
+    return Promise.reject(error);
+  },
+);
+
+// --- baseRequestClient (no interceptors, for refresh/logout) ---
+
+export const baseRequestClient = new RequestClient();
+
+// --- tradeRequestClient ---
 
 export const tradeRequestClient = axios.create({
   baseURL: apiURL,
   responseType: 'json',
 });
 
-tradeRequestClient.interceptors.response.use((value) => {
-  return value;
-}, (error) => {
-  message.error(error.message);
-});
+tradeRequestClient.interceptors.response.use(
+  (value) => value,
+  (error) => {
+    message.error(error.message);
+    return Promise.reject(error);
+  },
+);
 
-export interface PageFetchParams {
-  [key: string]: any;
-  pageNo?: number;
-  pageSize?: number;
-}
+export { getAccessToken, setAccessToken, apiURL };

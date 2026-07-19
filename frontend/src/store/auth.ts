@@ -1,64 +1,54 @@
-import type { Recordable, UserInfo } from '@vtrader/types';
-
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-
-import { LOGIN_PATH } from '@vtrader/constants';
-import { preferences } from '@vtrader/preferences';
-import { resetAllStores, useAccessStore, useUserStore } from '@vtrader/stores';
-
-import { notification } from 'ant-design-vue';
 import { defineStore } from 'pinia';
-
+import { notification } from 'ant-design-vue';
 import { getAccessCodesApi, getUserInfoApi, loginApi, logoutApi } from '#/api';
 import { $t } from '#/locales';
+import { setAccessToken, getAccessToken } from '#/api/request';
+
+export interface UserInfo {
+  id: number;
+  realName: string;
+  roles: string[];
+  username: string;
+  homePath?: string;
+}
+
+const LOGIN_PATH = '/auth/login';
+const DEFAULT_HOME_PATH = '/dashboard/analytics';
 
 export const useAuthStore = defineStore('auth', () => {
-  const accessStore = useAccessStore();
-  const userStore = useUserStore();
   const router = useRouter();
-
   const loginLoading = ref(false);
+  const accessToken = ref<string | null>(getAccessToken());
+  const accessCodes = ref<string[]>([]);
+  const accessChecked = ref(false);
+  const loginExpired = ref(false);
 
-  /**
-   * 异步处理登录操作
-   * Asynchronously handle the login process
-   * @param params 登录表单数据
-   * @param onSuccess 成功之后的回调函数
-   */
-  async function authLogin(
-    params: Recordable<any>,
-    onSuccess?: () => Promise<void> | void,
-  ) {
-    // 异步处理用户登录操作并获取 accessToken
-    let userInfo: null | UserInfo = null;
+  async function authLogin(params: Record<string, any>, onSuccess?: () => Promise<void> | void) {
+    let userInfo: UserInfo | null = null;
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      const { accessToken: token } = await loginApi(params);
 
-      // 如果成功获取到 accessToken
-      if (accessToken) {
-        accessStore.setAccessToken(accessToken);
+      if (token) {
+        setAccessToken(token);
+        accessToken.value = token;
 
-        // 获取用户信息并存储到 accessStore 中
-        const [fetchUserInfoResult, accessCodes] = await Promise.all([
+        const [fetchUserInfoResult, codes] = await Promise.all([
           fetchUserInfo(),
           getAccessCodesApi(),
         ]);
 
         userInfo = fetchUserInfoResult;
+        accessCodes.value = codes;
 
-        userStore.setUserInfo(userInfo);
-        accessStore.setAccessCodes(accessCodes);
-
-        if (accessStore.loginExpired) {
-          accessStore.setLoginExpired(false);
+        if (loginExpired.value) {
+          loginExpired.value = false;
         } else {
           onSuccess
             ? await onSuccess?.()
-            : await router.push(
-                userInfo.homePath || preferences.app.defaultHomePath,
-              );
+            : await router.push(userInfo?.homePath || DEFAULT_HOME_PATH);
         }
 
         if (userInfo?.realName) {
@@ -72,49 +62,44 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       loginLoading.value = false;
     }
-
-    return {
-      userInfo,
-    };
+    return { userInfo };
   }
 
   async function logout(redirect: boolean = true) {
     try {
       await logoutApi();
     } catch {
-      // 不做任何处理
+      // ignore
     }
+    setAccessToken(null);
+    accessToken.value = null;
+    accessChecked.value = false;
+    accessCodes.value = [];
+    loginExpired.value = false;
 
-    resetAllStores();
-    accessStore.setLoginExpired(false);
-
-    // 回登录页带上当前路由地址
     await router.replace({
       path: LOGIN_PATH,
       query: redirect
-        ? {
-            redirect: encodeURIComponent(router.currentRoute.value.fullPath),
-          }
+        ? { redirect: encodeURIComponent(router.currentRoute.value.fullPath) }
         : {},
     });
   }
 
   async function fetchUserInfo() {
-    let userInfo: null | UserInfo = null;
-    userInfo = await getUserInfoApi();
-    userStore.setUserInfo(userInfo);
+    const userInfo = await getUserInfoApi() as UserInfo;
     return userInfo;
   }
 
-  function $reset() {
-    loginLoading.value = false;
-  }
-
   return {
-    $reset,
+    accessToken,
+    accessChecked,
+    accessCodes,
+    loginExpired,
+    loginLoading,
     authLogin,
     fetchUserInfo,
-    loginLoading,
     logout,
   };
 });
+
+export { LOGIN_PATH, DEFAULT_HOME_PATH };

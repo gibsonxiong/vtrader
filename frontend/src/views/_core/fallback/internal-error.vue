@@ -1,9 +1,7 @@
 <script lang="ts" setup>
-import { Fallback } from '@vtrader/common-ui';
-
+import { Result } from 'ant-design-vue';
 defineOptions({ name: 'Fallback500Demo' });
 </script>
-
 <template>
-  <Fallback status="500" />
+  <Result status="500" title="500" sub-title="服务器错误" />
 </template>

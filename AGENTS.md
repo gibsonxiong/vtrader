@@ -125,6 +125,20 @@ pnpm check:type       # TypeScript 类型检查
 | `docs/project-analysis.md` | 详细项目分析 |
 | `docs/hardness-engineering-plan.md` | 系统加固方案 |
 
+## Agent skills
+
+### Issue tracker
+
+Issues tracked via GitHub Issues (`gibsonxiong/vtrader`). See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Canonical five-label vocabulary (needs-triage / needs-info / ready-for-agent / ready-for-human / wontfix). See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Multi-context layout — `CONTEXT-MAP.md` at root pointing to per-context `CONTEXT.md` files under `frontend/`, `backend/`, `shared/`. See `docs/agents/domain.md`.
+
 ## 开发注意事项
 
 - 不要在前端 `packages/@core/` 中引入业务逻辑

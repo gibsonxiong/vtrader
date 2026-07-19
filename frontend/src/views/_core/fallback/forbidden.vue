@@ -1,9 +1,7 @@
 <script lang="ts" setup>
-import { Fallback } from '@vtrader/common-ui';
-
+import { Result } from 'ant-design-vue';
 defineOptions({ name: 'Fallback403Demo' });
 </script>
-
 <template>
-  <Fallback status="403" />
+  <Result status="403" title="403" sub-title="无权限访问" />
 </template>

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Page } from '@vtrader/common-ui';
+import PageContainer from '#/components/PageContainer.vue';
 import { Form, Input, Button, DatePicker, Select, Space, message, Table, SelectOptGroup, SelectOption } from 'ant-design-vue';
 import { reactive, ref, onMounted, watch } from 'vue';
 import { useRoute } from 'vue-router';
@@ -126,7 +126,8 @@ watch(() => route.query, () => {
 </script>
 
 <template>
-  <Page>
+
+  <PageContainer>
     <div>
       <!-- <Form :model="formState" layout="inline" autocomplete="off" @submit.prevent class="mb-4">
         <Form.Item label="Broker" name="brokerId" :rules="[{ required: true, message: '请选择Broker!' }]">
@@ -185,7 +186,7 @@ watch(() => route.query, () => {
         bordered
       /> -->
     </div>
-  </Page>
+  </PageContainer>
 </template>
 
 <style scoped>

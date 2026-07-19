@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { JsonViewer, Page } from '@vtrader/common-ui';
+import PageContainer from '#/components/PageContainer.vue';
 import { Card, Statistic, Row, Col, Tag, Descriptions, Spin, message, Tabs, Table, Input, Button } from 'ant-design-vue';
 import { reactive, onMounted, computed } from 'vue';
 import { useRoute } from 'vue-router';
@@ -169,7 +169,8 @@ onMounted(() => {
 </script>
 
 <template>
-  <Page title="回测结果">
+
+  <PageContainer>
     <div>
       <Spin :spinning="state.loading || compare.loading">
         <div v-if="state.data" class="space-y-6">

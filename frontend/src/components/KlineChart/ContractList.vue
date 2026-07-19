@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { Loading } from '@vtrader/common-ui';
+import { Spin } from 'ant-design-vue';
 import { ref, onMounted } from 'vue';
 import { message } from 'ant-design-vue';
 import { getContractsApi, type MarketDataApi } from '#/api';
@@ -53,7 +53,7 @@ defineExpose({
 
 <template>
   <div class="contract-list">
-    <Loading :spinning="contractsLoading">
+    <Spin :spinning="contractsLoading">
       <div class="contract-search">
         <input
           type="text"
@@ -76,7 +76,7 @@ defineExpose({
           </div>
         </li>
       </ul>
-    </Loading>
+    </Spin>
   </div>
 </template>
 
