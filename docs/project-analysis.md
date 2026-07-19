@@ -7,8 +7,7 @@
 当前仓库主要由以下部分组成：
 
 - `frontend`：Vue 3 + Vite 前端应用
-- `backend`：NestJS 后端服务
-- `backend-mock`：Nitro Mock 服务
+- `backend`：NestJS 后端服务（承载全部 API，含 Mock 端点）
 - `packages`：共享业务能力、UI、请求层、状态管理、样式与多类基础设施包
 - `internal`：内部构建、lint、tailwind、vite 配置包
 - `scripts`：脚手架和仓库级工具
@@ -48,18 +47,13 @@
 
 - 前端：`http://localhost:8000/`
 - 后端 Swagger：`http://localhost:3000/api`
-- 前端内置 Mock API：`http://localhost:5320/api`
+- 后端 API：`http://localhost:3000/`
 
-当前前端开发代理的默认行为是：
+当前前端开发代理行为：
 
 - 浏览器请求 `/api`
-- Vite 将 `/api` 代理到 `http://localhost:5320/api`
-- 因此前端默认优先命中 Mock，而不是 Nest 后端
-
-这意味着本项目在开发时存在两套后端来源：
-
-- Mock API：用于页面联调和通用认证/菜单能力
-- Nest API：用于交易、行情、回测、WebSocket 等真实业务逻辑
+- Vite 将 `/api` 代理到 `http://localhost:3000`（NestJS 后端）
+- 所有请求统一走 Nest 后端，不再有独立的 Mock 服务
 
 ## 4. 架构观察
 
@@ -83,6 +77,9 @@
 
 后端以模块化 Nest 结构为主，核心模块包括：
 
+- `auth`：JWT 登录/登出/刷新，认证 Guard（数据写死在 `mock-data.ts`）
+- `user`：用户信息接口
+- `menu`：菜单/权限树接口
 - `strategy`：策略定义与管理
 - `market-data`：合约、K 线、批量下载等行情能力
 - `broker-manager`：券商/交易所适配与统一抽象
@@ -107,17 +104,15 @@
 - 前后端职责划分明确
 - 前端已具备统一请求层、路由守卫和权限生成机制
 - 后端已具备 Swagger、WebSocket、队列任务等基础能力
-- 已存在 Mock 服务，便于前端独立开发
+- Mock 数据已集成到 NestJS 后端（auth/user/menu 模块），前后端请求统一走 :3000，消除多后端来源问题
 
 ## 6. 现状风险
 
-### 6.1 开发流量入口不一致
+### 6.1 ~~开发流量入口不一致~~（已解决）
 
-前端默认代理到 Mock，但部分真实交易能力又直接指向 `3000`，容易出现：
+~~前端默认代理到 Mock，但部分真实交易能力又直接指向 `3000`~~ →
 
-- 同一页面混用 Mock 与真实后端
-- 登录态、菜单、权限来源不一致
-- 调试结果与真实环境不一致
+已将 Mock 端点（auth/login/logout/refresh、user/info、menu/all 等）迁移到 NestJS 后端，Vite 代理统一指向 `:3000`，`requestClient` 和 `tradeRequestClient` 均使用同一 baseURL。不再存在 Mock 与真实后端混用的问题。
 
 ### 6.2 认证边界存在分叉
 
@@ -156,15 +151,14 @@
 - 请求命中了错误目标
 - 某个基础设施缺失时失败方式不清楚
 
-## 7. 适合引入 Hardness Engineering 的位置
+## 7. 适合引入 Hardness Engineering 的位置（更新）
 
 如果按 “让系统更难误用、更难绕过、更难被无意破坏” 的思路来看，这个项目最值得优先处理的点是：
 
-1. 认证与权限入口统一
-2. Mock / Real API 切换显式化
-3. WebSocket 与回测入口增加防误用保护
-4. 高成本任务增加上限、幂等和失败恢复
-5. 启动前检查与运行期健康检查
+1. ~~认证与权限入口统一~~ ✅ 已完成（Mock 并入 NestJS，API 入口统一）
+2. WebSocket 与回测入口增加防误用保护
+3. 高成本任务增加上限、幂等和失败恢复
+4. 启动前检查与运行期健康检查
 
 ## 8. 结论
 

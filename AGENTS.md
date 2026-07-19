@@ -14,8 +14,7 @@ VTrader 是一个**加密货币量化交易平台**，基于 Vue Vben Admin (v5.
 ```
 vtrader/
   frontend/          # Vue 3 + Vite SPA (端口 8000)
-  backend/           # NestJS API 服务 (端口 3000)
-  backend-mock/      # Nitro mock 服务器 (端口 5320)
+  backend/           # NestJS API 服务 (端口 3000)，承载全部 API（含 mock 端点）
   shared/            # 共享类型、接口、Prisma schema
   packages/          # 25+ 前端业务包 (@core, effects, 工具等)
   internal/          # 构建/开发内部包 (lint-configs, vite-config, tsconfig, tailwind-config)
@@ -39,10 +38,20 @@ vtrader/
 ### 后端 (backend/)
 - **NestJS 11**, **TypeScript**
 - **Prisma** (MySQL), **BullMQ** (Redis 任务队列)
-- **Socket.IO** (WebSocket 实时推送)
-- **Swagger** (`/api` 文档)
+- **Socket.IO** (WebSocket 实时推送), **JWT** (jsonwebtoken)
+- **Swagger** (`/api` 文档), **cookie-parser**
 - **technicalindicators**, **apache-arrow**, **parquet-wasm** (数据处理)
 - **Jest** + **Supertest** (测试)
+
+后端模块组织：
+- `auth/` — 登录/登出/刷新/JWT 认证 Guard（数据写死在 mock-data.ts）
+- `user/` — 用户信息接口
+- `menu/` — 菜单/权限树接口
+- `market-data/` — 合约、K线、数据下载
+- `backtesting/` — 回测任务（BullMQ 队列）
+- `strategy/` — 策略定义与注册
+- `broker-manager/` — 券商/交易所适配层
+- `ws/` — WebSocket 实时推送
 
 ### 共享层 (shared/)
 - 前后端共享类型定义 (`shared/src/modules/`)
@@ -65,9 +74,10 @@ pnpm check:type       # TypeScript 类型检查
 
 ## 关键架构约定
 
-### 1. API 路由注意点
-- **开发模式**: Vite 将 `/api` 代理到 Mock 服务器 (5320), 而交易请求通过硬编码的 `tradeRequestClient` 直接发到 `http://127.0.0.1:3000`
-- 修改 API 层时注意区分 `requestClient` (mock) 和 `tradeRequestClient` (真实后端)
+### 1. API 路由
+- **统一入口**: Vite 将 `/api/*` 代理到 `http://localhost:3000`（NestJS 后端），所有请求（含认证和交易）均走同一后端
+- `requestClient` 和 `tradeRequestClient` 均使用 `apiURL`（即 `/api`），通过 Vite 代理到后端
+- NestJS 端新增了 `auth`、`user`、`menu` 模块，提供登录认证和权限数据（数据写死在 `backend/src/mock-data.ts`）
 
 ### 2. 回测系统
 - 回测通过 BullMQ 异步队列执行, **需要 Redis 运行**
