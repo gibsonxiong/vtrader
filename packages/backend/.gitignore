@@ -1,0 +1,8 @@
+node_modules
+# Keep environment variables out of version control
+.env
+
+# 忽略后端本地数据目录
+data/
+
+/generated/prisma

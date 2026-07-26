@@ -1,1 +1,0 @@
-import '@vtrader-core/design';
