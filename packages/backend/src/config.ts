@@ -1,4 +1,4 @@
-import type { BrokerType } from "./broker-manager/broker";
+import type { BrokerType } from 'src/types/broker';
 
 export default {
   brokers: [

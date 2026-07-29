@@ -1,9 +1,5 @@
-import { BarData, Interval } from '@vtrader/shared';
-
-export interface Params {
-  interval: Interval;
-  callback: (bar: BarData) => void;
-}
+import { BarData, Interval } from '../types/common';
+import type { Params } from '../types/strategy';
 
 const msOfMinute = 60 * 1000;
 const msMap: Record<Interval, number> = {

@@ -1,22 +1,19 @@
 import { EventEmitter } from 'node:events';
 import type {
-  CancelOrderRequest,
   BrokerSettings,
+  CancelOrderRequest,
   HistoryRequest,
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from '@vtrader/shared';
+  BrokerType,
+} from '../types/broker';
 import type {
   BarData,
   ContractData,
   OrderData,
-  PositionData,
-  TickData,
   TradeData,
-} from '@vtrader/shared';
-
-export type BrokerType = 'BINANCE_LINEAR' | 'BINANCE_LINEAR_TESTNET';
+} from '../types/common';
 
 export abstract class Broker extends EventEmitter {
   constructor() {

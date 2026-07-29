@@ -2,7 +2,7 @@ import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, Conne
 import type { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
-import type { SubscribeRequest } from '@vtrader/shared';
+import type { SubscribeRequest } from '../types/broker';
 
 @WebSocketGateway({
   namespace: '/ws',

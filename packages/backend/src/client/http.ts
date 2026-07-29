@@ -1,13 +1,5 @@
 import axios, { type AxiosRequestConfig, type AxiosResponse } from "axios";
-
-export interface HttpRequestConfig extends AxiosRequestConfig {
-  retryCount?: number;
-  retryDelay?: number;
-}
-
-export interface Http {
-  request(CustomConfig: HttpRequestConfig): Promise<AxiosResponse<any, any>>;
-}
+import type { HttpRequestConfig, Http } from '../types/client';
 
 // 基础重试拦截器
 export const retryInterceptor = async (error, config, instance) => {

@@ -7,20 +7,18 @@ import {
   Interval,
   OrderStatus,
   OrderType,
-} from '@vtrader/shared';
+} from '../types/common';
 import dayjs from 'dayjs';
 import { ModuleRef } from '@nestjs/core';
 import { Injectable } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { MarketDataService } from '../market-data/market-data.service';
-import { BacktestingSetting } from '@vtrader/shared';
+import { BacktestingSetting } from '../types/backtesting';
 import { PrismaService } from '../prisma.service';
-import type { Backtesting as BacktestingModel, Prisma } from '@vtrader/shared/prismaClient';
+import type { Backtesting as BacktestingModel, Prisma } from '../../generated/client';
 import { BacktestingEngine } from './backtesting-engine';
-import { OptimizerConfig } from '../optimization/index';
-
-export type OptimizerSetting = Omit<BacktestingSetting, 'strategySetting'> & Omit<OptimizerConfig, 'trainModel'>;
+import type { OptimizerConfig, OptimizerSetting } from '../types/backtesting';
 
 @Injectable()
 export class BacktestingService {

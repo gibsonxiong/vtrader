@@ -1,8 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import dayjs from 'dayjs';
-import { OrderData, OrderStatus, BarData, TradeData, Interval } from '@vtrader/shared';
-import { Response } from '@vtrader/shared';
+import { OrderData, OrderStatus, BarData, TradeData, Interval } from './types/common';
+import type { Response } from 'src/types/common';
+import type { BarOverviewRecord } from './types/market-data';
 import { BigNumber } from 'bignumber.js';
 import { Table, tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
 
@@ -67,16 +68,6 @@ export function response<T>(data?: T, code: number = 0, msg: string = '成功'):
     msg,
     data: data as T,
   };
-}
-
-export interface BarOverviewRecord {
-  version: 1;
-  brokerType: string;
-  symbol: string;
-  interval: Interval;
-  ranges: [string, string][];
-  updatedAt: string;
-  count?: number;
 }
 
 function getMarketDataDir() {

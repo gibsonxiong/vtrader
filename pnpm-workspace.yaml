@@ -1,7 +1,6 @@
 packages:
   - packages/frontend
   - packages/backend
-  - packages/shared
   - docs
 catalog:
   '@ant-design/icons-vue': ^7.0.1

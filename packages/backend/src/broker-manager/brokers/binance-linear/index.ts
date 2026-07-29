@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import type { AssetData, ContractData } from '@vtrader/shared';
+import type { AssetData, ContractData } from '../../../types/common';
 
 import WebSocket from 'ws';
 import * as crypto from 'node:crypto';
@@ -17,7 +17,7 @@ import {
   Product,
   TickData,
   TradeData,
-} from '@vtrader/shared';
+} from '../../../types/common';
 import {
   CancelOrderRequest,
   BrokerSettings,
@@ -25,13 +25,15 @@ import {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from '@vtrader/shared';
+  type BrokerType,
+} from '../../../types/broker';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
-import { createHttp, Http } from 'src/client/http';
+import { createHttp } from 'src/client/http';
+import type { Http } from 'src/types/client';
 import { createWs } from 'src/client/ws';
-import { Broker, type BrokerType } from 'src/broker-manager/broker';
+import { Broker } from 'src/broker-manager/broker';
 
 // ============================================================
 // constants.ts

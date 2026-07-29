@@ -1,8 +1,8 @@
-import type { BarData, ContractData } from '@vtrader/shared';
+import type { BarData, ContractData } from '../types/common';
 
 import { Injectable } from '@nestjs/common';
 import dayjs from 'dayjs';
-import { Interval } from '@vtrader/shared';
+import { Interval } from '../types/common';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear';
 import {
@@ -12,47 +12,9 @@ import {
   readBars,
   writeBarOverview,
   writeBars,
-  type BarOverviewRecord,
 } from 'src/utils';
-import type { BrokerType } from 'src/broker-manager/broker';
-
-export interface GetAllContractsParams {
-  brokerType: BrokerType;
-}
-
-export interface GetBarsParams {
-  brokerId: string;
-  interval: Interval;
-  startDate: string;
-  endDate?: string;
-  symbol: string;
-  preload?: number;
-  source: 'broker' | 'db';
-  currentPage?: number;
-  pageSize?: number;
-}
-
-export interface DownloadParams {
-  brokerId: string;
-  symbol: string;
-  interval: Interval;
-  startDate: string;
-  endDate?: string;
-}
-
-export interface BatchDownloadBarsParams {
-  brokerId: string;
-  symbols: string[];
-  intervals: Interval[];
-  startDate: string;
-  endDate?: string;
-}
-
-export interface DeleteBarOverviewParams {
-  brokerName: string;
-  symbol: string;
-  interval: Interval;
-}
+import type { BrokerType } from 'src/types/broker';
+import type { GetAllContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, DeleteBarOverviewParams, BarOverviewRecord } from '../types/market-data';
 
 
 function sortRanges(ranges: [string, string][]): [dayjs.Dayjs, dayjs.Dayjs][] {

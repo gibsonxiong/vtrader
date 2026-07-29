@@ -1,10 +1,9 @@
 import { Controller } from '@nestjs/common';
 
 import { Post, Body } from '@nestjs/common';
-import { Response } from '@vtrader/shared';
-import { MarketDataService, type DownloadParams, type GetBarsParams, type GetAllContractsParams, type BatchDownloadBarsParams, type DeleteBarOverviewParams } from './market-data.service';
+import { MarketDataService } from './market-data.service';
+import type { DownloadParams, GetBarsParams, GetAllContractsParams, BatchDownloadBarsParams, DeleteBarOverviewParams } from '../types/market-data';
 import { response } from 'src/utils';
-import type { BarOverviewRecord } from 'src/utils';
 
 @Controller('market-data')
 export class MarketDataController {

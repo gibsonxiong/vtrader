@@ -1,5 +1,5 @@
-import { Offset, OrderStatus } from '@vtrader/shared';
-import type { OrderData, TradeData } from '@vtrader/shared';
+import { Offset, OrderStatus } from '../types/common';
+import type { OrderData, TradeData } from '../types/common';
 import { BigNumber } from 'bignumber.js';
 
 export class Asset {

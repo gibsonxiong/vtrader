@@ -1,18 +1,9 @@
-import { Direction, Offset } from '@vtrader/shared';
-import { SendOrderParams, CancelOrderParams } from '@vtrader/shared';
+import { Direction, Offset } from '../types/common';
+import { SendOrderParams, CancelOrderParams, ContextProps } from '../types/strategy';
 import { Strategy } from './strategy';
 import { ArrayManger } from 'src/strategy/array-manager';
 import { Position } from './position';
 import { Asset } from './asset';
-
-export interface ContextProps {
-  strategy: Strategy;
-  symbol: string;
-  asset: Asset;
-  longPos: Position;
-  shortPos: Position;
-  am: ArrayManger;
-}
 
 export class Context {
   strategy: Strategy;

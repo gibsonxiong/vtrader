@@ -1,4 +1,4 @@
-import { Direction, Offset, OrderStatus, type OrderData, type TradeData } from "@vtrader/shared";
+import { Direction, Offset, OrderStatus, type OrderData, type TradeData } from '../types/common';
 import { BigNumber } from 'bignumber.js';
 
 export class Position {

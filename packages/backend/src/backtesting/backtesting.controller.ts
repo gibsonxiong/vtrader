@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
-import { Response } from '@vtrader/shared';
-import { BacktestingApi } from '@vtrader/shared';
+import { BacktestingApi } from '../types/backtesting';
+import type { Response } from 'src/types/common';
 
 import { BacktestingService } from './backtesting.service';
 // import { BacktestingCleanupService } from './backtesting-cleanup.service';

@@ -1,4 +1,4 @@
-import { TradeData, OrderData, OrderType, BarData, ContractData, AssetData, OrderStatus, Direction, Offset } from '@vtrader/shared';
+import { TradeData, OrderData, OrderType, BarData, ContractData, AssetData, OrderStatus, Direction, Offset } from '../../../types/common';
 import {
   CancelOrderRequest,
   BrokerSettings,
@@ -6,19 +6,14 @@ import {
   SendOrderRequest,
   SubscribeRequest,
   ClearHandler,
-} from '@vtrader/shared';
-import { Broker, type BrokerType } from 'src/broker-manager/broker';
+  type MockBrokerProps,
+  type BrokerType,
+} from '../../../types/broker';
+import { Broker } from 'src/broker-manager/broker';
 import BinanceLinearBroker from '../binance-linear';
 let tradeCount: number = 0;
 
-export interface MockBrokerProps {
-  brokerId: string;
-  commissionRate: number;
-  // BrokerClass: new () => Broker;
-  assetName?: string;
-  assetBalance: number;
-  assetFrozen?: number;
-}
+
 
 export class MockBroker extends Broker {
   private broker: Broker;

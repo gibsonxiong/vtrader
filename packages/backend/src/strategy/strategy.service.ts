@@ -2,17 +2,8 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Injectable } from '@nestjs/common';
-import { Strategy, StrategyProps, ParamConfig } from './strategy';
-
-
-export interface CreateInstanceParam extends StrategyProps {
-  name: string;
-}
-export interface StrategyConfig {
-  name: string;
-  strategyClass: new (props: StrategyProps) => Strategy;
-  paramConfigs: Record<string, ParamConfig>;
-}
+import { Strategy } from './strategy';
+import { StrategyProps, ParamConfig, CreateInstanceParam, StrategyConfig } from '../types/strategy';
 
 export default async function loadStrategyClasses() {
   const dirPath = path.resolve(__dirname, './strategies');

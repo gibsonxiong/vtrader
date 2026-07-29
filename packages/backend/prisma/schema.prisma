@@ -1,0 +1,47 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Backtesting {
+  id    Int     @default(autoincrement()) @id
+  brokerId String
+  strategyName String
+  symbol String
+  interval String
+  startDate String
+  endDate String
+  startBalance Decimal
+  endBalance Decimal
+  maxDrawdown Decimal
+  maxDrawdownPercent Decimal
+  totalNetPnl Decimal
+  totalReturnPercent Decimal
+  dailyResults Json
+  trades Json
+}
+
+model Bar {
+  brokerName String
+  symbol String
+  interval String
+  timestamp BigInt
+  open Decimal
+  high Decimal
+  low Decimal
+  close Decimal
+  volume Decimal
+
+  @@unique([brokerName, symbol, timestamp, interval])
+}

@@ -1,19 +1,15 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Job } from 'bullmq';
 import { Injectable, Logger } from '@nestjs/common';
-import { BacktestingSetting } from '@vtrader/shared';
-import { MarketDataService } from '../market-data/market-data.service';
-import { StrategyService } from '../strategy/strategy.service';
-import { BrokerManagerService } from '../broker-manager/broker-manager.service';
-import { PrismaService } from '../prisma.service';
-import { NotificationService, BacktestNotificationData } from '../notification/notification.service';
-import { BacktestingEngine } from './backtesting-engine';
-import { OptimizerFactory, OptimizerConfig } from '../optimization';
-
-export type OptimizerSetting = Omit<BacktestingSetting, 'strategySetting'> & {
-  optimizerDiretion: 'maximize' | 'minimize';
-  optimizerSetting?: OptimizerSetting;
-};
+import type { BacktestingSetting } from 'src/types/backtesting';
+import { MarketDataService } from 'src/market-data/market-data.service';
+import { StrategyService } from 'src/strategy/strategy.service';
+import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
+import { PrismaService } from 'src/prisma.service';
+import { NotificationService } from 'src/notification/notification.service';
+import type { BacktestNotificationData } from 'src/types/notification';
+import { BacktestingEngine } from 'src/backtesting/backtesting-engine';
+import type { OptimizerSetting } from '../types/backtesting';
 
 
 @Processor('backtesting')

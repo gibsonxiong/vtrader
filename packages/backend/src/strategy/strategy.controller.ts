@@ -1,10 +1,8 @@
+import type { Response } from 'src/types/common';
 import { Controller, Post, Body } from '@nestjs/common';
-import { Response } from '@vtrader/shared';
 import { StrategyService } from './strategy.service';
-import type { ParamConfig } from './strategy';
+import type { ParamConfig, StrategyParamDTO } from '../types/strategy';
 import { response } from 'src/utils';
-
-type StrategyParamDTO = Record<string, { value: any; type: string }>;
 
 function toTypeString(t: ParamConfig['type']): string {
   if (t === String) return 'string';
@@ -22,14 +20,14 @@ export class StrategyController {
 
   // POST /strategy/strategy_class
   @Post('strategy_class')
-  async getStrategyClasses() {
+  async getStrategyClasses(): Promise<Response<string[]>> {
     const list = await this.strategyService.getStategieConfigs();
     return response(list.map((i) => i.name));
   }
 
   // POST /strategy/strategy_class/detail
   @Post('strategy_class/detail')
-  async getStrategyParams(@Body() body: { name: string }) {
+  async getStrategyParams(@Body() body: { name: string }): Promise<Response<StrategyParamDTO>> {
     const strategies = await this.strategyService.getStategieConfigs();
     const s = strategies.find((i) => i.name === body.name);
     if (!s) return response({});

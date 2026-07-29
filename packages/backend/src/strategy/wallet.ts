@@ -1,11 +1,7 @@
-import { Offset, OrderStatus } from '@vtrader/shared';
-import type { OrderData } from '@vtrader/shared';
+import { Offset, OrderStatus } from '../types/common';
+import type { OrderData } from '../types/common';
 import { BigNumber } from 'bignumber.js';
-
-export interface WalletProps {
-  total: number;
-  assetName: string;
-}
+import type { WalletProps } from '../types/strategy';
 
 export class Wallet {
   _total: number;

@@ -1,5 +1,5 @@
-import { Direction, Interval, Offset, OrderStatus } from '@vtrader/shared';
-import type { BarData, OrderData } from '@vtrader/shared';
+import { Direction, Interval, Offset, OrderStatus } from '../../types/common';
+import type { BarData, OrderData } from '../../types/common';
 import { Strategy, param } from '../strategy';
 import { ArrayManger } from '../array-manager';
 import { rsi } from 'technicalindicators';

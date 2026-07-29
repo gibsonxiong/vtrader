@@ -1,22 +1,10 @@
+import type { OptimizerConfig, TrialResult } from '../types/backtesting';
+
 // 超参数类型定义
 interface Hyperparameter {
   name: string;
   type: 'continuous' | 'categorical';
   range: number[] | string[];
-}
-
-export interface TrialResult {
-  id: number;
-  hyperparameters: Record<string, any>;
-  score: number;
-}
-
-export interface OptimizerConfig {
-  hyperparameters: Hyperparameter[];
-  trainModel: (hyperparameters: Record<string, any>) => Promise<number>;
-  maxTrials: number;
-  direction: 'maximize' | 'minimize';
-  earlyStoppingRounds?: number;
 }
 
 abstract class HyperparameterOptimizer {

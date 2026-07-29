@@ -1,8 +1,6 @@
 import { Controller, Post } from '@nestjs/common';
-import { Response } from '@vtrader/shared';
 
 import { BrokerManagerService } from './broker-manager.service';
-import type { BrokerConfig } from './broker-manager.service';
 import { response } from 'src/utils';
 
 @Controller('broker-manager')

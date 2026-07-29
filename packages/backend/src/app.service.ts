@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 
-import { Direction, Interval, Offset, OrderStatus } from '@vtrader/shared';
-import type { BarData, OrderData, TradeData } from '@vtrader/shared';
+import { Direction, Interval, Offset, OrderStatus } from './types/common';
+import type { BarData, OrderData, TradeData } from './types/common';
 import { MarketDataService } from './market-data/market-data.service';
-import { BacktestingService, type OptimizerSetting } from './backtesting/backtesting.service';
+import { BacktestingService } from './backtesting/backtesting.service';
+import type { OptimizerSetting } from './types/backtesting';
 import { StrategyService } from './strategy/strategy.service';
 import { BrokerManagerService } from './broker-manager/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 // import { mockBars } from './mock/bars';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
 import { test } from './optimization/index';
-import type { BacktestingSetting } from '@vtrader/shared';
+import type { BacktestingSetting } from './types/backtesting';
 import config from './config';
 import { readBars, writeBars } from './utils';
 import { testWork } from './test-work';

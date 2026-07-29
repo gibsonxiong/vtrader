@@ -4,9 +4,10 @@ import { MarketDataService } from 'src/market-data/market-data.service';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { StrategyService } from 'src/strategy/strategy.service';
-import type { BacktestingSetting, Interval } from '@vtrader/shared';
-import type { OptimizerSetting } from 'src/backtesting/backtesting.service';
-import { OptimizerFactory, type TrialResult } from 'src/optimization/index';
+import type { BacktestingSetting } from '../types/backtesting';
+import type { Interval } from '../types/common';
+import type { OptimizerSetting, TrialResult } from '../types/backtesting';
+import { OptimizerFactory } from 'src/optimization/index';
 import { pathToFileURL } from 'url';
 import path from 'path';
 

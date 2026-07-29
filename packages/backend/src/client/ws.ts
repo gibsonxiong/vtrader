@@ -1,13 +1,5 @@
 import WebSocket from 'ws';
-
-export interface WsConfig {
-  url: string;
-  agent?: any;
-  onOpen?: (ws: WebSocket) => void;
-  onMessage?: (ws: WebSocket, data: WebSocket.Data) => void;
-  onClose?: (ws: WebSocket) => void;
-  onError?: (ws: WebSocket, error: Error) => void;
-}
+import type { WsConfig } from '../types/client';
 
 export function createWs(config: WsConfig): WebSocket {
   const ws = new WebSocket(config.url, {

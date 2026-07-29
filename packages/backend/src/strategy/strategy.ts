@@ -1,6 +1,7 @@
 import dayjs from 'dayjs';
-import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus, DailyResultItem } from '@vtrader/shared';
-import { StrategyEngine, SendOrderParams, CancelOrderParams } from '@vtrader/shared';
+import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from '../types/common';
+import { DailyResultItem } from '../types/backtesting';
+import { StrategyEngine, SendOrderParams, CancelOrderParams, StrategyProps, RecordData, ParamConfig } from '../types/strategy';
 import { Context } from './context';
 import { genOrderId, canOrderCancel, roundTo, calculateStd } from 'src/utils';
 import { BigNumber } from 'bignumber.js';
@@ -8,32 +9,6 @@ import 'reflect-metadata';
 import { Asset } from './asset';
 import { Position } from './position';
 import { ArrayManger } from './array-manager';
-
-export interface StrategyProps {
-  engine: StrategyEngine;
-  symbols: string[];
-  assetBalance: number;
-  assetName: string;
-  setting?: Record<string, any>;
-}
-
-export interface RecordData {
-  date: string;
-  timestamp: number;
-  // netPnl: number;
-  totalValue: number;
-}
-
-export interface ParamConfig {
-  type:
-    | StringConstructor
-    | NumberConstructor
-    | BooleanConstructor
-    | FunctionConstructor
-    | ObjectConstructor
-    | ArrayConstructor;
-  default?: any;
-}
 
 const paramMetadataKey = Symbol('param');
 

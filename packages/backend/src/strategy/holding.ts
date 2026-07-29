@@ -1,30 +1,7 @@
-import { Direction, Offset, OrderStatus } from '@vtrader/shared';
-import type { OrderData } from '@vtrader/shared';
+import { Direction, Offset, OrderStatus } from '../types/common';
+import type { OrderData } from '../types/common';
 import { BigNumber } from 'bignumber.js';
-
-export interface Holding {
-  symbol: string;
-  direction: Direction;
-  pos: number;
-  price: number;
-  initPrice: number;
-  tradingPnl: number;
-  accumTradingPnl: number;
-  commission: number;
-  turnover: number;
-  frozenMap: Record<string, number>;
-  frozen: number;
-  available: number;
-
-  calcFrozen(order: OrderData): void;
-  update(order: OrderData): void;
-  needProcessOrder(order: OrderData): boolean;
-  calcTradingPnl(order: OrderData): number;
-  getHoldingPnl(newPrice: number): number;
-  getPnl(newPrice: number): number;
-  getRoi(newPrice: number): number;
-  toString(): string;
-}
+import type { Holding } from '../types/strategy';
 
 export class LongHolding implements Holding {
   public symbol: string;

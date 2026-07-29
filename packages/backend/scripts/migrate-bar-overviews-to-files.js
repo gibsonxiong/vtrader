@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { PrismaClient } = require('@vtrader/shared/prismaClient')
+const { PrismaClient } = require('@prisma/client')
 
 function getMarketDataDir() {
   return path.resolve(__dirname, '../data')

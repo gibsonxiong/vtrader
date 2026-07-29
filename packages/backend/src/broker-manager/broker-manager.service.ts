@@ -1,16 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Broker, type BrokerType } from './broker';
-import type { BrokerSettings } from '@vtrader/shared';
+import { Broker } from './broker';
+import type { BrokerConfig, BrokerSettings, BrokerType, MockBrokerProps } from '../types/broker';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear';
 import BinanceLinearTestnetBroker from 'src/broker-manager/brokers/binance-linear-testnet';
 import config from 'src/config';
-import { MockBroker, MockBrokerProps } from './brokers/mock/mock-broker';
-
-export interface BrokerConfig {
-  id: string;
-  brokerType: BrokerType;
-  settings: BrokerSettings;
-}
+import { MockBroker } from './brokers/mock/mock-broker';
 
 @Injectable()
 export class BrokerManagerService {

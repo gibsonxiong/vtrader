@@ -1,5 +1,5 @@
-import type { BrokerType } from 'src/broker-manager/broker';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear';
+import type { BrokerType } from 'src/types/broker';
 
 export default class BinanceLinearTestnetBroker extends BinanceLinearBroker {
   REST_HOST = 'https://testnet.binancefuture.com';
