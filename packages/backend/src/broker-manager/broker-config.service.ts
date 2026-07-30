@@ -1,10 +1,12 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma.service';
 import { encrypt, decrypt } from '../utils/crypto';
 import type { BrokerConfig, BrokerSettings, BrokerType } from '../types/broker';
 
 @Injectable()
 export class BrokerConfigService implements OnModuleInit {
+  private readonly logger = new Logger(BrokerConfigService.name);
   private cache: Map<string, BrokerConfig> = new Map();
 
   constructor(private prisma: PrismaService) {}
@@ -75,20 +77,11 @@ export class BrokerConfigService implements OnModuleInit {
     return broker;
   }
 
-  // 更新 broker
-  async update(id: string, data: {
-    name?: string;
-    apiKey?: string;
-    apiSecret?: string;
-    settings?: Record<string, any>;
-  }) {
-    const updateData: any = { ...data };
-    if (data.apiKey) updateData.apiKey = encrypt(data.apiKey);
-    if (data.apiSecret) updateData.apiSecret = encrypt(data.apiSecret);
-    
+  // 更新 broker（仅允许修改名称）
+  async update(id: string, data: { name: string }) {
     const broker = await this.prisma.broker.update({
       where: { id },
-      data: updateData,
+      data: { name: data.name },
     });
     await this.refreshCache();
     return broker;
@@ -101,5 +94,23 @@ export class BrokerConfigService implements OnModuleInit {
       data: { isActive: false },
     });
     await this.refreshCache();
+  }
+
+  // 每天凌晨 3 点清理超过 7 天的软删除数据
+  @Cron(CronExpression.EVERY_DAY_AT_3AM)
+  async cleanupDeletedBrokers() {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const result = await this.prisma.broker.deleteMany({
+      where: {
+        isActive: false,
+        updatedAt: { lt: sevenDaysAgo },
+      },
+    });
+
+    if (result.count > 0) {
+      this.logger.log(`已清理 ${result.count} 条过期 broker 数据`);
+    }
   }
 }

@@ -27,17 +27,13 @@ export class BrokerConfigController {
     return { code: 0, msg: 'success', data: broker };
   }
 
-  // 更新
+  // 更新（仅允许修改名称）
   @Post('update')
   async update(@Body() body: {
     id: string;
-    name?: string;
-    apiKey?: string;
-    apiSecret?: string;
-    settings?: Record<string, any>;
+    name: string;
   }): Promise<Response<any>> {
-    const { id, ...data } = body;
-    const broker = await this.configService.update(id, data);
+    const broker = await this.configService.update(body.id, { name: body.name });
     return { code: 0, msg: 'success', data: broker };
   }
 
