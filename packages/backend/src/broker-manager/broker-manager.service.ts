@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Broker } from './broker';
+import { BrokerConfigService } from './broker-config.service';
 import type { BrokerConfig, BrokerSettings, BrokerType, MockBrokerProps } from '../types/broker';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear';
 import BinanceLinearTestnetBroker from 'src/broker-manager/brokers/binance-linear-testnet';
-import config from 'src/config';
 import { MockBroker } from './brokers/mock/mock-broker';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class BrokerManagerService {
   };
   instances: Record<string, Promise<Broker>> = {};
 
-  constructor() {
+  constructor(private readonly configService: BrokerConfigService) {
   }
 
   getBrokerTypes(): BrokerType[] {
@@ -22,11 +22,11 @@ export class BrokerManagerService {
   }
 
   getBrokerConfigs(): BrokerConfig[] {
-    return config.brokers;
+    return this.configService.getAllConfigs();
   }
 
   getBrokerConfig(brokerId: string): BrokerConfig | undefined {
-    return this.getBrokerConfigs().find(c => c.id === brokerId);
+    return this.configService.getFullConfig(brokerId);
   }
 
   async getBroker(brokerId: string): Promise<Broker> {

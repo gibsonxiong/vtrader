@@ -12,14 +12,13 @@ import { BarGenerator } from './strategy/bar-generator';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';
 import { test } from './optimization/index';
 import type { BacktestingSetting } from './types/backtesting';
-import config from './config';
 import { readBars, writeBars } from './utils';
 import { testWork } from './test-work';
 
 // 
 // console.log(bollingerbands({period : 3, values : [2,3,4,5,6,7,8,9,10,11], stdDev : 2}));
 
-const brokerId = config.brokers[0].id;
+const brokerId = 'binance_test'; // 默认使用测试网
 
 @Injectable()
 export class AppService {

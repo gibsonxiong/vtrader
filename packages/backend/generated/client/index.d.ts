@@ -23,6 +23,11 @@ export type Backtesting = $Result.DefaultSelection<Prisma.$BacktestingPayload>
  * 
  */
 export type Bar = $Result.DefaultSelection<Prisma.$BarPayload>
+/**
+ * Model Broker
+ * 
+ */
+export type Broker = $Result.DefaultSelection<Prisma.$BrokerPayload>
 
 /**
  * ##  Prisma Client ʲˢ
@@ -161,6 +166,16 @@ export class PrismaClient<
     * ```
     */
   get bar(): Prisma.BarDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.broker`: Exposes CRUD operations for the **Broker** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Brokers
+    * const brokers = await prisma.broker.findMany()
+    * ```
+    */
+  get broker(): Prisma.BrokerDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -603,7 +618,8 @@ export namespace Prisma {
 
   export const ModelName: {
     Backtesting: 'Backtesting',
-    Bar: 'Bar'
+    Bar: 'Bar',
+    Broker: 'Broker'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -622,7 +638,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "backtesting" | "bar"
+      modelProps: "backtesting" | "bar" | "broker"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -758,6 +774,72 @@ export namespace Prisma {
           }
         }
       }
+      Broker: {
+        payload: Prisma.$BrokerPayload<ExtArgs>
+        fields: Prisma.BrokerFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BrokerFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BrokerFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>
+          }
+          findFirst: {
+            args: Prisma.BrokerFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BrokerFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>
+          }
+          findMany: {
+            args: Prisma.BrokerFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>[]
+          }
+          create: {
+            args: Prisma.BrokerCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>
+          }
+          createMany: {
+            args: Prisma.BrokerCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          delete: {
+            args: Prisma.BrokerDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>
+          }
+          update: {
+            args: Prisma.BrokerUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>
+          }
+          deleteMany: {
+            args: Prisma.BrokerDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BrokerUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.BrokerUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BrokerPayload>
+          }
+          aggregate: {
+            args: Prisma.BrokerAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBroker>
+          }
+          groupBy: {
+            args: Prisma.BrokerGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BrokerGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BrokerCountArgs<ExtArgs>
+            result: $Utils.Optional<BrokerCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -856,6 +938,7 @@ export namespace Prisma {
   export type GlobalOmitConfig = {
     backtesting?: BacktestingOmit
     bar?: BarOmit
+    broker?: BrokerOmit
   }
 
   /* Types for Logging */
@@ -2959,6 +3042,928 @@ export namespace Prisma {
 
 
   /**
+   * Model Broker
+   */
+
+  export type AggregateBroker = {
+    _count: BrokerCountAggregateOutputType | null
+    _min: BrokerMinAggregateOutputType | null
+    _max: BrokerMaxAggregateOutputType | null
+  }
+
+  export type BrokerMinAggregateOutputType = {
+    id: string | null
+    name: string | null
+    brokerType: string | null
+    apiKey: string | null
+    apiSecret: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BrokerMaxAggregateOutputType = {
+    id: string | null
+    name: string | null
+    brokerType: string | null
+    apiKey: string | null
+    apiSecret: string | null
+    isActive: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BrokerCountAggregateOutputType = {
+    id: number
+    name: number
+    brokerType: number
+    apiKey: number
+    apiSecret: number
+    settings: number
+    isActive: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BrokerMinAggregateInputType = {
+    id?: true
+    name?: true
+    brokerType?: true
+    apiKey?: true
+    apiSecret?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BrokerMaxAggregateInputType = {
+    id?: true
+    name?: true
+    brokerType?: true
+    apiKey?: true
+    apiSecret?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BrokerCountAggregateInputType = {
+    id?: true
+    name?: true
+    brokerType?: true
+    apiKey?: true
+    apiSecret?: true
+    settings?: true
+    isActive?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BrokerAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Broker to aggregate.
+     */
+    where?: BrokerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Brokers to fetch.
+     */
+    orderBy?: BrokerOrderByWithRelationInput | BrokerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BrokerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Brokers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Brokers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Brokers
+    **/
+    _count?: true | BrokerCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BrokerMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BrokerMaxAggregateInputType
+  }
+
+  export type GetBrokerAggregateType<T extends BrokerAggregateArgs> = {
+        [P in keyof T & keyof AggregateBroker]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBroker[P]>
+      : GetScalarType<T[P], AggregateBroker[P]>
+  }
+
+
+
+
+  export type BrokerGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BrokerWhereInput
+    orderBy?: BrokerOrderByWithAggregationInput | BrokerOrderByWithAggregationInput[]
+    by: BrokerScalarFieldEnum[] | BrokerScalarFieldEnum
+    having?: BrokerScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BrokerCountAggregateInputType | true
+    _min?: BrokerMinAggregateInputType
+    _max?: BrokerMaxAggregateInputType
+  }
+
+  export type BrokerGroupByOutputType = {
+    id: string
+    name: string
+    brokerType: string
+    apiKey: string
+    apiSecret: string
+    settings: JsonValue | null
+    isActive: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: BrokerCountAggregateOutputType | null
+    _min: BrokerMinAggregateOutputType | null
+    _max: BrokerMaxAggregateOutputType | null
+  }
+
+  type GetBrokerGroupByPayload<T extends BrokerGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BrokerGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BrokerGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BrokerGroupByOutputType[P]>
+            : GetScalarType<T[P], BrokerGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BrokerSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    name?: boolean
+    brokerType?: boolean
+    apiKey?: boolean
+    apiSecret?: boolean
+    settings?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["broker"]>
+
+
+
+  export type BrokerSelectScalar = {
+    id?: boolean
+    name?: boolean
+    brokerType?: boolean
+    apiKey?: boolean
+    apiSecret?: boolean
+    settings?: boolean
+    isActive?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BrokerOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "name" | "brokerType" | "apiKey" | "apiSecret" | "settings" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["broker"]>
+
+  export type $BrokerPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Broker"
+    objects: {}
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      name: string
+      brokerType: string
+      apiKey: string
+      apiSecret: string
+      settings: Prisma.JsonValue | null
+      isActive: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["broker"]>
+    composites: {}
+  }
+
+  type BrokerGetPayload<S extends boolean | null | undefined | BrokerDefaultArgs> = $Result.GetResult<Prisma.$BrokerPayload, S>
+
+  type BrokerCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BrokerFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BrokerCountAggregateInputType | true
+    }
+
+  export interface BrokerDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Broker'], meta: { name: 'Broker' } }
+    /**
+     * Find zero or one Broker that matches the filter.
+     * @param {BrokerFindUniqueArgs} args - Arguments to find a Broker
+     * @example
+     * // Get one Broker
+     * const broker = await prisma.broker.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BrokerFindUniqueArgs>(args: SelectSubset<T, BrokerFindUniqueArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Broker that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BrokerFindUniqueOrThrowArgs} args - Arguments to find a Broker
+     * @example
+     * // Get one Broker
+     * const broker = await prisma.broker.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BrokerFindUniqueOrThrowArgs>(args: SelectSubset<T, BrokerFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Broker that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerFindFirstArgs} args - Arguments to find a Broker
+     * @example
+     * // Get one Broker
+     * const broker = await prisma.broker.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BrokerFindFirstArgs>(args?: SelectSubset<T, BrokerFindFirstArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Broker that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerFindFirstOrThrowArgs} args - Arguments to find a Broker
+     * @example
+     * // Get one Broker
+     * const broker = await prisma.broker.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BrokerFindFirstOrThrowArgs>(args?: SelectSubset<T, BrokerFindFirstOrThrowArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Brokers that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Brokers
+     * const brokers = await prisma.broker.findMany()
+     * 
+     * // Get first 10 Brokers
+     * const brokers = await prisma.broker.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const brokerWithIdOnly = await prisma.broker.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends BrokerFindManyArgs>(args?: SelectSubset<T, BrokerFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Broker.
+     * @param {BrokerCreateArgs} args - Arguments to create a Broker.
+     * @example
+     * // Create one Broker
+     * const Broker = await prisma.broker.create({
+     *   data: {
+     *     // ... data to create a Broker
+     *   }
+     * })
+     * 
+     */
+    create<T extends BrokerCreateArgs>(args: SelectSubset<T, BrokerCreateArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Brokers.
+     * @param {BrokerCreateManyArgs} args - Arguments to create many Brokers.
+     * @example
+     * // Create many Brokers
+     * const broker = await prisma.broker.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BrokerCreateManyArgs>(args?: SelectSubset<T, BrokerCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Delete a Broker.
+     * @param {BrokerDeleteArgs} args - Arguments to delete one Broker.
+     * @example
+     * // Delete one Broker
+     * const Broker = await prisma.broker.delete({
+     *   where: {
+     *     // ... filter to delete one Broker
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BrokerDeleteArgs>(args: SelectSubset<T, BrokerDeleteArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Broker.
+     * @param {BrokerUpdateArgs} args - Arguments to update one Broker.
+     * @example
+     * // Update one Broker
+     * const broker = await prisma.broker.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BrokerUpdateArgs>(args: SelectSubset<T, BrokerUpdateArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Brokers.
+     * @param {BrokerDeleteManyArgs} args - Arguments to filter Brokers to delete.
+     * @example
+     * // Delete a few Brokers
+     * const { count } = await prisma.broker.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BrokerDeleteManyArgs>(args?: SelectSubset<T, BrokerDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Brokers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Brokers
+     * const broker = await prisma.broker.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BrokerUpdateManyArgs>(args: SelectSubset<T, BrokerUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Broker.
+     * @param {BrokerUpsertArgs} args - Arguments to update or create a Broker.
+     * @example
+     * // Update or create a Broker
+     * const broker = await prisma.broker.upsert({
+     *   create: {
+     *     // ... data to create a Broker
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Broker we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BrokerUpsertArgs>(args: SelectSubset<T, BrokerUpsertArgs<ExtArgs>>): Prisma__BrokerClient<$Result.GetResult<Prisma.$BrokerPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Brokers.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerCountArgs} args - Arguments to filter Brokers to count.
+     * @example
+     * // Count the number of Brokers
+     * const count = await prisma.broker.count({
+     *   where: {
+     *     // ... the filter for the Brokers we want to count
+     *   }
+     * })
+    **/
+    count<T extends BrokerCountArgs>(
+      args?: Subset<T, BrokerCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BrokerCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Broker.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BrokerAggregateArgs>(args: Subset<T, BrokerAggregateArgs>): Prisma.PrismaPromise<GetBrokerAggregateType<T>>
+
+    /**
+     * Group by Broker.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BrokerGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BrokerGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BrokerGroupByArgs['orderBy'] }
+        : { orderBy?: BrokerGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BrokerGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBrokerGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Broker model
+   */
+  readonly fields: BrokerFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Broker.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BrokerClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Broker model
+   */
+  interface BrokerFieldRefs {
+    readonly id: FieldRef<"Broker", 'String'>
+    readonly name: FieldRef<"Broker", 'String'>
+    readonly brokerType: FieldRef<"Broker", 'String'>
+    readonly apiKey: FieldRef<"Broker", 'String'>
+    readonly apiSecret: FieldRef<"Broker", 'String'>
+    readonly settings: FieldRef<"Broker", 'Json'>
+    readonly isActive: FieldRef<"Broker", 'Boolean'>
+    readonly createdAt: FieldRef<"Broker", 'DateTime'>
+    readonly updatedAt: FieldRef<"Broker", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Broker findUnique
+   */
+  export type BrokerFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * Filter, which Broker to fetch.
+     */
+    where: BrokerWhereUniqueInput
+  }
+
+  /**
+   * Broker findUniqueOrThrow
+   */
+  export type BrokerFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * Filter, which Broker to fetch.
+     */
+    where: BrokerWhereUniqueInput
+  }
+
+  /**
+   * Broker findFirst
+   */
+  export type BrokerFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * Filter, which Broker to fetch.
+     */
+    where?: BrokerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Brokers to fetch.
+     */
+    orderBy?: BrokerOrderByWithRelationInput | BrokerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Brokers.
+     */
+    cursor?: BrokerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Brokers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Brokers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Brokers.
+     */
+    distinct?: BrokerScalarFieldEnum | BrokerScalarFieldEnum[]
+  }
+
+  /**
+   * Broker findFirstOrThrow
+   */
+  export type BrokerFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * Filter, which Broker to fetch.
+     */
+    where?: BrokerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Brokers to fetch.
+     */
+    orderBy?: BrokerOrderByWithRelationInput | BrokerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Brokers.
+     */
+    cursor?: BrokerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Brokers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Brokers.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Brokers.
+     */
+    distinct?: BrokerScalarFieldEnum | BrokerScalarFieldEnum[]
+  }
+
+  /**
+   * Broker findMany
+   */
+  export type BrokerFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * Filter, which Brokers to fetch.
+     */
+    where?: BrokerWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Brokers to fetch.
+     */
+    orderBy?: BrokerOrderByWithRelationInput | BrokerOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Brokers.
+     */
+    cursor?: BrokerWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Brokers from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Brokers.
+     */
+    skip?: number
+    distinct?: BrokerScalarFieldEnum | BrokerScalarFieldEnum[]
+  }
+
+  /**
+   * Broker create
+   */
+  export type BrokerCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * The data needed to create a Broker.
+     */
+    data: XOR<BrokerCreateInput, BrokerUncheckedCreateInput>
+  }
+
+  /**
+   * Broker createMany
+   */
+  export type BrokerCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Brokers.
+     */
+    data: BrokerCreateManyInput | BrokerCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Broker update
+   */
+  export type BrokerUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * The data needed to update a Broker.
+     */
+    data: XOR<BrokerUpdateInput, BrokerUncheckedUpdateInput>
+    /**
+     * Choose, which Broker to update.
+     */
+    where: BrokerWhereUniqueInput
+  }
+
+  /**
+   * Broker updateMany
+   */
+  export type BrokerUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Brokers.
+     */
+    data: XOR<BrokerUpdateManyMutationInput, BrokerUncheckedUpdateManyInput>
+    /**
+     * Filter which Brokers to update
+     */
+    where?: BrokerWhereInput
+    /**
+     * Limit how many Brokers to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Broker upsert
+   */
+  export type BrokerUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * The filter to search for the Broker to update in case it exists.
+     */
+    where: BrokerWhereUniqueInput
+    /**
+     * In case the Broker found by the `where` argument doesn't exist, create a new Broker with this data.
+     */
+    create: XOR<BrokerCreateInput, BrokerUncheckedCreateInput>
+    /**
+     * In case the Broker was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BrokerUpdateInput, BrokerUncheckedUpdateInput>
+  }
+
+  /**
+   * Broker delete
+   */
+  export type BrokerDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+    /**
+     * Filter which Broker to delete.
+     */
+    where: BrokerWhereUniqueInput
+  }
+
+  /**
+   * Broker deleteMany
+   */
+  export type BrokerDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Brokers to delete
+     */
+    where?: BrokerWhereInput
+    /**
+     * Limit how many Brokers to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Broker without action
+   */
+  export type BrokerDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Broker
+     */
+    select?: BrokerSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Broker
+     */
+    omit?: BrokerOmit<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -3008,6 +4013,21 @@ export namespace Prisma {
   export type BarScalarFieldEnum = (typeof BarScalarFieldEnum)[keyof typeof BarScalarFieldEnum]
 
 
+  export const BrokerScalarFieldEnum: {
+    id: 'id',
+    name: 'name',
+    brokerType: 'brokerType',
+    apiKey: 'apiKey',
+    apiSecret: 'apiSecret',
+    settings: 'settings',
+    isActive: 'isActive',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BrokerScalarFieldEnum = (typeof BrokerScalarFieldEnum)[keyof typeof BrokerScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -3021,6 +4041,14 @@ export namespace Prisma {
   };
 
   export type JsonNullValueInput = (typeof JsonNullValueInput)[keyof typeof JsonNullValueInput]
+
+
+  export const NullableJsonNullValueInput: {
+    DbNull: typeof DbNull,
+    JsonNull: typeof JsonNull
+  };
+
+  export type NullableJsonNullValueInput = (typeof NullableJsonNullValueInput)[keyof typeof NullableJsonNullValueInput]
 
 
   export const JsonNullValueFilter: {
@@ -3059,6 +4087,25 @@ export namespace Prisma {
   };
 
   export type BarOrderByRelevanceFieldEnum = (typeof BarOrderByRelevanceFieldEnum)[keyof typeof BarOrderByRelevanceFieldEnum]
+
+
+  export const NullsOrder: {
+    first: 'first',
+    last: 'last'
+  };
+
+  export type NullsOrder = (typeof NullsOrder)[keyof typeof NullsOrder]
+
+
+  export const BrokerOrderByRelevanceFieldEnum: {
+    id: 'id',
+    name: 'name',
+    brokerType: 'brokerType',
+    apiKey: 'apiKey',
+    apiSecret: 'apiSecret'
+  };
+
+  export type BrokerOrderByRelevanceFieldEnum = (typeof BrokerOrderByRelevanceFieldEnum)[keyof typeof BrokerOrderByRelevanceFieldEnum]
 
 
   /**
@@ -3105,6 +4152,20 @@ export namespace Prisma {
    * Reference to a field of type 'BigInt'
    */
   export type BigIntFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BigInt'>
+    
+
+
+  /**
+   * Reference to a field of type 'Boolean'
+   */
+  export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>
+    
+
+
+  /**
+   * Reference to a field of type 'DateTime'
+   */
+  export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
     
 
 
@@ -3297,6 +4358,79 @@ export namespace Prisma {
     low?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     close?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
     volume?: DecimalWithAggregatesFilter<"Bar"> | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BrokerWhereInput = {
+    AND?: BrokerWhereInput | BrokerWhereInput[]
+    OR?: BrokerWhereInput[]
+    NOT?: BrokerWhereInput | BrokerWhereInput[]
+    id?: StringFilter<"Broker"> | string
+    name?: StringFilter<"Broker"> | string
+    brokerType?: StringFilter<"Broker"> | string
+    apiKey?: StringFilter<"Broker"> | string
+    apiSecret?: StringFilter<"Broker"> | string
+    settings?: JsonNullableFilter<"Broker">
+    isActive?: BoolFilter<"Broker"> | boolean
+    createdAt?: DateTimeFilter<"Broker"> | Date | string
+    updatedAt?: DateTimeFilter<"Broker"> | Date | string
+  }
+
+  export type BrokerOrderByWithRelationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    brokerType?: SortOrder
+    apiKey?: SortOrder
+    apiSecret?: SortOrder
+    settings?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _relevance?: BrokerOrderByRelevanceInput
+  }
+
+  export type BrokerWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    name?: string
+    AND?: BrokerWhereInput | BrokerWhereInput[]
+    OR?: BrokerWhereInput[]
+    NOT?: BrokerWhereInput | BrokerWhereInput[]
+    brokerType?: StringFilter<"Broker"> | string
+    apiKey?: StringFilter<"Broker"> | string
+    apiSecret?: StringFilter<"Broker"> | string
+    settings?: JsonNullableFilter<"Broker">
+    isActive?: BoolFilter<"Broker"> | boolean
+    createdAt?: DateTimeFilter<"Broker"> | Date | string
+    updatedAt?: DateTimeFilter<"Broker"> | Date | string
+  }, "id" | "name">
+
+  export type BrokerOrderByWithAggregationInput = {
+    id?: SortOrder
+    name?: SortOrder
+    brokerType?: SortOrder
+    apiKey?: SortOrder
+    apiSecret?: SortOrder
+    settings?: SortOrderInput | SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BrokerCountOrderByAggregateInput
+    _max?: BrokerMaxOrderByAggregateInput
+    _min?: BrokerMinOrderByAggregateInput
+  }
+
+  export type BrokerScalarWhereWithAggregatesInput = {
+    AND?: BrokerScalarWhereWithAggregatesInput | BrokerScalarWhereWithAggregatesInput[]
+    OR?: BrokerScalarWhereWithAggregatesInput[]
+    NOT?: BrokerScalarWhereWithAggregatesInput | BrokerScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Broker"> | string
+    name?: StringWithAggregatesFilter<"Broker"> | string
+    brokerType?: StringWithAggregatesFilter<"Broker"> | string
+    apiKey?: StringWithAggregatesFilter<"Broker"> | string
+    apiSecret?: StringWithAggregatesFilter<"Broker"> | string
+    settings?: JsonNullableWithAggregatesFilter<"Broker">
+    isActive?: BoolWithAggregatesFilter<"Broker"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"Broker"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Broker"> | Date | string
   }
 
   export type BacktestingCreateInput = {
@@ -3504,6 +4638,90 @@ export namespace Prisma {
     low?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     close?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     volume?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+  }
+
+  export type BrokerCreateInput = {
+    id?: string
+    name: string
+    brokerType: string
+    apiKey: string
+    apiSecret: string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BrokerUncheckedCreateInput = {
+    id?: string
+    name: string
+    brokerType: string
+    apiKey: string
+    apiSecret: string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BrokerUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    brokerType?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    apiSecret?: StringFieldUpdateOperationsInput | string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BrokerUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    brokerType?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    apiSecret?: StringFieldUpdateOperationsInput | string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BrokerCreateManyInput = {
+    id?: string
+    name: string
+    brokerType: string
+    apiKey: string
+    apiSecret: string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BrokerUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    brokerType?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    apiSecret?: StringFieldUpdateOperationsInput | string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BrokerUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    brokerType?: StringFieldUpdateOperationsInput | string
+    apiKey?: StringFieldUpdateOperationsInput | string
+    apiSecret?: StringFieldUpdateOperationsInput | string
+    settings?: NullableJsonNullValueInput | InputJsonValue
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type IntFilter<$PrismaModel = never> = {
@@ -3811,6 +5029,138 @@ export namespace Prisma {
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
   }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type DateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type SortOrderInput = {
+    sort: SortOrder
+    nulls?: NullsOrder
+  }
+
+  export type BrokerOrderByRelevanceInput = {
+    fields: BrokerOrderByRelevanceFieldEnum | BrokerOrderByRelevanceFieldEnum[]
+    sort: SortOrder
+    search: string
+  }
+
+  export type BrokerCountOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    brokerType?: SortOrder
+    apiKey?: SortOrder
+    apiSecret?: SortOrder
+    settings?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BrokerMaxOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    brokerType?: SortOrder
+    apiKey?: SortOrder
+    apiSecret?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BrokerMinOrderByAggregateInput = {
+    id?: SortOrder
+    name?: SortOrder
+    brokerType?: SortOrder
+    apiKey?: SortOrder
+    apiSecret?: SortOrder
+    isActive?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type DateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
+  }
 
   export type StringFieldUpdateOperationsInput = {
     set?: string
@@ -3838,6 +5188,14 @@ export namespace Prisma {
     decrement?: bigint | number
     multiply?: bigint | number
     divide?: bigint | number
+  }
+
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
+  export type DateTimeFieldUpdateOperationsInput = {
+    set?: Date | string
   }
 
   export type NestedIntFilter<$PrismaModel = never> = {
@@ -3986,6 +5344,78 @@ export namespace Prisma {
     _sum?: NestedBigIntFilter<$PrismaModel>
     _min?: NestedBigIntFilter<$PrismaModel>
     _max?: NestedBigIntFilter<$PrismaModel>
+  }
+
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
+  export type NestedDateTimeFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeFilter<$PrismaModel> | Date | string
+  }
+
+  export type NestedIntNullableFilter<$PrismaModel = never> = {
+    equals?: number | IntFieldRefInput<$PrismaModel> | null
+    in?: number[] | null
+    notIn?: number[] | null
+    lt?: number | IntFieldRefInput<$PrismaModel>
+    lte?: number | IntFieldRefInput<$PrismaModel>
+    gt?: number | IntFieldRefInput<$PrismaModel>
+    gte?: number | IntFieldRefInput<$PrismaModel>
+    not?: NestedIntNullableFilter<$PrismaModel> | number | null
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue
+    lte?: InputJsonValue
+    gt?: InputJsonValue
+    gte?: InputJsonValue
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
+  }
+
+  export type NestedDateTimeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    in?: Date[] | string[]
+    notIn?: Date[] | string[]
+    lt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    lte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gt?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    gte?: Date | string | DateTimeFieldRefInput<$PrismaModel>
+    not?: NestedDateTimeWithAggregatesFilter<$PrismaModel> | Date | string
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedDateTimeFilter<$PrismaModel>
+    _max?: NestedDateTimeFilter<$PrismaModel>
   }
 
 

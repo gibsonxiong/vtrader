@@ -3,6 +3,7 @@ import { BacktestingEngine } from './backtesting-engine';
 import { MarketDataService } from 'src/market-data/market-data.service';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
+import { BrokerConfigService } from 'src/broker-manager/broker-config.service';
 import { StrategyService } from 'src/strategy/strategy.service';
 import type { BacktestingSetting } from '../types/backtesting';
 import type { Interval } from '../types/common';
@@ -12,7 +13,8 @@ import { pathToFileURL } from 'url';
 import path from 'path';
 
 const prisma = new PrismaService();
-const brokerManagerService = new BrokerManagerService();
+const brokerConfigService = new BrokerConfigService(prisma);
+const brokerManagerService = new BrokerManagerService(brokerConfigService);
 const marketDataService = new MarketDataService(brokerManagerService);
 const strategyService = new StrategyService();
 const backtestingEngie = new BacktestingEngine(

@@ -45,3 +45,15 @@ model Bar {
 
   @@unique([brokerName, symbol, timestamp, interval])
 }
+
+model Broker {
+  id         String   @id @default(uuid())
+  name       String   @unique @db.VarChar(100)
+  brokerType String   @db.VarChar(50)
+  apiKey     String   @db.VarChar(500)
+  apiSecret  String   @db.VarChar(500)
+  settings   Json?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}

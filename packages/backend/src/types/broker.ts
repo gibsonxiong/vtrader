@@ -13,6 +13,7 @@ export interface MockBrokerProps {
 
 export interface BrokerConfig {
   id: string;
+  name: string;
   brokerType: BrokerType;
   settings: BrokerSettings;
 }

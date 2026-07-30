@@ -123,12 +123,29 @@ exports.Prisma.BarScalarFieldEnum = {
   volume: 'volume'
 };
 
+exports.Prisma.BrokerScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  brokerType: 'brokerType',
+  apiKey: 'apiKey',
+  apiSecret: 'apiSecret',
+  settings: 'settings',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -158,10 +175,24 @@ exports.Prisma.BarOrderByRelevanceFieldEnum = {
   interval: 'interval'
 };
 
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
+exports.Prisma.BrokerOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  brokerType: 'brokerType',
+  apiKey: 'apiKey',
+  apiSecret: 'apiSecret'
+};
+
 
 exports.Prisma.ModelName = {
   Backtesting: 'Backtesting',
-  Bar: 'Bar'
+  Bar: 'Bar',
+  Broker: 'Broker'
 };
 /**
  * Create the Client
@@ -202,7 +233,6 @@ const config = {
     "db"
   ],
   "activeProvider": "mysql",
-  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {
@@ -211,13 +241,13 @@ const config = {
       }
     }
   },
-  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/client\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Backtesting {\n  id                 Int     @id @default(autoincrement())\n  brokerId           String\n  strategyName       String\n  symbol             String\n  interval           String\n  startDate          String\n  endDate            String\n  startBalance       Decimal\n  endBalance         Decimal\n  maxDrawdown        Decimal\n  maxDrawdownPercent Decimal\n  totalNetPnl        Decimal\n  totalReturnPercent Decimal\n  dailyResults       Json\n  trades             Json\n}\n\nmodel Bar {\n  brokerName String\n  symbol     String\n  interval   String\n  timestamp  BigInt\n  open       Decimal\n  high       Decimal\n  low        Decimal\n  close      Decimal\n  volume     Decimal\n\n  @@unique([brokerName, symbol, timestamp, interval])\n}\n",
-  "inlineSchemaHash": "043adacfd73ffa55411ee08147c128b95777d96d4c8740f2b7ced241e8fca8c4",
+  "inlineSchema": "// This is your Prisma schema file,\n// learn more about it in the docs: https://pris.ly/d/prisma-schema\n\n// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?\n// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init\n\ngenerator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/client\"\n}\n\ndatasource db {\n  provider = \"mysql\"\n  url      = env(\"DATABASE_URL\")\n}\n\nmodel Backtesting {\n  id                 Int     @id @default(autoincrement())\n  brokerId           String\n  strategyName       String\n  symbol             String\n  interval           String\n  startDate          String\n  endDate            String\n  startBalance       Decimal\n  endBalance         Decimal\n  maxDrawdown        Decimal\n  maxDrawdownPercent Decimal\n  totalNetPnl        Decimal\n  totalReturnPercent Decimal\n  dailyResults       Json\n  trades             Json\n}\n\nmodel Bar {\n  brokerName String\n  symbol     String\n  interval   String\n  timestamp  BigInt\n  open       Decimal\n  high       Decimal\n  low        Decimal\n  close      Decimal\n  volume     Decimal\n\n  @@unique([brokerName, symbol, timestamp, interval])\n}\n\nmodel Broker {\n  id         String   @id @default(uuid())\n  name       String   @unique @db.VarChar(100)\n  brokerType String   @db.VarChar(50)\n  apiKey     String   @db.VarChar(500)\n  apiSecret  String   @db.VarChar(500)\n  settings   Json?\n  isActive   Boolean  @default(true)\n  createdAt  DateTime @default(now())\n  updatedAt  DateTime @updatedAt\n}\n",
+  "inlineSchemaHash": "e6777986bdbc9961da0a68d4d28dc2358d7863d6cb39a7df8f60155606162a34",
   "copyEngine": true
 }
 config.dirname = '/'
 
-config.runtimeDataModel = JSON.parse("{\"models\":{\"Backtesting\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"brokerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"strategyName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"symbol\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"interval\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startDate\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"endDate\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startBalance\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"endBalance\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"maxDrawdown\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"maxDrawdownPercent\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"totalNetPnl\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"totalReturnPercent\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"dailyResults\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"trades\",\"kind\":\"scalar\",\"type\":\"Json\"}],\"dbName\":null},\"Bar\":{\"fields\":[{\"name\":\"brokerName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"symbol\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"interval\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timestamp\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"open\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"high\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"low\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"close\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"volume\",\"kind\":\"scalar\",\"type\":\"Decimal\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
+config.runtimeDataModel = JSON.parse("{\"models\":{\"Backtesting\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"Int\"},{\"name\":\"brokerId\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"strategyName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"symbol\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"interval\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startDate\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"endDate\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"startBalance\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"endBalance\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"maxDrawdown\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"maxDrawdownPercent\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"totalNetPnl\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"totalReturnPercent\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"dailyResults\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"trades\",\"kind\":\"scalar\",\"type\":\"Json\"}],\"dbName\":null},\"Bar\":{\"fields\":[{\"name\":\"brokerName\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"symbol\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"interval\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"timestamp\",\"kind\":\"scalar\",\"type\":\"BigInt\"},{\"name\":\"open\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"high\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"low\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"close\",\"kind\":\"scalar\",\"type\":\"Decimal\"},{\"name\":\"volume\",\"kind\":\"scalar\",\"type\":\"Decimal\"}],\"dbName\":null},\"Broker\":{\"fields\":[{\"name\":\"id\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"name\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"brokerType\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"apiKey\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"apiSecret\",\"kind\":\"scalar\",\"type\":\"String\"},{\"name\":\"settings\",\"kind\":\"scalar\",\"type\":\"Json\"},{\"name\":\"isActive\",\"kind\":\"scalar\",\"type\":\"Boolean\"},{\"name\":\"createdAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"},{\"name\":\"updatedAt\",\"kind\":\"scalar\",\"type\":\"DateTime\"}],\"dbName\":null}},\"enums\":{},\"types\":{}}")
 defineDmmfProperty(exports.Prisma, config.runtimeDataModel)
 config.engineWasm = {
   getRuntime: async () => require('./query_engine_bg.js'),

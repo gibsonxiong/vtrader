@@ -151,12 +151,29 @@ exports.Prisma.BarScalarFieldEnum = {
   volume: 'volume'
 };
 
+exports.Prisma.BrokerScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  brokerType: 'brokerType',
+  apiKey: 'apiKey',
+  apiSecret: 'apiSecret',
+  settings: 'settings',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
 };
 
 exports.Prisma.JsonNullValueInput = {
+  JsonNull: Prisma.JsonNull
+};
+
+exports.Prisma.NullableJsonNullValueInput = {
+  DbNull: Prisma.DbNull,
   JsonNull: Prisma.JsonNull
 };
 
@@ -186,10 +203,24 @@ exports.Prisma.BarOrderByRelevanceFieldEnum = {
   interval: 'interval'
 };
 
+exports.Prisma.NullsOrder = {
+  first: 'first',
+  last: 'last'
+};
+
+exports.Prisma.BrokerOrderByRelevanceFieldEnum = {
+  id: 'id',
+  name: 'name',
+  brokerType: 'brokerType',
+  apiKey: 'apiKey',
+  apiSecret: 'apiSecret'
+};
+
 
 exports.Prisma.ModelName = {
   Backtesting: 'Backtesting',
-  Bar: 'Bar'
+  Bar: 'Bar',
+  Broker: 'Broker'
 };
 
 /**
