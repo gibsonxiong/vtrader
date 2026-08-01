@@ -9,8 +9,7 @@
     "eslint.config.*"
   ],
   "compilerOptions": {
-    // Override lib for TypeScript 6.0 compatibility
-    "lib": ["ES2024", "ESNext.Array", "ESNext.Collection"],
+    "lib": ["ES2024"],
 
     // Most tools use transpilation instead of Node.js's native type-stripping.
     // Bundler mode provides a smoother developer experience.
