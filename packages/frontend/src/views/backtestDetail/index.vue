@@ -53,8 +53,11 @@ async function getBacktestDetail(id: number): Promise<BacktestDetail> {
   const equityCurve = toEquityCurve((model.dailyResults ?? []) as any[], initialCapital)
 
   const barRes = await marketDataApi.getBars({
-    brokerId: model.brokerId, symbol: model.symbol, interval: model.interval,
-    startDate: model.startDate, endDate: model.endDate,
+    brokerId: model.brokerId, 
+    symbol: model.symbol, 
+    interval: model.interval,
+    startDate: model.startDate,
+    endDate: model.endDate,
     source: 'db', currentPage: 1, pageSize: 1000,
   })
 
@@ -77,7 +80,8 @@ async function getBacktestDetail(id: number): Promise<BacktestDetail> {
       profitLossRatio: avgLoss === 0 ? 9999 : avgProfit / avgLoss,
       totalTrades, avgDailyTrades: totalTrades / dayCount,
     },
-    trades, kLines: barRes.data ?? [], equityCurve,
+    trades, 
+    kLines: barRes.data ?? [], equityCurve,
   }
 }
 

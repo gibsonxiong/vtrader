@@ -52,3 +52,4 @@ vite.config.ts.*
 *.sln
 *.sw?
 .history
+dump.rdb
