@@ -27,33 +27,30 @@ export class BrokerConfigService implements OnModuleInit {
         id: b.id,
         name: b.name,
         brokerType: b.brokerType as BrokerType,
-        settings: {
-          ...this.decryptSettings(b.apiKey, b.apiSecret),
-          ...(b.settings as Record<string, any> || {}),
-        },
+        apiKey: decrypt(b.apiKey),
+        apiSecret: decrypt(b.apiSecret),
       });
     }
   }
 
-  // 解密 settings
-  private decryptSettings(apiKey: string, apiSecret: string): BrokerSettings {
-    return {
-      apiKey: decrypt(apiKey),
-      apiSecret: decrypt(apiSecret),
-    };
-  }
-
   // 获取所有配置（不返回密钥）
-  getAllConfigs(): BrokerConfig[] {
+  getAllConfigs(decrypt = false): BrokerConfig[] {
     return Array.from(this.cache.values()).map(c => ({
       ...c,
-      settings: { apiKey: '***', apiSecret: '***' } as any,
+      apiKey: decrypt ? c.apiKey : '***',
+      apiSecret: decrypt ? c.apiSecret : '***',
     }));
   }
 
   // 获取完整配置（含密钥，仅内部使用）
-  getFullConfig(brokerId: string): BrokerConfig | undefined {
-    return this.cache.get(brokerId);
+  getConfig(brokerId: string, decrypt = false): BrokerConfig | undefined {
+    const configs = this.getAllConfigs(decrypt);
+    return configs.find(c => c.id === brokerId);
+  }
+
+  getConfigByType(brokerType: BrokerType, decrypt = false): BrokerConfig[] {
+    const configs = this.getAllConfigs(decrypt);
+    return configs.filter(c => c.brokerType === brokerType);
   }
 
   // 新增 broker

@@ -14,7 +14,7 @@ export interface SyncContractsParams {
 }
 
 export interface GetBarsParams {
-  brokerId: string;
+  brokerType: BrokerType;
   interval: Interval;
   startDate: string;
   endDate?: string;
@@ -26,7 +26,7 @@ export interface GetBarsParams {
 }
 
 export interface DownloadParams {
-  brokerId: string;
+  brokerType: BrokerType;
   symbol: string;
   interval: Interval;
   startDate: string;
@@ -34,7 +34,7 @@ export interface DownloadParams {
 }
 
 export interface BatchDownloadBarsParams {
-  brokerId: string;
+  brokerType: BrokerType;
   symbols: string[];
   intervals: Interval[];
   startDate: string;
@@ -42,7 +42,7 @@ export interface BatchDownloadBarsParams {
 }
 
 export interface DeleteBarOverviewParams {
-  brokerName: string;
+  brokerType: BrokerType;
   symbol: string;
   interval: Interval;
 }

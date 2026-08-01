@@ -1,7 +1,7 @@
 import type { Response } from 'src/types/common';
 import { getHttp } from './http';
 import type { BarData, ContractData } from 'src/types/common';
-import type { GetContractsParams, GetBarsParams, DownloadParams, SyncContractsParams } from 'src/types/market-data';
+import type { GetContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, SyncContractsParams } from 'src/types/market-data';
 
 export const marketDataApi = {
   getBarOverviews() {
@@ -25,6 +25,11 @@ export const marketDataApi = {
   download(params: DownloadParams) {
     return getHttp().post<Response<{ jobId: string; message: string }>>(
       '/market-data/download', params,
+    );
+  },
+  batchDownload(params: BatchDownloadBarsParams) {
+    return getHttp().post<Response<{ message: string }>>(
+      '/market-data/batchDownload', params,
     );
   },
   syncContracts(params: SyncContractsParams) {

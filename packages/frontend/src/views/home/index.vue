@@ -30,7 +30,7 @@ async function fetchBrokerCount() {
     // 获取每个 brokerType 的合约数量
     await fetchContractStats()
   } catch (error) {
-    console.error('获取券商配置失败:', error)
+    console.error('获取经纪商配置失败:', error)
     brokerCount.value = 0
   } finally {
     brokerLoading.value = false
@@ -78,17 +78,15 @@ function goContracts(brokerType: string) {
 
 <template>
   <div class="page home-page">
-    <h2>首页</h2>
-
-    <!-- 券商模块 -->
+    <!-- 经经纪商模块 -->
     <div class="broker-card" @click="goBrokerPage">
       <div class="broker-card-header">
-        <span class="broker-card-title">券商</span>
+        <span class="broker-card-title">经纪商</span>
         <button class="broker-add-btn" @click="goAddBroker">+ 新增</button>
       </div>
       <div class="broker-card-body" v-if="!brokerLoading">
-        <span v-if="brokerCount > 0" class="broker-count">已配置 {{ brokerCount }} 个券商</span>
-        <span v-else class="broker-empty">暂无券商，点击添加</span>
+        <span v-if="brokerCount > 0" class="broker-count">已配置 {{ brokerCount }} 个经纪商</span>
+        <span v-else class="broker-empty">暂无经纪商，点击添加</span>
       </div>
       <div class="broker-card-body" v-else>
         <span class="broker-empty">加载中...</span>
@@ -122,7 +120,7 @@ function goContracts(brokerType: string) {
           </button>
         </div>
         <div v-if="uniqueBrokerTypes.length === 0" class="contract-empty">
-          暂无券商，请先配置券商
+          暂无经纪商，请先配置经纪商
         </div>
       </div>
       <div class="contract-list" v-else>
@@ -199,7 +197,6 @@ function goContracts(brokerType: string) {
   background: #fff;
   border-radius: 12px;
   padding: 16px;
-  margin-top: 16px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
   cursor: pointer;
 }

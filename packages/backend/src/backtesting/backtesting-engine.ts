@@ -60,7 +60,7 @@ export class BacktestingEngine implements StrategyEngine {
 
   async initBroker(): Promise<void> {
     this.broker = await this.brokerManagerService.createMockBroker({
-      brokerId: this.setting.brokerId,
+      brokerType: this.setting.brokerType,
       assetName: this.setting.assetName,
       assetBalance: this.setting.assetBalance,
       commissionRate: this.setting.commissionRate,
@@ -294,7 +294,7 @@ export class BacktestingEngine implements StrategyEngine {
     const totalReturnPercent = totalNetPnl / startBalance;
 
     return {
-      brokerId: this.setting.brokerId,
+      brokerType: this.setting.brokerType,
       symbol: this.setting.symbol,
       strategyName: this.setting.strategyName,
       interval: this.setting.interval,

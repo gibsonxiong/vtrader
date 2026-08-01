@@ -39,7 +39,7 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
       ...setting,
       dataLoader: async (symbol: string, interval: Interval, preloadCount: number) => {
         const bars = await marketDataService.getBarsFromDb({
-          brokerId: setting.brokerId,
+          brokerType: setting.brokerType,
           symbol: symbol,
           interval: interval,
           startDate: setting.startDate,
@@ -64,7 +64,7 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
 
     const backtesting = await prisma.backtesting.create({
       data: {
-        brokerId: result.brokerId,
+        brokerId: result.brokerType,
         symbol: result.symbol,
         strategyName: result.strategyName,
         interval: result.interval,

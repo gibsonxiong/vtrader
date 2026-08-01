@@ -136,11 +136,11 @@ export class MarketDataService {
   }
 
   async getBarsFromBroker(params: Omit<GetBarsParams, 'source'>): Promise<{ list: BarData[]; total: number }> {
-    const { brokerId, startDate, endDate, interval, symbol, preload, currentPage, pageSize } = params;
+    const { brokerType, startDate, endDate, interval, symbol, preload, currentPage, pageSize } = params;
     let startTime = dayjs(startDate).startOf('day').format('YYYY-MM-DD HH:mm:ss');
     const endTime = dayjs(endDate).endOf('day').format('YYYY-MM-DD HH:mm:ss');
 
-    const broker = await this.brokerMgr.getBroker(brokerId);
+    const broker = await this.brokerMgr.getBrokerByType(brokerType);
 
     if (preload) {
       const [n, unit] = INTERVAL_VT2DAYJS[interval];
@@ -164,15 +164,9 @@ export class MarketDataService {
   }
 
   async getBarsFromDb(params: Omit<GetBarsParams, 'source'>): Promise<{ list: BarData[]; total: number }> {
-    const { brokerId, startDate, endDate, interval, symbol, preload, currentPage, pageSize } = params;
+    const { brokerType, startDate, endDate, interval, symbol, preload, currentPage, pageSize } = params;
     let startTime = dayjs(startDate).startOf('day').valueOf();
     const endTime = dayjs(endDate).endOf('day').valueOf();
-
-    const brokerConfig = this.brokerConfigService.getFullConfig(brokerId);
-
-    if (!brokerConfig) {
-      throw new Error(`未找到id为[${brokerId}]的broker`);
-    }
 
     if (!interval) {
       throw new Error(`${interval}周期不能为空！`);
@@ -183,51 +177,7 @@ export class MarketDataService {
       startTime = dayjs(startTime).subtract(preload * n, unit).valueOf();
     }
 
-    // const pagination: { skip?: number; take?: number } = {};
-    // if (currentPage && pageSize && currentPage > 0 && pageSize > 0) {
-    //   pagination.skip = (currentPage - 1) * pageSize;
-    //   pagination.take = pageSize;
-    // }
-
-    // const where = {
-    //   timestamp: {
-    //     gte: startTime,
-    //     lte: endTime,
-    //   },
-    //   brokerName: brokerConfig.brokerName,
-    //   interval,
-    //   symbol,
-    // };
-
-    // const total = await this.prisma.bar.count({ where });
-
-    // const bars = await this.prisma.bar.findMany({
-    //   select: {
-    //     timestamp: true,
-    //     open: true,
-    //     high: true,
-    //     low: true,
-    //     close: true,
-    //     volume: true,
-    //   },
-    //   where,
-    //   orderBy: {
-    //     timestamp: 'desc',
-    //   },
-    //   ...pagination,
-    // });
-    // const list = bars.map((bar) => ({
-    //   symbol: symbol,
-    //   interval: interval,
-    //   timestamp: Number(bar.timestamp),
-    //   open: bar.open.toNumber(),
-    //   high: bar.high.toNumber(),
-    //   low: bar.low.toNumber(),
-    //   close: bar.close.toNumber(),
-    //   volume: bar.volume.toNumber(),
-    // }));
-
-    let bars = await readBars(brokerConfig.brokerType, symbol, interval, startTime, endTime);
+    let bars = await readBars(brokerType, symbol, interval, startTime, endTime);
     const total = bars.length;
 
     if (currentPage && pageSize && currentPage > 0 && pageSize > 0) {
@@ -236,25 +186,19 @@ export class MarketDataService {
       bars = bars.slice(skip, end);
     }
 
-    return { 
+    return {
       list: bars,
       total,
     };
   }
 
   async getBarOverview(params: {
-    brokerId: string;
+    brokerType: BrokerType;
     symbol: string;
     interval: Interval;
   }): Promise<BarOverviewRecord | null> {
-    const { brokerId, symbol, interval} = params;
-    const brokerConfig = this.brokerConfigService.getFullConfig(brokerId);
-
-    if (!brokerConfig) {
-      throw new Error(`未找到id为[${brokerId}]的broker`);
-    }
-
-    return readBarOverview(brokerConfig.brokerType, symbol, interval);
+    const { brokerType, symbol, interval} = params;
+    return readBarOverview(brokerType, symbol, interval);
   }
 
   async getBarOverviews(): Promise<BarOverviewRecord[]> {
@@ -262,24 +206,19 @@ export class MarketDataService {
   }
 
   async deleteBarOverview(params: DeleteBarOverviewParams): Promise<DeleteBarOverviewParams> {
-    const { brokerName, symbol, interval } = params;
-    deleteBarOverviewFiles(brokerName, symbol, interval);
-    return { brokerName, symbol, interval };
+    const { brokerType, symbol, interval } = params;
+    deleteBarOverviewFiles(brokerType, symbol, interval);
+    return { brokerType, symbol, interval };
   }
 
   async downloadBars(params: DownloadParams): Promise<number> {
     let { endDate } = params;
-    const { brokerId, startDate, interval, symbol } = params;
-    const brokerConfig = this.brokerConfigService.getFullConfig(brokerId);
-
-    if (!brokerConfig) {
-      throw new Error(`未找到id为[${brokerId}]的broker`);
-    }
+    const { brokerType, startDate, interval, symbol } = params;
 
     endDate = endDate ?? formatDate(dayjs());
 
     const barOverview = await this.getBarOverview({
-      brokerId,
+      brokerType,
       symbol,
       interval,
     });
@@ -302,23 +241,15 @@ export class MarketDataService {
     // 逐个区间下载
     for (const [rangeStart, rangeEnd] of missingRanges) {
       const bars = await this.getBarsFromBroker({
-        brokerId,
+        brokerType,
         startDate: rangeStart,
         endDate: rangeEnd,
         interval,
         symbol,
       });
 
-      // const { count } = await this.prisma.bar.createMany({
-      //   data: bars.list.map((bar) => ({
-      //     ...bar,
-      //     brokerName: brokerConfig.brokerName,
-      //   })),
-      //   skipDuplicates: true,
-      // });
-
       // 写入文件
-      const { count, total } = await writeBars(brokerConfig.brokerType, symbol, interval, bars.list);
+      const { count, total } = await writeBars(brokerType, symbol, interval, bars.list);
 
       totalCount += count;
       totalBars = total;
@@ -332,7 +263,7 @@ export class MarketDataService {
 
     writeBarOverview({
       version: 1,
-      brokerType: brokerConfig.brokerType,
+      brokerType,
       symbol,
       interval,
       ranges: newRanges,
@@ -345,14 +276,14 @@ export class MarketDataService {
 
   // 批量下载
   async batchDownloadBars(params: BatchDownloadBarsParams): Promise<number> {
-    const { brokerId, startDate, endDate, intervals, symbols } = params;
+    const { brokerType, startDate, endDate, intervals, symbols } = params;
 
     // 组合遍历
     let allCount = 0;
     for (const symbol of symbols) {
       for (const interval of intervals) {
         const count = await this.downloadBars({
-          brokerId,
+          brokerType,
           startDate,
           endDate,
           interval,

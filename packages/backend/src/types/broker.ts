@@ -3,7 +3,7 @@ import type { Direction, Interval, Offset, OrderType } from './common';
 export type BrokerType = 'BINANCE_LINEAR' | 'BINANCE_LINEAR_TESTNET';
 
 export interface MockBrokerProps {
-  brokerId: string;
+  brokerType: BrokerType;
   commissionRate: number;
   // BrokerClass: new () => Broker;
   assetName?: string;
@@ -15,7 +15,8 @@ export interface BrokerConfig {
   id: string;
   name: string;
   brokerType: BrokerType;
-  settings: BrokerSettings;
+  apiKey: string;
+  apiSecret: string;
 }
 
 /**

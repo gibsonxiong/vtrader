@@ -37,6 +37,11 @@ const router = createRouter({
       component: () => import('@/views/backtestDetail/index.vue'),
     },
     {
+      path: '/data/download',
+      name: 'data-download',
+      component: () => import('@/views/marketDataDownload/index.vue'),
+    },
+    {
       path: '/contracts',
       name: 'contracts',
       component: () => import('@/views/contracts/index.vue'),

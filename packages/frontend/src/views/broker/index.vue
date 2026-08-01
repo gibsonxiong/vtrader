@@ -3,10 +3,11 @@ import { ref, computed, onMounted } from 'vue'
 import { showToast } from '@/ui/mobile'
 import { brokerConfigApi } from '@vtrader/backend/api'
 import type { BrokerConfig, BrokerType } from '@vtrader/backend/api'
+import { formatBrokerType } from '@/utils/broker'
 
 const brokerTypes: { key: BrokerType; label: string }[] = [
-  { key: 'BINANCE_LINEAR', label: '实盘' },
-  { key: 'BINANCE_LINEAR_TESTNET', label: '测试网' },
+  { key: 'BINANCE_LINEAR', label: formatBrokerType('BINANCE_LINEAR') },
+  { key: 'BINANCE_LINEAR_TESTNET', label: formatBrokerType('BINANCE_LINEAR_TESTNET') },
 ]
 
 const activeTab = ref<BrokerType>('BINANCE_LINEAR')
@@ -43,7 +44,7 @@ async function fetchBrokers() {
     const res = await brokerConfigApi.list()
     brokers.value = res.data ?? []
   } catch {
-    showToast('获取券商列表失败')
+    showToast('获取经纪商列表失败')
   } finally {
     loading.value = false
   }
@@ -78,7 +79,7 @@ function onTypePickerUpdate(value: string[]) {
 
 async function handleFormSubmit() {
   if (!formName.value.trim()) {
-    showToast('请输入券商名称')
+    showToast('请输入经纪商名称')
     return
   }
 
@@ -139,7 +140,7 @@ async function handleDelete() {
   <div class="page broker-page">
     <!-- 顶部标题栏 -->
     <div class="header">
-      <h2>券商管理</h2>
+      <h2>经纪商管理</h2>
       <button class="add-btn" @click="openCreateForm">+ 新增</button>
     </div>
 
@@ -180,28 +181,28 @@ async function handleDelete() {
     <m-popup
       v-model:open="showForm"
       placement="bottom"
-      :title="isEdit ? '编辑券商' : '新增券商'"
+      :title="isEdit ? '编辑经纪商' : '新增经纪商'"
       :showOk="false"
       :showCancel="false"
     >
       <div class="form-container">
         <form @submit.prevent="handleFormSubmit">
           <div class="form-item">
-            <div class="form-label">券商名称</div>
+            <div class="form-label">经纪商名称</div>
             <input
               type="text"
               class="form-input"
               v-model="formName"
-              placeholder="请输入券商名称"
+              placeholder="请输入经纪商名称"
             />
           </div>
 
           <!-- 新增模式：显示类型、API Key、API Secret -->
           <template v-if="!isEdit">
             <div class="form-item" @click="showTypePicker = true">
-              <div class="form-label">券商类型</div>
+              <div class="form-label">经纪商类型</div>
               <div class="form-control">
-                <span>{{ typeLabel || '请选择类型' }}</span>
+                <span>{{ typeLabel || '请选择经纪商类型' }}</span>
                 <span class="arrow">›</span>
               </div>
             </div>
@@ -239,7 +240,7 @@ async function handleDelete() {
           :data="[typeOptions]"
           :cols="1"
           :cascade="false"
-          title="选择券商类型"
+          title="选择经纪商类型"
           @update:value="onTypePickerUpdate"
         />
       </div>
@@ -255,7 +256,7 @@ async function handleDelete() {
       ]"
     >
       <div style="padding: 16px; text-align: center;">
-        确定要删除该券商配置吗？
+        确定要删除该经纪商配置吗？
       </div>
     </m-modal>
   </div>

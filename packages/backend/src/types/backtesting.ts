@@ -1,5 +1,6 @@
 import { Interval, type BarData, type TradeData } from './common';
 import { Backtesting, Prisma } from '../../generated/client';
+import type { BrokerType } from './broker';
 
 export type { Backtesting } from '../../generated/client';
 
@@ -7,7 +8,7 @@ export type { Backtesting } from '../../generated/client';
  * 回测设置接口
  */
 export interface BacktestingSetting {
-  brokerId: string;
+  brokerType: BrokerType;
   startDate: string;
   endDate: string;
   symbol: string; // 多个用逗号分隔
@@ -29,7 +30,7 @@ export interface DailyResultItem {
 }
 
 export interface BacktestingResult {
-  brokerId: string;
+  brokerType: BrokerType;
   symbol: string;
   strategyName: string;
   interval: Interval;

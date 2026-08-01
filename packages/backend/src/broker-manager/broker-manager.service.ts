@@ -20,7 +20,7 @@ export class BrokerManagerService implements OnModuleDestroy {
   constructor(private readonly configService: BrokerConfigService) {}
 
   async getBroker(brokerId: string): Promise<Broker> {
-    const brokerConfig = this.configService.getFullConfig(brokerId);
+    const brokerConfig = this.configService.getConfig(brokerId, true);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
@@ -35,7 +35,11 @@ export class BrokerManagerService implements OnModuleDestroy {
     if (!this.instances[brokerId]) {
       this.instances[brokerId] = new Promise((resolve, reject) => {
         const broker = new brokerClass();
-        broker.connect(brokerConfig.settings)
+        console.log('brokerConfig', brokerConfig);
+        broker.connect({
+          apiKey: brokerConfig.apiKey,
+          apiSecret: brokerConfig.apiSecret,
+        })
           .then(() => resolve(broker))
           .catch((err) => {
             this.logger.error(`Broker[${brokerId}] 连接失败: ${err}`);
@@ -48,28 +52,16 @@ export class BrokerManagerService implements OnModuleDestroy {
   }
 
   async getBrokerByType(brokerType: BrokerType): Promise<Broker> {
-    const brokerConfig = this.configService.getAllConfigs().find(c => c.brokerType === brokerType);
+    const brokerConfig = this.configService.getConfigByType(brokerType, true);
 
-    if (!brokerConfig) {
+    if (!brokerConfig.length) {
       throw new Error(`未找到类型为[${brokerType}]的broker`);
     }
 
-    return this.getBroker(brokerConfig.id);
+    return this.getBroker(brokerConfig[0].id);
   }
 
   async createMockBroker(props: MockBrokerProps): Promise<MockBroker> {
-    const { brokerId } = props;
-    const brokerConfig = this.configService.getFullConfig(brokerId);
-
-    if (!brokerConfig) {
-      throw new Error(`未找到id为[${brokerId}]的broker`);
-    }
-
-    const brokerClass = this.brokerClassMap[brokerConfig.brokerType];
-
-    if (!brokerClass) {
-      throw new Error(`未找到类型为[${brokerConfig.brokerType}]的broker`);
-    }
 
     const mockBroker = new MockBroker(props);
     return mockBroker;

@@ -45,39 +45,39 @@ export class BacktestingService {
     };
   }
 
-  async createBacktestingSync(setting: BacktestingSetting): Promise<void> {
-    try {
-      const engine = await this.moduleRef.resolve(BacktestingEngine);
+  // async createBacktestingSync(setting: BacktestingSetting): Promise<void> {
+  //   try {
+  //     const engine = await this.moduleRef.resolve(BacktestingEngine);
 
-      if (!setting.data && !setting.dataLoader) {
-        setting.dataLoader = async (symbol: string, interval: Interval, preloadCount: number) => {
-          const bars = await this.marketDataService.getBarsFromDb({
-            brokerId: setting.brokerId,
-            symbol: symbol,
-            interval: interval,
-            startDate: setting.startDate,
-            endDate: setting.endDate,
-            preload: preloadCount,
-          });
-          return bars.list;
-        }
-      }
+  //     if (!setting.data && !setting.dataLoader) {
+  //       setting.dataLoader = async (symbol: string, interval: Interval, preloadCount: number) => {
+  //         const bars = await this.marketDataService.getBarsFromDb({
+  //           brokerType: setting.brokerType,
+  //           symbol: symbol,
+  //           interval: interval,
+  //           startDate: setting.startDate,
+  //           endDate: setting.endDate,
+  //           preload: preloadCount,
+  //         });
+  //         return bars.list;
+  //       }
+  //     }
 
-      // 设置回测参数
-      await engine.init(setting);
+  //     // 设置回测参数
+  //     await engine.init(setting);
             
-      // 运行回测
-      await engine.runBacktesting();
+  //     // 运行回测
+  //     await engine.runBacktesting();
       
-      // 计算结果
-      const result = await engine.calculateResult();
-      console.log(`结果计算完成，结果: `, result);
+  //     // 计算结果
+  //     const result = await engine.calculateResult();
+  //     console.log(`结果计算完成，结果: `, result);
       
-    } catch (error) {
-      console.error(`执行失败: ${error.message}`, error.stack);
-      throw new Error(`回测失败: ${error.message}`);
-    }
-  }
+  //   } catch (error) {
+  //     console.error(`执行失败: ${error.message}`, error.stack);
+  //     throw new Error(`回测失败: ${error.message}`);
+  //   }
+  // }
 
   async optimization(setting: OptimizerSetting) {
     const job = await this.backtestingQueue.add('optimization', setting, {

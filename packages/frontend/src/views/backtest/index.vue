@@ -6,7 +6,7 @@ import BacktestForm from './components/BacktestForm.vue'
 import BacktestList from './components/BacktestList.vue'
 import { backtestingApi } from '@vtrader/backend/api'
 
-interface CreateBacktestParams { strategy: string; symbol: string; brokerId: string; startDate: string; endDate: string; initialCapital: number; interval: string; params?: Record<string, number> }
+interface CreateBacktestParams { strategy: string; symbol: string; brokerType: string; startDate: string; endDate: string; initialCapital: number; interval: string; params?: Record<string, number> }
 interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
 
 async function waitBacktestFinished(jobId: string) {
@@ -24,7 +24,7 @@ async function waitBacktestFinished(jobId: string) {
 
 async function createBacktest(data: CreateBacktestParams) {
   const createRes = await backtestingApi.create({
-    brokerId: data.brokerId,
+    brokerType: data.brokerType as any,
     strategyName: data.strategy,
     strategySetting: data.params ?? {},
     symbol: data.symbol,

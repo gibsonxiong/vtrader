@@ -5,15 +5,14 @@ import dayjs from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { backtestingApi, marketDataApi } from '@vtrader/backend/api'
 import type { BarData, Backtesting, Interval } from '@vtrader/backend/api'
+import EquityCurve from './components/EquityCurve.vue'
+import TradeList from './components/TradeList.vue'
+import KLineChart from './components/KLineChart.vue'
 
 interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
 interface EquityCurvePoint { time: string; equity: number; returnRate: number }
 interface BacktestMetrics { totalReturn: number; annualReturn: number; maxDrawdown: number; sharpeRatio: number; winRate: number; profitLossRatio: number; totalTrades: number; avgDailyTrades: number }
 interface BacktestDetail { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; params: Record<string, number>; metrics: BacktestMetrics; trades: TradeRecord[]; kLines: BarData[]; equityCurve: EquityCurvePoint[] }
-
-import EquityCurve from './components/EquityCurve.vue'
-import TradeList from './components/TradeList.vue'
-import KLineChart from './components/KLineChart.vue'
 
 function toNumber(value: any): number {
   return Number(value ?? 0)
@@ -53,8 +52,8 @@ async function getBacktestDetail(id: number): Promise<BacktestDetail> {
   const equityCurve = toEquityCurve((model.dailyResults ?? []) as any[], initialCapital)
 
   const barRes = await marketDataApi.getBars({
-    brokerId: model.brokerId, 
-    symbol: model.symbol, 
+    brokerType: model.brokerId as any,
+    symbol: model.symbol,
     interval: model.interval as Interval,
     startDate: model.startDate,
     endDate: model.endDate,

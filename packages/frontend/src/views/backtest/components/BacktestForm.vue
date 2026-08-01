@@ -16,7 +16,7 @@ const emit = defineEmits<{
 interface BacktestConfig {
   strategy: string
   symbol: string
-  brokerId: string
+  brokerType: string
   startDate: string
   endDate: string
   initialCapital: number
@@ -25,7 +25,7 @@ interface BacktestConfig {
 }
 
 interface SymbolOption {
-  brokerId: string
+  brokerType: string
   symbol: string
   label: string
 }
@@ -55,8 +55,8 @@ function getDefaultSymbol() {
   return symbols.value[0]?.symbol ?? ''
 }
 
-function getDefaultBrokerId() {
-  return symbols.value[0]?.brokerId ?? ''
+function getDefaultBrokerType() {
+  return symbols.value[0]?.brokerType ?? ''
 }
 
 function getDefaultForm(): BacktestConfig {
@@ -64,7 +64,7 @@ function getDefaultForm(): BacktestConfig {
   return {
     strategy: firstStrategy?.name ?? '',
     symbol: getDefaultSymbol(),
-    brokerId: getDefaultBrokerId(),
+    brokerType: getDefaultBrokerType(),
     startDate: `${currentDate.getFullYear()}-01-01`,
     endDate: `${currentDate.getFullYear()}-12-31`,
     initialCapital: 10000,
@@ -134,7 +134,7 @@ async function loadContracts() {
     const contracts = await contractStore.fetchContracts(broker.brokerType as any)
     if (contracts.length > 0) {
       return contracts.map((c: ContractData) => ({
-        brokerId: broker.id,
+        brokerType: broker.brokerType,
         symbol: c.symbol,
         label: c.symbol,
       }))
@@ -187,7 +187,7 @@ onMounted(async () => {
       showToast('未获取到可用合约')
     } else {
       form.symbol = getDefaultSymbol()
-      form.brokerId = getDefaultBrokerId()
+      form.brokerType = getDefaultBrokerType()
     }
   } else {
     showToast('获取交易对失败')
@@ -223,7 +223,7 @@ function onSymbolUpdate(value: string[]) {
   const selectedSymbol = value[0] ?? ''
   const selectedContract = symbols.value.find((item) => item.symbol === selectedSymbol)
   form.symbol = selectedSymbol
-  form.brokerId = selectedContract?.brokerId ?? ''
+  form.brokerType = selectedContract?.brokerType ?? ''
   showSymbolPicker.value = false
 }
 
@@ -251,7 +251,7 @@ function handleSubmit() {
     showToast('请选择交易对')
     return
   }
-  if (!form.brokerId) {
+  if (!form.brokerType) {
     showToast('未找到交易对对应的 broker')
     return
   }

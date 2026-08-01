@@ -131,7 +131,7 @@ export class AppService {
   // 下载K线
   async downlaod(): Promise<void> {
     const count = await this.marketDataService.downloadBars({
-      brokerId,
+      brokerType: 'BINANCE_LINEAR',
       startDate: '2025-07-01',
       // endDate: '2025-05-02',
       interval: Interval.MINUTE_1,
@@ -145,7 +145,7 @@ export class AppService {
   async backtesting(): Promise<void> {
     // 1. 设置回测参数
     const setting: BacktestingSetting = {
-      brokerId,
+      brokerType: 'BINANCE_LINEAR',
       startDate: '2024-11-01',
       endDate: '2025-12-01',
       symbol: 'BTCUSDT:USDT',
@@ -210,7 +210,7 @@ export class AppService {
 
     // 1. 设置回测参数
     const setting: OptimizerSetting = {
-      brokerId,
+      brokerType: 'BINANCE_LINEAR',
       startDate: '2025-10-01',
       endDate: '2025-12-01',
       symbol: 'BTCUSDT:USDT',
