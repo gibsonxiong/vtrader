@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
 import type { BrokerType, ContractData, Interval } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
-
 import { showToast, showLoadingToast, closeToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
 
@@ -171,7 +170,9 @@ function onEndDateConfirm(date: Date) {
 <template>
   <div class="download-page">
     <div class="nav-bar">
-      <button class="nav-back" @click="router.back()">← 返回</button>
+      <button class="nav-back" @click="router.back()">
+        <i class="iconfont icon-left"></i>
+      </button>
       <span class="nav-title">下载市场数据</span>
       <span class="nav-right"></span>
     </div>
@@ -184,7 +185,7 @@ function onEndDateConfirm(date: Date) {
           <span :class="{ placeholder: !brokerType }">
             {{ brokerType || '请选择 BrokerType' }}
           </span>
-          <span class="arrow">›</span>
+          <i class="iconfont icon-right"></i>
         </div>
       </div>
 
@@ -195,7 +196,7 @@ function onEndDateConfirm(date: Date) {
           <span :class="{ placeholder: symbols.length === 0 }">
             {{ symbols.length > 0 ? `已选 ${symbols.length} 个交易对` : '请选择交易对' }}
           </span>
-          <span class="arrow">›</span>
+          <i class="iconfont icon-right"></i>
         </div>
         <div v-if="symbols.length > 0" class="selected-tags">
           <span v-for="s in symbols" :key="s" class="tag">{{ s }}</span>
@@ -209,7 +210,7 @@ function onEndDateConfirm(date: Date) {
           <span :class="{ placeholder: intervals.length === 0 }">
             {{ intervals.length > 0 ? `已选 ${intervals.length} 个周期` : '请选择时间周期' }}
           </span>
-          <span class="arrow">›</span>
+          <i class="iconfont icon-right"></i>
         </div>
         <div v-if="intervals.length > 0" class="selected-tags">
           <span v-for="i in intervals" :key="i" class="tag">{{ i }}</span>
@@ -223,7 +224,7 @@ function onEndDateConfirm(date: Date) {
           <span :class="{ placeholder: !startDate }">
             {{ startDate || '选择开始日期' }}
           </span>
-          <span class="arrow">›</span>
+          <i class="iconfont icon-right"></i>
         </div>
       </div>
 
@@ -234,7 +235,7 @@ function onEndDateConfirm(date: Date) {
           <span :class="{ placeholder: !endDate }">
             {{ endDate || '选择结束日期' }}
           </span>
-          <span class="arrow">›</span>
+          <i class="iconfont icon-right"></i>
         </div>
       </div>
 
@@ -276,7 +277,7 @@ function onEndDateConfirm(date: Date) {
       v-model:open="showContractPicker"
       placement="bottom"
       title="选择交易对"
-      @ok="confirmContractSelection"
+      :showOk="false"
       @cancel="showContractPicker = false"
     >
       <div class="contract-picker">
@@ -291,21 +292,20 @@ function onEndDateConfirm(date: Date) {
             v-for="contract in contracts"
             :key="contract.symbol"
             class="contract-option"
+            :class="{ selected: symbols.includes(contract.symbol) }"
             @click="toggleContract(contract)"
           >
-            <label class="checkbox-label">
-              <input
-                type="checkbox"
-                :checked="symbols.includes(contract.symbol)"
-                @click.stop
-                @change="toggleContract(contract)"
-              />
+            <div class="contract-info">
               <span class="contract-symbol">{{ contract.symbol }}</span>
               <span v-if="contract.name" class="contract-name">{{ contract.name }}</span>
-            </label>
+            </div>
+            <i class="iconfont icon-check" v-if="symbols.includes(contract.symbol)"></i>
           </div>
         </div>
       </div>
+      <template #footer>
+        <button class="footer-btn" @click="confirmContractSelection">确定</button>
+      </template>
     </m-popup>
 
     <!-- 时间周期多选弹窗 -->
@@ -313,7 +313,7 @@ function onEndDateConfirm(date: Date) {
       v-model:open="showIntervalPicker"
       placement="bottom"
       title="选择时间周期"
-      @ok="confirmIntervalSelection"
+      :showOk="false"
       @cancel="showIntervalPicker = false"
     >
       <div class="interval-picker">
@@ -321,19 +321,16 @@ function onEndDateConfirm(date: Date) {
           v-for="option in intervalOptions"
           :key="option.value"
           class="interval-option"
+          :class="{ selected: intervals.includes(option.value) }"
           @click="toggleInterval(option.value)"
         >
-          <label class="checkbox-label">
-            <input
-              type="checkbox"
-              :checked="intervals.includes(option.value)"
-              @click.stop
-              @change="toggleInterval(option.value)"
-            />
-            <span>{{ option.label }}</span>
-          </label>
+          <span class="interval-label">{{ option.label }}</span>
+          <i class="iconfont icon-check" v-if="intervals.includes(option.value)"></i>
         </div>
       </div>
+      <template #footer>
+        <button class="footer-btn" @click="confirmIntervalSelection">确定</button>
+      </template>
     </m-popup>
 
     <!-- 开始日期选择器 -->
@@ -394,54 +391,6 @@ function onEndDateConfirm(date: Date) {
   padding: 16px;
 }
 
-.form-item {
-  margin-bottom: 12px;
-}
-
-.form-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.form-input,
-.form-select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.form-input:focus,
-.form-select:focus {
-  outline: none;
-  border-color: #1677ff;
-}
-
-.form-control {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.form-control .placeholder {
-  color: #999;
-}
-
-.form-control .arrow {
-  color: #999;
-  font-size: 18px;
-}
-
 .selected-tags {
   display: flex;
   flex-wrap: wrap;
@@ -464,31 +413,31 @@ function onEndDateConfirm(date: Date) {
 }
 
 .contract-option {
-  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
   border-bottom: 1px solid #f5f5f5;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .contract-option:active {
   background: #f5f5f5;
 }
 
-.checkbox-label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-}
 
-.checkbox-label input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
+
+.contract-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .contract-symbol {
   font-weight: 500;
-  font-size: 14px;
+  font-size: 15px;
+  color: #333;
 }
 
 .contract-name {
@@ -508,13 +457,34 @@ function onEndDateConfirm(date: Date) {
 }
 
 .interval-option {
-  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
   border-bottom: 1px solid #f5f5f5;
   cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 .interval-option:active {
   background: #f5f5f5;
+}
+
+
+
+.interval-label {
+  font-size: 15px;
+  color: #333;
+}
+
+.interval-option .iconfont {
+  color: #1677ff;
+  font-size: 20px;
+}
+
+.contract-option .iconfont {
+  color: #1677ff;
+  font-size: 20px;
 }
 
 .loading-container {

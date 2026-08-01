@@ -288,7 +288,7 @@ function getIntervalLabel() {
           <div class="form-label">策略</div>
           <div class="form-control">
             <span :class="{ placeholder: !form.strategy }">{{ getStrategyLabel() || '请选择策略' }}</span>
-            <span class="arrow">›</span>
+            <i class="iconfont icon-right"></i>
           </div>
         </div>
 
@@ -311,7 +311,7 @@ function getIntervalLabel() {
           <div class="form-label">交易对</div>
           <div class="form-control">
             <span :class="{ placeholder: !form.symbol }">{{ getSymbolLabel() || '请选择交易对' }}</span>
-            <span class="arrow">›</span>
+            <i class="iconfont icon-right"></i>
           </div>
         </div>
 
@@ -320,7 +320,7 @@ function getIntervalLabel() {
           <div class="form-label">周期</div>
           <div class="form-control">
             <span :class="{ placeholder: !form.interval }">{{ getIntervalLabel() || '请选择周期' }}</span>
-            <span class="arrow">›</span>
+            <i class="iconfont icon-right"></i>
           </div>
         </div>
 
@@ -329,7 +329,7 @@ function getIntervalLabel() {
           <div class="form-label">开始日期</div>
           <div class="form-control">
             <span :class="{ placeholder: !form.startDate }">{{ form.startDate || '请选择开始日期' }}</span>
-            <span class="arrow">›</span>
+            <i class="iconfont icon-right"></i>
           </div>
         </div>
 
@@ -338,7 +338,7 @@ function getIntervalLabel() {
           <div class="form-label">结束日期</div>
           <div class="form-control">
             <span :class="{ placeholder: !form.endDate }">{{ form.endDate || '请选择结束日期' }}</span>
-            <span class="arrow">›</span>
+            <i class="iconfont icon-right"></i>
           </div>
         </div>
 
@@ -353,9 +353,6 @@ function getIntervalLabel() {
           />
         </div>
 
-        <div class="form-actions">
-          <button type="submit" class="primary-btn">开始回测</button>
-        </div>
       </form>
 
       <!-- 策略选择器 -->
@@ -409,58 +406,15 @@ function getIntervalLabel() {
         @ok="onEndDateUpdate"
       />
     </div>
+    <template #footer>
+      <button class="footer-btn" @click="handleSubmit">开始回测</button>
+    </template>
   </m-popup>
 </template>
 
 <style scoped>
 .form-container {
   padding: 20px 16px 30px;
-}
-
-.form-item {
-  margin-bottom: 12px;
-}
-
-.form-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #1677ff;
-}
-
-.form-control {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.form-control .placeholder {
-  color: #999;
-}
-
-.form-control .arrow {
-  color: #999;
-  font-size: 18px;
 }
 
 .form-actions {

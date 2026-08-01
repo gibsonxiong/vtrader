@@ -95,9 +95,7 @@ onMounted(loadContracts)
     <!-- 顶部导航 -->
     <div class="header">
       <button class="back-btn" @click="goBack">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M15 18l-6-6 6-6"/>
-        </svg>
+        <i class="iconfont icon-left"></i>
       </button>
       <span class="title">{{ formatBrokerType(brokerType) }}</span>
       <button class="sync-btn" @click="handleSync" :disabled="contractStore.loading">

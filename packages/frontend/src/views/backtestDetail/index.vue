@@ -119,7 +119,9 @@ function formatPercent(val: number): string {
 <template>
   <div class="page detail-page">
     <div class="nav-bar">
-      <button class="nav-back" @click="router.back()">← 返回</button>
+      <button class="nav-back" @click="router.back()">
+        <i class="iconfont icon-left"></i>
+      </button>
       <span class="nav-title">回测详情</span>
       <span class="nav-right"></span>
     </div>

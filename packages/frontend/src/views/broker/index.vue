@@ -203,7 +203,7 @@ async function handleDelete() {
               <div class="form-label">经纪商类型</div>
               <div class="form-control">
                 <span>{{ typeLabel || '请选择经纪商类型' }}</span>
-                <span class="arrow">›</span>
+                <i class="iconfont icon-right"></i>
               </div>
             </div>
 
@@ -228,9 +228,6 @@ async function handleDelete() {
             </div>
           </template>
 
-          <div class="form-actions">
-            <button type="submit" class="primary-btn">{{ isEdit ? '保存' : '添加' }}</button>
-          </div>
         </form>
 
         <!-- 类型选择器 -->
@@ -244,6 +241,9 @@ async function handleDelete() {
           @update:value="onTypePickerUpdate"
         />
       </div>
+      <template #footer>
+        <button class="footer-btn" @click="handleFormSubmit">{{ isEdit ? '保存' : '添加' }}</button>
+      </template>
     </m-popup>
 
     <!-- 删除确认 Modal -->
@@ -409,48 +409,6 @@ async function handleDelete() {
 
 .form-container {
   padding: 20px 16px 30px;
-}
-
-.form-item {
-  margin-bottom: 12px;
-}
-
-.form-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  box-sizing: border-box;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #1677ff;
-}
-
-.form-control {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 14px;
-  background: #fff;
-  cursor: pointer;
-}
-
-.form-control .arrow {
-  color: #999;
-  font-size: 18px;
 }
 
 .form-actions {

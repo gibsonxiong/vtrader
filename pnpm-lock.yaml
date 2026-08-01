@@ -203,6 +203,9 @@ importers:
       ant-design-vue:
         specifier: 'catalog:'
         version: 4.2.6(vue@3.5.40(typescript@6.0.3))
+      antd-mobile-icons:
+        specifier: ^0.3.0
+        version: 0.3.0
       antd-mobile-vue-next:
         specifier: 0.1.0-16
         version: 0.1.0-16(rollup@4.54.0)(typescript@6.0.3)
@@ -2669,6 +2672,9 @@ packages:
     engines: {node: '>=12.22.0'}
     peerDependencies:
       vue: '>=3.2.0'
+
+  antd-mobile-icons@0.3.0:
+    resolution: {integrity: sha512-rqINQpJWZWrva9moCd1Ye695MZYWmqLPE+bY8d2xLRy7iSQwPsinCdZYjpUPp2zL/LnKYSyXxP2ut2A+DC+whQ==}
 
   antd-mobile-vue-next@0.1.0-16:
     resolution: {integrity: sha512-k5qi68So6Rye0CBa4l6orxxFukWDtn656P6q/KyAjmJEjBVRbGO2jfEW2b8PVh0nFTipcyVS/hygn1K34zjfDw==}
@@ -8683,6 +8689,8 @@ snapshots:
       vue: 3.5.40(typescript@6.0.3)
       vue-types: 3.0.2(vue@3.5.40(typescript@6.0.3))
       warning: 4.0.3
+
+  antd-mobile-icons@0.3.0: {}
 
   antd-mobile-vue-next@0.1.0-16(rollup@4.54.0)(typescript@6.0.3):
     dependencies:
