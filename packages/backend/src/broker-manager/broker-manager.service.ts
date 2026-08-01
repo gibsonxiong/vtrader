@@ -49,9 +49,13 @@ export class BrokerManagerService {
       
       this.instances[brokerId] = new Promise((resolve) => {
         const broker = new brokerClass();
-        broker.connect(brokerConfig.settings).then(() => {
-          resolve(broker);
-        });
+        broker.connect(brokerConfig.settings)
+          .catch((err) => {
+            console.error(`Broker[${brokerId}] 连接失败，将以部分可用状态运行: ${err}`);
+          })
+          .then(() => {
+            resolve(broker);
+          });
       });
     }
     return this.instances[brokerId];

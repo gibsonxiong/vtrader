@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 
 import { Post, Body } from '@nestjs/common';
 import { MarketDataService } from './market-data.service';
-import type { DownloadParams, GetBarsParams, GetAllContractsParams, BatchDownloadBarsParams, DeleteBarOverviewParams } from '../types/market-data';
+import type { DownloadParams, GetBarsParams, GetAllContractsParams, SyncContractsParams, BatchDownloadBarsParams, DeleteBarOverviewParams } from '../types/market-data';
 import { response } from 'src/utils';
 
 @Controller('market-data')
@@ -10,7 +10,7 @@ export class MarketDataController {
   constructor(private readonly marketDataService: MarketDataService) {}
 
   /**
-   * 获取所有合约
+   * 获取所有合约（从文件读取）
    */
   @Post('getContracts')
   async getAllContracts(
@@ -19,6 +19,18 @@ export class MarketDataController {
   ) {
     const data = await this.marketDataService.getAllContracts(body);
     return response(data);
+  }
+
+  /**
+   * 同步合约数据（从broker拉取并保存到文件）
+   */
+  @Post('syncContracts')
+  async syncContracts(
+    @Body()
+    body: SyncContractsParams
+  ) {
+    const count = await this.marketDataService.syncContracts(body);
+    return response({ count });
   }
 
   /**

@@ -3,6 +3,7 @@ import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { showToast } from '@/ui/mobile'
 import { strategyApi, brokerManagerApi, marketDataApi } from '@vtrader/backend/api'
 import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
+import { useContractStore } from '@/stores/contract'
 
 interface StrategyParamMeta { label: string; default: number; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -30,6 +31,8 @@ interface SymbolOption {
 }
 
 const visible = defineModel<boolean>('visible', { default: false })
+
+const contractStore = useContractStore()
 
 const strategies = ref<StrategyMeta[]>([])
 const symbols = ref<SymbolOption[]>([])
@@ -128,8 +131,7 @@ async function loadContracts() {
   })
 
   for (const broker of brokers) {
-    const contractsRes = await marketDataApi.getContracts({ brokerType: broker.brokerType })
-    const contracts = contractsRes.data ?? []
+    const contracts = await contractStore.fetchContracts(broker.brokerType as any)
     if (contracts.length > 0) {
       return contracts.map((c: ContractData) => ({
         brokerId: broker.id,

@@ -36,6 +36,11 @@ const router = createRouter({
       name: 'backtest-detail',
       component: () => import('@/views/backtestDetail/index.vue'),
     },
+    {
+      path: '/contracts',
+      name: 'contracts',
+      component: () => import('@/views/contracts/index.vue'),
+    },
   ],
 })
 

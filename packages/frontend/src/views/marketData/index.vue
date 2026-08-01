@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { brokerManagerApi, marketDataApi } from '@vtrader/backend/api'
 import type { ContractData, BrokerConfig } from '@vtrader/backend/api'
+import { useContractStore } from '@/stores/contract'
 
 interface MarketDataFileOverview { version: 1; brokerType: string; symbol: string; interval: string; ranges: [string, string][]; updatedAt: string; count: number }
 interface DownloadRequest { brokerId: string; symbol: string; interval: string; startDate: string; endDate: string; overwrite: boolean }
@@ -17,6 +18,9 @@ const overwrite = ref(false)
 
 // 状态
 const downloading = ref(false)
+
+// 合约 Store
+const contractStore = useContractStore()
 
 // 覆盖确认弹窗
 const showOverwriteDialog = ref(false)
@@ -85,8 +89,7 @@ async function onBrokerSelected(id: string) {
   try {
     const selected = brokerOptions.value.find(b => b.value === id)
     if (!selected) throw new Error('未找到选中的 broker')
-    const res = await marketDataApi.getContracts({ brokerType: selected.brokerType })
-    const data = res.data ?? []
+    const data = await contractStore.fetchContracts(selected.brokerType as any)
     contracts.value = data
   } catch (e: any) {
     console.error('加载合约列表失败:', e)

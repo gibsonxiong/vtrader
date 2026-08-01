@@ -10,11 +10,13 @@ import {
   listBarOverviews,
   readBarOverview,
   readBars,
+  readContracts,
   writeBarOverview,
   writeBars,
+  writeContracts,
 } from 'src/utils';
 import type { BrokerType } from 'src/types/broker';
-import type { GetAllContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, DeleteBarOverviewParams, BarOverviewRecord } from '../types/market-data';
+import type { GetAllContractsParams, SyncContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, DeleteBarOverviewParams, BarOverviewRecord } from '../types/market-data';
 
 
 function sortRanges(ranges: [string, string][]): [dayjs.Dayjs, dayjs.Dayjs][] {
@@ -113,9 +115,15 @@ export class MarketDataService {
 
   async getAllContracts(params: GetAllContractsParams): Promise<ContractData[]> {
     const { brokerType } = params;
-    const broker = await this.brokerMgr.getBrokerByType(brokerType as any);
+    return readContracts(brokerType);
+  }
 
-    return broker.getAllContracts();
+  async syncContracts(params: SyncContractsParams): Promise<number> {
+    const { brokerType } = params;
+    const broker = await this.brokerMgr.getBrokerByType(brokerType as any);
+    const contracts = broker.getAllContracts();
+    writeContracts(brokerType, contracts);
+    return contracts.length;
   }
 
   getBars(params: GetBarsParams): Promise<{ list: BarData[]; total: number }> {

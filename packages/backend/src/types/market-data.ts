@@ -9,6 +9,10 @@ export interface GetAllContractsParams {
   brokerType: BrokerType;
 }
 
+export interface SyncContractsParams {
+  brokerType: BrokerType;
+}
+
 export interface GetBarsParams {
   brokerId: string;
   interval: Interval;

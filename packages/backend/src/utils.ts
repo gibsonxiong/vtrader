@@ -4,6 +4,7 @@ import dayjs from 'dayjs';
 import { OrderData, OrderStatus, BarData, TradeData, Interval } from './types/common';
 import type { Response } from 'src/types/common';
 import type { BarOverviewRecord } from './types/market-data';
+import type { ContractData } from './types/common';
 import { BigNumber } from 'bignumber.js';
 import { Table, tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
 
@@ -169,6 +170,42 @@ export function deleteBarOverviewFiles(brokerName: string, symbol: string, inter
     fs.unlinkSync(metaFilePath);
   }
 }
+
+// ========== Contract 文件存储 ==========
+
+function getContractsDir() {
+  return path.resolve(__dirname, '../data/contracts');
+}
+
+function getContractsFilePath(brokerType: string) {
+  return path.resolve(getContractsDir(), brokerType, 'contracts.json');
+}
+
+function ensureContractsDir(brokerType: string) {
+  fs.mkdirSync(path.resolve(getContractsDir(), brokerType), { recursive: true });
+}
+
+export function readContracts(brokerType: string): ContractData[] {
+  const filePath = getContractsFilePath(brokerType);
+  if (!fs.existsSync(filePath)) {
+    return [];
+  }
+  try {
+    const raw = fs.readFileSync(filePath, 'utf8');
+    return JSON.parse(raw) as ContractData[];
+  } catch (e) {
+    console.error(e);
+    throw new Error('read contracts file error');
+  }
+}
+
+export function writeContracts(brokerType: string, contracts: ContractData[]): void {
+  ensureContractsDir(brokerType);
+  const filePath = getContractsFilePath(brokerType);
+  fs.writeFileSync(filePath, JSON.stringify(contracts, null, 2));
+}
+
+// ========== Bar 文件存储 ==========
 
 export async function writeBars(brokerName: string, symbol: string, interval: Interval, newBars: BarData[]): Promise<{count: number; total: number}> {
   const parquet = await initParquetWasm();
