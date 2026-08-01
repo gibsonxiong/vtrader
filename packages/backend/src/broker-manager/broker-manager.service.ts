@@ -1,36 +1,26 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Broker } from './broker';
 import { BrokerConfigService } from './broker-config.service';
-import type { BrokerConfig, BrokerSettings, BrokerType, MockBrokerProps } from '../types/broker';
+import type { BrokerType, MockBrokerProps } from '../types/broker';
 import BinanceLinearBroker from 'src/broker-manager/brokers/binance-linear';
 import BinanceLinearTestnetBroker from 'src/broker-manager/brokers/binance-linear-testnet';
 import { MockBroker } from './brokers/mock/mock-broker';
 
 @Injectable()
-export class BrokerManagerService {
-  brokerClassMap: Record<BrokerType, new () => Broker> = {
+export class BrokerManagerService implements OnModuleDestroy {
+  private readonly logger = new Logger(BrokerManagerService.name);
+
+  private brokerClassMap: Record<BrokerType, new () => Broker> = {
     BINANCE_LINEAR: BinanceLinearBroker,
     BINANCE_LINEAR_TESTNET: BinanceLinearTestnetBroker,
   };
-  instances: Record<string, Promise<Broker>> = {};
 
-  constructor(private readonly configService: BrokerConfigService) {
-  }
+  private instances: Record<string, Promise<Broker>> = {};
 
-  getBrokerTypes(): BrokerType[] {
-    return Object.keys(this.brokerClassMap) as BrokerType[];
-  }
-
-  getBrokerConfigs(): BrokerConfig[] {
-    return this.configService.getAllConfigs();
-  }
-
-  getBrokerConfig(brokerId: string): BrokerConfig | undefined {
-    return this.configService.getFullConfig(brokerId);
-  }
+  constructor(private readonly configService: BrokerConfigService) {}
 
   async getBroker(brokerId: string): Promise<Broker> {
-    const brokerConfig = this.getBrokerConfig(brokerId);
+    const brokerConfig = this.configService.getFullConfig(brokerId);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
@@ -39,30 +29,26 @@ export class BrokerManagerService {
     const brokerClass = this.brokerClassMap[brokerConfig.brokerType];
 
     if (!brokerClass) {
-      throw new Error(`未找到id为[${brokerId}]的broker`);
+      throw new Error(`未找到类型为[${brokerConfig.brokerType}]的broker`);
     }
 
-    const instance = this.instances[brokerId];
-
-    if (!instance) {
-      console.log('生成broker中');
-      
-      this.instances[brokerId] = new Promise((resolve) => {
+    if (!this.instances[brokerId]) {
+      this.instances[brokerId] = new Promise((resolve, reject) => {
         const broker = new brokerClass();
         broker.connect(brokerConfig.settings)
+          .then(() => resolve(broker))
           .catch((err) => {
-            console.error(`Broker[${brokerId}] 连接失败，将以部分可用状态运行: ${err}`);
-          })
-          .then(() => {
-            resolve(broker);
+            this.logger.error(`Broker[${brokerId}] 连接失败: ${err}`);
+            reject(err);
           });
       });
     }
+
     return this.instances[brokerId];
   }
 
   async getBrokerByType(brokerType: BrokerType): Promise<Broker> {
-    const brokerConfig = this.getBrokerConfigs().find(c => c.brokerType === brokerType);
+    const brokerConfig = this.configService.getAllConfigs().find(c => c.brokerType === brokerType);
 
     if (!brokerConfig) {
       throw new Error(`未找到类型为[${brokerType}]的broker`);
@@ -73,7 +59,7 @@ export class BrokerManagerService {
 
   async createMockBroker(props: MockBrokerProps): Promise<MockBroker> {
     const { brokerId } = props;
-    const brokerConfig = this.getBrokerConfig(brokerId);
+    const brokerConfig = this.configService.getFullConfig(brokerId);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
@@ -82,14 +68,25 @@ export class BrokerManagerService {
     const brokerClass = this.brokerClassMap[brokerConfig.brokerType];
 
     if (!brokerClass) {
-      throw new Error(`未找到id为[${brokerId}]的broker`);
+      throw new Error(`未找到类型为[${brokerConfig.brokerType}]的broker`);
     }
 
-    console.log('生成mock broker中');
-    
-    const broker = new brokerClass();
     const mockBroker = new MockBroker(props);
-
     return mockBroker;
+  }
+
+  async destroyBroker(brokerId: string): Promise<void> {
+    const instance = this.instances[brokerId];
+    if (instance) {
+      const broker = await instance;
+      await broker.stop();
+      delete this.instances[brokerId];
+      this.logger.log(`Broker[${brokerId}] 已销毁`);
+    }
+  }
+
+  async onModuleDestroy(): Promise<void> {
+    const brokerIds = Object.keys(this.instances);
+    await Promise.all(brokerIds.map(id => this.destroyBroker(id)));
   }
 }

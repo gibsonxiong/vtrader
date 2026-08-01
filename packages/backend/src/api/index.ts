@@ -5,7 +5,6 @@ export type { HttpClient } from './http';
 // 导出所有 API 方法
 export { backtestingApi } from './backtesting-api';
 export { marketDataApi } from './market-data-api';
-export { brokerManagerApi } from './broker-manager-api';
 export { brokerConfigApi } from './broker-config-api';
 export { strategyApi } from './strategy-api';
 

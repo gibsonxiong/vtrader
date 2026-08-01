@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { showToast } from '@/ui/mobile'
-import { strategyApi, brokerManagerApi, marketDataApi } from '@vtrader/backend/api'
+import { strategyApi, brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
 import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 
@@ -123,7 +123,7 @@ function parseDateValue(dateStr: string): Date {
 }
 
 async function loadContracts() {
-  const brokerRes = await brokerManagerApi.getConfigs()
+  const brokerRes = await brokerConfigApi.list()
   const brokers = (brokerRes.data ?? []).sort((a: BrokerConfig, b: BrokerConfig) => {
     const aIsTestnet = a.brokerType.includes('TESTNET')
     const bIsTestnet = b.brokerType.includes('TESTNET')

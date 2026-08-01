@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { brokerManagerApi, marketDataApi } from '@vtrader/backend/api'
+import { brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
 import type { ContractData, BrokerConfig } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 
@@ -66,7 +66,7 @@ async function loadFileOverviews() {
 async function loadBrokers() {
   loadingBrokers.value = true
   try {
-    const res = await brokerManagerApi.getConfigs()
+    const res = await brokerConfigApi.list()
     const data = res.data ?? []
     brokerOptions.value = data.map((b: any) => ({
       label: b.brokerType,

@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import dayjs from 'dayjs';
 import { Interval } from '../types/common';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
+import { BrokerConfigService } from 'src/broker-manager/broker-config.service';
 import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear';
 import {
   deleteBarOverviewFiles,
@@ -111,6 +112,7 @@ function calculateUnion(
 export class MarketDataService {
   constructor(
     private brokerMgr: BrokerManagerService,
+    private brokerConfigService: BrokerConfigService,
   ) {}
 
   async getAllContracts(params: GetAllContractsParams): Promise<ContractData[]> {
@@ -166,7 +168,7 @@ export class MarketDataService {
     let startTime = dayjs(startDate).startOf('day').valueOf();
     const endTime = dayjs(endDate).endOf('day').valueOf();
 
-    const brokerConfig = await this.brokerMgr.getBrokerConfig(brokerId);
+    const brokerConfig = this.brokerConfigService.getFullConfig(brokerId);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
@@ -246,7 +248,7 @@ export class MarketDataService {
     interval: Interval;
   }): Promise<BarOverviewRecord | null> {
     const { brokerId, symbol, interval} = params;
-    const brokerConfig = await this.brokerMgr.getBrokerConfig(brokerId);
+    const brokerConfig = this.brokerConfigService.getFullConfig(brokerId);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
@@ -268,7 +270,7 @@ export class MarketDataService {
   async downloadBars(params: DownloadParams): Promise<number> {
     let { endDate } = params;
     const { brokerId, startDate, interval, symbol } = params;
-    const brokerConfig = await this.brokerMgr.getBrokerConfig(brokerId);
+    const brokerConfig = this.brokerConfigService.getFullConfig(brokerId);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
