@@ -4,12 +4,13 @@ import { useRoute, useRouter } from 'vue-router'
 import { useContractStore } from '@/stores/contract'
 import { showToast, showLoadingToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
+import type { BrokerType } from '@vtrader/backend/api'
 
 const route = useRoute()
 const router = useRouter()
 const contractStore = useContractStore()
 
-const brokerType = computed(() => route.query.brokerType as string)
+const brokerType = computed(() => route.query.brokerType as BrokerType)
 const contracts = computed(() => contractStore.contractsMap.get(brokerType.value) || [])
 
 // 搜索关键词

@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { backtestingApi, marketDataApi } from '@vtrader/backend/api'
-import type { BarData, Backtesting } from '@vtrader/backend/api'
+import type { BarData, Backtesting, Interval } from '@vtrader/backend/api'
 
 interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
 interface EquityCurvePoint { time: string; equity: number; returnRate: number }
@@ -55,7 +55,7 @@ async function getBacktestDetail(id: number): Promise<BacktestDetail> {
   const barRes = await marketDataApi.getBars({
     brokerId: model.brokerId, 
     symbol: model.symbol, 
-    interval: model.interval,
+    interval: model.interval as Interval,
     startDate: model.startDate,
     endDate: model.endDate,
     source: 'db', currentPage: 1, pageSize: 1000,
@@ -69,9 +69,14 @@ async function getBacktestDetail(id: number): Promise<BacktestDetail> {
   const dayCount = Math.max(equityCurve.length, 1)
 
   return {
-    id: model.id, strategy: model.strategyName, symbol: model.symbol,
-    startDate: model.startDate, endDate: model.endDate,
-    initialCapital, finalCapital, params: {},
+    id: model.id, 
+    strategy: model.strategyName, 
+    symbol: model.symbol,
+    startDate: model.startDate, 
+    endDate: model.endDate,
+    initialCapital, 
+    finalCapital, 
+    params: {},
     metrics: {
       totalReturn: toNumber(model.totalReturnPercent),
       annualReturn: dayCount > 0 ? toNumber(model.totalReturnPercent) * (365 / dayCount) : 0,
@@ -81,7 +86,8 @@ async function getBacktestDetail(id: number): Promise<BacktestDetail> {
       totalTrades, avgDailyTrades: totalTrades / dayCount,
     },
     trades, 
-    kLines: barRes.data ?? [], equityCurve,
+    kLines: barRes.data?.list || [], 
+    equityCurve,
   }
 }
 

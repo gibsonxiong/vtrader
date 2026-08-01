@@ -15,7 +15,10 @@ export const marketDataApi = {
     );
   },
   getBars(params: GetBarsParams) {
-    return getHttp().post<Response<BarData[]>>(
+    return getHttp().post<Response<{
+    list: BarData[];
+    total: number;
+  }>>(
       '/market-data/getBars', params,
     );
   },
