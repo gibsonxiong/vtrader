@@ -17,10 +17,6 @@ const brokerConfigService = new BrokerConfigService(prisma);
 const brokerManagerService = new BrokerManagerService(brokerConfigService);
 const marketDataService = new MarketDataService(brokerManagerService, brokerConfigService);
 const strategyService = new StrategyService();
-const backtestingEngie = new BacktestingEngine(
-  strategyService,
-  brokerManagerService,
-);
 const connection = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -30,12 +26,15 @@ const connection = {
 async function backtesting(job: SandboxedJob<BacktestingSetting>) {
   const { data: setting } = job;
   console.log(`开始处理回测任务 ${job.id}: ${setting.strategyName}`);
-  
+
+  // 每次任务创建独立的 engine 实例，避免并发状态污染
+  const engine = new BacktestingEngine(strategyService, brokerManagerService);
+
   try {
     // 更新任务进度
     await job.updateProgress(0);
     // 设置回测参数
-    await backtestingEngie.init({
+    await engine.init({
       ...setting,
       dataLoader: async (symbol: string, interval: Interval, preloadCount: number) => {
         const bars = await marketDataService.getBarsFromDb({
@@ -51,16 +50,16 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
     });
     await job.updateProgress(20);
     console.log(`任务 ${job.id}: 参数设置完成`);
-    
+
     // 加载数据
-    await backtestingEngie.loadData();
+    await engine.loadData();
     await job.updateProgress(50);
     console.log(`任务 ${job.id}: 数据加载完成`);
-    
+
     // 运行回测
-    await backtestingEngie.runBacktesting();
+    await engine.runBacktesting();
     await job.updateProgress(80);
-    const result = await backtestingEngie.calculateResult();
+    const result = await engine.calculateResult();
 
     const backtesting = await prisma.backtesting.create({
       data: {
