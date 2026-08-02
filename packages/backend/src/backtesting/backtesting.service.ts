@@ -108,9 +108,10 @@ export class BacktestingService {
     console.log(where)
     // 过滤掉空字符串的where查询
     if (where) {
-      Object.keys(where).forEach(key => {
-        if (where[key] === '') {
-          delete where[key];
+      const whereRecord = where as Record<string, any>;
+      Object.keys(whereRecord).forEach(key => {
+        if (whereRecord[key] === '') {
+          delete whereRecord[key];
         }
       });
     }

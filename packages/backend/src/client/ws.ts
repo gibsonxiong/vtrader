@@ -8,19 +8,19 @@ export function createWs(config: WsConfig): WebSocket {
   });
 
   ws.on('open', () => {
-    config.onOpen?.call(ws);
+    config.onOpen?.(ws);
   });
 
   ws.on('message', (data: WebSocket.Data) => {
-    config.onMessage?.call(ws, data);
+    config.onMessage?.(ws, data);
   });
 
-  ws.on('error', (error) => {
-    config.onError?.call(ws, error);
+  ws.on('error', (error: Error) => {
+    config.onError?.(ws, error);
   });
 
   ws.on('close', () => {
-    config.onClose?.call(ws);
+    config.onClose?.(ws);
   });
 
   return ws;

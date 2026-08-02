@@ -240,7 +240,7 @@ class MdApi {
           this.onMessage(data.toString());
         });
 
-        this.ws.on('error', (error) => {
+        this.ws.on('error', (error: Error) => {
           clearTimeout(connectTimeout);
           this.broker.writeLog(`市场数据WebSocket连接失败: ${error.message}（将继续运行，数据不可用）`);
           resolve();
@@ -708,7 +708,7 @@ class RestApi {
       const data = await this.sendSignedRequest('GET', '/fapi/v2/account');
       const list = Array.isArray(data?.positions) ? data.positions : [];
       return list
-        .filter(p => Number(p.positionAmt ?? 0) !== 0)
+        .filter((p: any) => Number(p.positionAmt ?? 0) !== 0)
         .map((p: any) => {
           const contract = this.broker.getContractByName(String(p.symbol ?? ''));
           const symbol = contract?.symbol ?? '';
@@ -917,10 +917,10 @@ class TradeApi {
             this.broker.writeLog('交易WebSocket连接成功');
             resolve();
           },
-          onMessage: (data: WebSocket.Data) => {
+          onMessage: (_ws: WebSocket, data: WebSocket.Data) => {
             this.onMessage(data.toString());
           },
-          onError: (error) => {
+          onError: (_ws: WebSocket, error: Error) => {
             this.broker.writeLog(`交易WebSocket连接失败: ${error.message}（将继续运行，交易不可用）`);
             resolve();
           },
@@ -1146,7 +1146,7 @@ class UserApi {
           this.onMessage(data.toString());
         });
 
-        this.ws.on('error', (error) => {
+        this.ws.on('error', (error: Error) => {
           clearTimeout(connectTimeout);
           this.broker.writeLog(`用户数据WebSocket连接失败: ${error.message}（将继续运行，账户数据不可用）`);
           resolve();

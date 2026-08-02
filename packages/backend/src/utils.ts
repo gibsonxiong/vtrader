@@ -10,7 +10,7 @@ import { Table, tableFromArrays, tableFromIPC, tableToIPC } from 'apache-arrow';
 
 let orderCount: number = 0;
 
-let parquet;
+let parquet: any;
 let parquetWasmInited = false;
 async function initParquetWasm() {
   if (!parquetWasmInited) {
@@ -213,7 +213,7 @@ export async function writeBars(brokerName: string, symbol: string, interval: In
 
   const exsitsBars = await readBars(brokerName, symbol, interval);
   console.log('exsitsBars', exsitsBars);
-  const existsKeys = {};
+  const existsKeys: Record<string, boolean> = {};
   const list: BarData[] = [];
   // 去重复
   [...exsitsBars, ...newBars].forEach((b) => {

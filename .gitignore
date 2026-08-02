@@ -27,6 +27,7 @@ backend/shared/
 frontend/shared/
 
 # local env files
+.env
 .env.local
 .env.*.local
 .eslintcache
@@ -53,3 +54,5 @@ vite.config.ts.*
 *.sw?
 .history
 dump.rdb
+.workbuddy/
+_tmp_*
