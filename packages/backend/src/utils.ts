@@ -212,7 +212,6 @@ export async function writeBars(brokerName: string, symbol: string, interval: In
   const { Table, writeParquet, WriterPropertiesBuilder, Compression } = parquet;
 
   const exsitsBars = await readBars(brokerName, symbol, interval);
-  console.log('exsitsBars', exsitsBars);
   const existsKeys: Record<string, boolean> = {};
   const list: BarData[] = [];
   // 去重复
@@ -224,7 +223,6 @@ export async function writeBars(brokerName: string, symbol: string, interval: In
     }
   });
   list.sort((a, b) => b.timestamp - a.timestamp);
-  console.log('list', list);
 
   // 使用 Int64 存储时间戳，减少 Date 对象开销
   const timestamps = BigInt64Array.from(list.map((b) => BigInt(b.timestamp)));

@@ -20,7 +20,7 @@ export class BrokerManagerService implements OnModuleDestroy {
   constructor(private readonly configService: BrokerConfigService) {}
 
   async getBroker(brokerId: string): Promise<Broker> {
-    const brokerConfig = this.configService.getConfig(brokerId, true);
+    const brokerConfig = await this.configService.getConfig(brokerId, true);
 
     if (!brokerConfig) {
       throw new Error(`未找到id为[${brokerId}]的broker`);
@@ -35,13 +35,12 @@ export class BrokerManagerService implements OnModuleDestroy {
     if (!this.instances[brokerId]) {
       this.instances[brokerId] = new Promise((resolve, reject) => {
         const broker = new brokerClass();
-        console.log('brokerConfig', brokerConfig);
         broker.connect({
           apiKey: brokerConfig.apiKey,
           apiSecret: brokerConfig.apiSecret,
         })
           .then(() => resolve(broker))
-          .catch((err) => {
+          .catch((err: Error) => {
             this.logger.error(`Broker[${brokerId}] 连接失败: ${err}`);
             reject(err);
           });
@@ -52,7 +51,7 @@ export class BrokerManagerService implements OnModuleDestroy {
   }
 
   async getBrokerByType(brokerType: BrokerType): Promise<Broker> {
-    const brokerConfig = this.configService.getConfigByType(brokerType, true);
+    const brokerConfig = await this.configService.getConfigByType(brokerType, true);
 
     if (!brokerConfig.length) {
       throw new Error(`未找到类型为[${brokerType}]的broker`);

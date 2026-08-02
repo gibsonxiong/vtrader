@@ -23,18 +23,31 @@ export class BrokerConfigService implements OnModuleInit {
     
     this.cache.clear();
     for (const b of brokers) {
+      let apiKey, apiSecret;
+      try {
+        apiKey = decrypt(b.apiKey);
+        apiSecret = decrypt(b.apiSecret);
+      } catch (error) {
+        this.logger.error(`Error decrypting broker ${b.id}: ${error}`);
+        apiKey = '';
+        apiSecret = '';
+      }
       this.cache.set(b.id, {
         id: b.id,
         name: b.name,
         brokerType: b.brokerType as BrokerType,
-        apiKey: decrypt(b.apiKey),
-        apiSecret: decrypt(b.apiSecret),
+        apiKey,
+        apiSecret,
       });
     }
   }
 
   // 获取所有配置（不返回密钥）
-  getAllConfigs(decrypt = false): BrokerConfig[] {
+  async getAllConfigs(decrypt = false): Promise<BrokerConfig[]> {
+    if (this.cache.size === 0) {
+      await this.refreshCache();
+    }
+
     return Array.from(this.cache.values()).map(c => ({
       ...c,
       apiKey: decrypt ? c.apiKey : '***',
@@ -43,13 +56,13 @@ export class BrokerConfigService implements OnModuleInit {
   }
 
   // 获取完整配置（含密钥，仅内部使用）
-  getConfig(brokerId: string, decrypt = false): BrokerConfig | undefined {
-    const configs = this.getAllConfigs(decrypt);
+  async getConfig(brokerId: string, decrypt = false): Promise<BrokerConfig | undefined> {
+    const configs = await this.getAllConfigs(decrypt);
     return configs.find(c => c.id === brokerId);
   }
 
-  getConfigByType(brokerType: BrokerType, decrypt = false): BrokerConfig[] {
-    const configs = this.getAllConfigs(decrypt);
+  async getConfigByType(brokerType: BrokerType, decrypt = false): Promise<BrokerConfig[]> {
+    const configs = await this.getAllConfigs(decrypt);
     return configs.filter(c => c.brokerType === brokerType);
   }
 
@@ -59,7 +72,6 @@ export class BrokerConfigService implements OnModuleInit {
     brokerType: BrokerType;
     apiKey: string;
     apiSecret: string;
-    settings?: Record<string, any>;
   }) {
     const broker = await this.prisma.broker.create({
       data: {
@@ -67,7 +79,6 @@ export class BrokerConfigService implements OnModuleInit {
         brokerType: data.brokerType,
         apiKey: encrypt(data.apiKey),
         apiSecret: encrypt(data.apiSecret),
-        settings: data.settings || {},
       },
     });
     await this.refreshCache();
