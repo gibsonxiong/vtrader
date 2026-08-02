@@ -10,7 +10,7 @@ export class BrokerConfigController {
   // 获取列表（不返回密钥）
   @Post('list')
   async list() {
-    const configs = this.configService.getAllConfigs();
+    const configs = await this.configService.getAllConfigs();
     return response(configs);
   }
 
