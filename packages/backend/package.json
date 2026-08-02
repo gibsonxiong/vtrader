@@ -21,6 +21,9 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
+    "@bull-board/api": "^8.5.0",
+    "@bull-board/express": "^8.5.0",
+    "@bull-board/nestjs": "^8.5.0",
     "@nestjs/bullmq": "^11.0.4",
     "@nestjs/common": "^11.1.3",
     "@nestjs/config": "^4.0.2",
@@ -35,7 +38,7 @@
     "apache-arrow": "^14.0.2",
     "axios": "catalog:",
     "bignumber.js": "^9.3.1",
-    "bullmq": "^5.66.0",
+    "bullmq": "^5.81.3",
     "cookie-parser": "^1.4.7",
     "dayjs": "catalog:",
     "http-proxy-agent": "^7.0.2",
