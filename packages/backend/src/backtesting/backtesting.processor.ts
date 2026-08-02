@@ -15,7 +15,7 @@ import path from 'path';
 const prisma = new PrismaService();
 const brokerConfigService = new BrokerConfigService(prisma);
 const brokerManagerService = new BrokerManagerService(brokerConfigService);
-const marketDataService = new MarketDataService(brokerManagerService, brokerConfigService);
+const marketDataService = new MarketDataService(brokerManagerService, brokerConfigService, undefined);
 const strategyService = new StrategyService();
 const connection = {
   host: process.env.REDIS_HOST || 'localhost',

@@ -8,6 +8,8 @@ export { marketDataApi } from './market-data-api';
 export { brokerConfigApi } from './broker-config-api';
 export { strategyApi } from './strategy-api';
 
+// 导出 API 类型
+export type { DownloadJobStatus } from './market-data-api';
 
 // 重新导出所有类型（供前端使用）
 export * from '../types/common';

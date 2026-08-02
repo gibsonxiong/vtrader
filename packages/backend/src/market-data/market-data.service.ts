@@ -1,6 +1,8 @@
 import type { BarData, ContractData } from '../types/common';
 
 import { Injectable } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
 import dayjs from 'dayjs';
 import { Interval } from '../types/common';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
@@ -113,6 +115,7 @@ export class MarketDataService {
   constructor(
     private brokerMgr: BrokerManagerService,
     private brokerConfigService: BrokerConfigService,
+    @InjectQueue('market-data-download') private readonly downloadQueue?: Queue,
   ) {}
 
   async getAllContracts(params: GetAllContractsParams): Promise<ContractData[]> {
@@ -211,6 +214,31 @@ export class MarketDataService {
     return { brokerType, symbol, interval };
   }
 
+  /**
+   * 异步下载K线数据（通过队列）
+   */
+  async downloadBarsAsync(params: DownloadParams): Promise<{ jobId: string; message: string }> {
+    if (!this.downloadQueue) {
+      throw new Error('下载队列未初始化');
+    }
+
+    const job = await this.downloadQueue.add('download', params, {
+      attempts: 3,
+      backoff: {
+        type: 'exponential',
+        delay: 2000,
+      },
+    });
+
+    return {
+      jobId: job.id!,
+      message: '下载任务已提交，正在后台处理...',
+    };
+  }
+
+  /**
+   * 同步下载K线数据（直接执行，保留向后兼容）
+   */
   async downloadBars(params: DownloadParams): Promise<number> {
     let { endDate } = params;
     const { brokerType, startDate, interval, symbol } = params;
@@ -274,7 +302,27 @@ export class MarketDataService {
     return totalCount;
   }
 
-  // 批量下载
+  /**
+   * 异步批量下载K线数据（通过队列）
+   */
+  async batchDownloadBarsAsync(params: BatchDownloadBarsParams): Promise<{ jobId: string; message: string }> {
+    if (!this.downloadQueue) {
+      throw new Error('下载队列未初始化');
+    }
+
+    const job = await this.downloadQueue.add('batchDownload', params, {
+      attempts: 1,
+    });
+
+    return {
+      jobId: job.id!,
+      message: '批量下载任务已提交，正在后台处理...',
+    };
+  }
+
+  /**
+   * 同步批量下载K线数据（直接执行，保留向后兼容）
+   */
   async batchDownloadBars(params: BatchDownloadBarsParams): Promise<number> {
     const { brokerType, startDate, endDate, intervals, symbols } = params;
 
@@ -294,5 +342,31 @@ export class MarketDataService {
     }
 
     return allCount;
+  }
+
+  /**
+   * 获取下载任务状态
+   */
+  async getDownloadStatus(jobId: string) {
+    if (!this.downloadQueue) {
+      throw new Error('下载队列未初始化');
+    }
+
+    const job = await this.downloadQueue.getJob(jobId);
+
+    if (!job) {
+      return { status: 'not_found', message: '任务不存在' };
+    }
+
+    const state = await job.getState();
+    const progress = job.progress;
+
+    return {
+      status: state,
+      progress,
+      data: job.data,
+      result: job.returnvalue,
+      failedReason: job.failedReason,
+    };
   }
 }

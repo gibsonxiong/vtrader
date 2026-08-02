@@ -55,26 +55,38 @@ export class MarketDataController {
   }
 
   /**
-   * 下载并入库K线数据
+   * 下载并入库K线数据（异步）
    */
   @Post('download')
   async downloadBars(
     @Body()
     body: DownloadParams,
   ) {
-    const data = await this.marketDataService.downloadBars(body);
+    const data = await this.marketDataService.downloadBarsAsync(body);
     return response(data);
   }
 
   /**
-   * 批量下载并入库K线数据
+   * 获取下载任务状态
+   */
+  @Post('download/status')
+  async getDownloadStatus(
+    @Body()
+    body: { jobId: string },
+  ) {
+    const data = await this.marketDataService.getDownloadStatus(body.jobId);
+    return response(data);
+  }
+
+  /**
+   * 批量下载并入库K线数据（异步）
    */
   @Post('batchDownload')
   async batchDownloadBars(
     @Body()
     body: BatchDownloadBarsParams,
   ) {
-    const data = await this.marketDataService.batchDownloadBars(body);
+    const data = await this.marketDataService.batchDownloadBarsAsync(body);
     return response(data);
   }
 

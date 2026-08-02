@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
-import type { BrokerType, ContractData, Interval } from '@vtrader/backend/api'
+import type { BrokerType, ContractData, Interval, DownloadJobStatus } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import { showToast, showLoadingToast, closeToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
@@ -18,6 +18,10 @@ const endDate = ref('')
 
 // 状态
 const downloading = ref(false)
+const currentJobId = ref<string | null>(null)
+const downloadProgress = ref(0)
+const downloadStatus = ref<string>('')
+const pollTimer = ref<ReturnType<typeof setInterval> | null>(null)
 
 // 合约 Store
 const contractStore = useContractStore()
@@ -105,16 +109,15 @@ function confirmIntervalSelection() {
 }
 
 // 下载数据
-
-
 async function doDownload() {
-    if (!brokerType.value || symbols.value.length === 0 || intervals.value.length === 0 || !startDate.value || !endDate.value) {
+  if (!brokerType.value || symbols.value.length === 0 || intervals.value.length === 0 || !startDate.value || !endDate.value) {
     showToast('请填写完整的下载信息')
     return
   }
 
   downloading.value = true
-  showLoadingToast({ message: '正在下载数据...', duration: 0, forbidClick: true })
+  downloadProgress.value = 0
+  downloadStatus.value = '正在提交任务...'
 
   try {
     const res = await marketDataApi.batchDownload({
@@ -124,19 +127,84 @@ async function doDownload() {
       startDate: startDate.value,
       endDate: endDate.value,
     })
-    closeToast()
-    showToast(`下载任务已提交: ${res.data?.message || '成功'}`)
-    router.push({ name: 'data' })
+
+    const jobId = res.data?.jobId
+    if (!jobId) {
+      throw new Error('未获取到任务ID')
+    }
+
+    currentJobId.value = jobId
+    downloadStatus.value = '任务已提交，等待处理...'
+
+    // 开始轮询进度
+    startPolling(jobId)
   } catch (e: any) {
-    closeToast()
-    showToast(e.message || '下载失败')
-  } finally {
     downloading.value = false
+    downloadStatus.value = ''
+    showToast(e.message || '提交任务失败')
+  }
+}
+
+// 轮询任务进度
+function startPolling(jobId: string) {
+  // 清除之前的定时器
+  if (pollTimer.value) {
+    clearInterval(pollTimer.value)
+  }
+
+  pollTimer.value = setInterval(async () => {
+    try {
+      const res = await marketDataApi.getDownloadStatus(jobId)
+      const status: DownloadJobStatus = res.data!
+
+      downloadProgress.value = status.progress || 0
+
+      if (status.status === 'completed') {
+        // 完成
+        stopPolling()
+        downloading.value = false
+        downloadStatus.value = '下载完成'
+
+        const totalBars = status.result?.totalBars || 0
+        showToast(`下载完成！共 ${totalBars} 条数据`)
+
+        // 延迟跳转
+        setTimeout(() => {
+          router.push({ name: 'data' })
+        }, 1500)
+      } else if (status.status === 'failed') {
+        // 失败
+        stopPolling()
+        downloading.value = false
+        downloadStatus.value = ''
+        showToast(`下载失败: ${status.failedReason || '未知错误'}`)
+      } else if (status.status === 'active') {
+        // 进行中
+        downloadStatus.value = `正在下载... ${status.progress || 0}%`
+      } else if (status.status === 'waiting') {
+        // 等待中
+        downloadStatus.value = '等待处理...'
+      }
+    } catch (e: any) {
+      console.error('轮询失败:', e)
+    }
+  }, 1000) // 每秒轮询一次
+}
+
+// 停止轮询
+function stopPolling() {
+  if (pollTimer.value) {
+    clearInterval(pollTimer.value)
+    pollTimer.value = null
   }
 }
 
 onMounted(() => {
   loadBrokers()
+})
+
+onUnmounted(() => {
+  stopPolling()
 })
 
 // 日期选择器
@@ -243,6 +311,15 @@ function onEndDateConfirm(date: Date) {
       <button class="primary-btn" @click="doDownload" :disabled="downloading">
         {{ downloading ? '下载中...' : '下载数据' }}
       </button>
+
+      <!-- 进度展示 -->
+      <div v-if="downloading || downloadStatus" class="progress-container">
+        <div class="progress-status">{{ downloadStatus }}</div>
+        <div v-if="downloading" class="progress-bar">
+          <div class="progress-fill" :style="{ width: `${downloadProgress}%` }"></div>
+        </div>
+        <div v-if="downloading" class="progress-percent">{{ downloadProgress }}%</div>
+      </div>
     </div>
 
     <!-- BrokerType 选择器 -->
@@ -542,5 +619,39 @@ function onEndDateConfirm(date: Date) {
 .primary-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.progress-container {
+  margin-top: 16px;
+  padding: 12px;
+  background: #fff;
+  border-radius: 8px;
+}
+
+.progress-status {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.progress-bar {
+  height: 8px;
+  background: #f0f0f0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #1677ff, #4096ff);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-percent {
+  font-size: 12px;
+  color: #1677ff;
+  margin-top: 4px;
+  text-align: right;
 }
 </style>
