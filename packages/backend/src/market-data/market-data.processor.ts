@@ -235,8 +235,8 @@ async function batchDownload(job: SandboxedJob<BatchDownloadBarsParams>) {
           endDate: data.endDate,
         },
         {
-          // 确定性 jobId，同批次重试时可去重
-          jobId: `batch-${job.id}-${symbol}-${interval}`,
+          // 确定性 jobId（BullMQ 不允许 `:`，需 sanitize）
+          jobId: `batch-${job.id}-${sanitizeJobId(symbol)}-${sanitizeJobId(interval)}`,
           attempts: 3,
           backoff: { type: 'exponential', delay: 2000 },
         },
@@ -319,6 +319,11 @@ function generateCombinations(
     }
   }
   return combos;
+}
+
+/** BullMQ jobId 不允许包含 `:`，替换为 `_` */
+function sanitizeJobId(str: string): string {
+  return str.replace(/:/g, '_');
 }
 
 /**
