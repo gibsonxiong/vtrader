@@ -17,7 +17,6 @@
   "dependencies": {
     "@vtrader/backend": "workspace:*",
     "ant-design-vue": "catalog:",
-    "antd-mobile-icons": "^0.3.0",
     "antd-mobile-vue-next": "0.1.0-16",
     "axios": "^1.18.0",
     "dayjs": "^1.11.21",
