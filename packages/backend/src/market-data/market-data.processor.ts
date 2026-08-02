@@ -3,13 +3,14 @@
  * 使用 BullMQ 队列异步处理下载任务
  */
 
-import { SandboxedJob } from 'bullmq';
+import { SandboxedJob, Queue, QueueEvents, Job } from 'bullmq';
 import dayjs from 'dayjs';
 import { PrismaService } from 'src/prisma.service';
 import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
 import { BrokerConfigService } from 'src/broker-manager/broker-config.service';
 import { MarketDataService } from './market-data.service';
 import type { DownloadParams, BatchDownloadBarsParams } from '../types/market-data';
+import type { Interval } from '../types/common';
 import {
   writeBars,
   writeBarOverview,
@@ -21,6 +22,13 @@ const brokerConfigService = new BrokerConfigService(prisma);
 const brokerManagerService = new BrokerManagerService(brokerConfigService);
 // 沙盒模式下不使用队列注入，传 undefined
 const marketDataService = new MarketDataService(brokerManagerService, brokerConfigService, undefined);
+
+// Redis 连接配置（与 app.module.ts 中 BullModule.forRoot 保持一致）
+const connection = {
+  host: process.env.REDIS_HOST || 'localhost',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  password: process.env.REDIS_PASSWORD,
+};
 
 /**
  * 计算补集（缺失区间）
@@ -194,102 +202,123 @@ async function download(job: SandboxedJob<DownloadParams>) {
 }
 
 /**
- * 批量下载任务
+ * 批量下载任务（异步并发模式）
+ *
+ * 将每个 symbol × interval 组合拆成独立的 `download` 作业入队，
+ * 利用队列的并发能力（DOWNLOAD_WORKERS）并行执行。
+ * 支持部分成功/失败的结果聚合。
  */
 async function batchDownload(job: SandboxedJob<BatchDownloadBarsParams>) {
   const { data } = job;
-  console.log(`开始处理批量下载任务 ${job.id}`);
+  const combinations = generateCombinations(data.symbols, data.intervals);
+  console.log(
+    `[批量下载 ${job.id}] 开始, ${data.symbols.length} symbols × ${data.intervals.length} intervals = ${combinations.length} 个子任务`,
+  );
+
+  const queueName = 'market-data-download';
+  const queue = new Queue(queueName, { connection });
+  const queueEvents = new QueueEvents(queueName, { connection });
 
   try {
     await job.updateProgress(0);
 
-    // 生成所有 symbol × interval 组合
-    const jobs: { symbol: string; interval: string }[] = [];
-    for (const symbol of data.symbols) {
-      for (const interval of data.intervals) {
-        jobs.push({ symbol, interval });
-      }
+    // 1. 将每个组合作为独立 download 作业入队
+    const subJobs: { job: Job; symbol: string; interval: Interval }[] = [];
+    for (const { symbol, interval } of combinations) {
+      const subJob = await queue.add(
+        'download',
+        {
+          brokerType: data.brokerType,
+          symbol,
+          interval,
+          startDate: data.startDate,
+          endDate: data.endDate,
+        },
+        {
+          // 确定性 jobId，同批次重试时可去重
+          jobId: `batch-${job.id}-${symbol}-${interval}`,
+          attempts: 3,
+          backoff: { type: 'exponential', delay: 2000 },
+        },
+      );
+      subJobs.push({ job: subJob, symbol, interval });
     }
 
-    console.log(`任务 ${job.id}: 共 ${jobs.length} 个下载子任务`);
+    console.log(`[批量下载 ${job.id}] ${subJobs.length} 个子任务已入队，等待执行...`);
 
-    const results: { symbol: string; interval: string; totalBars: number }[] = [];
-    let totalDownloaded = 0;
+    // 2. 并发等待所有子任务完成
+    type SubResult = {
+      symbol: string;
+      interval: string;
+      status: 'success' | 'failed';
+      totalBars: number;
+      error?: string;
+    };
 
-    // 逐个执行（避免并发过高）
-    for (let i = 0; i < jobs.length; i++) {
-      const { symbol, interval } = jobs[i];
+    const results: SubResult[] = [];
+    let completed = 0;
+    const total = subJobs.length;
 
-      // 创建子任务参数
-      const subParams: DownloadParams = {
-        brokerType: data.brokerType,
-        symbol,
-        interval: interval as any,
-        startDate: data.startDate,
-        endDate: data.endDate,
-      };
-
-      // 直接调用下载逻辑
-      const barOverview = await marketDataService.getBarOverview({
-        brokerType: subParams.brokerType,
-        symbol: subParams.symbol,
-        interval: subParams.interval,
-      });
-      const ranges = (barOverview?.ranges || []) as [string, string][];
-      const endDate = subParams.endDate ?? formatDate(dayjs());
-      const missingRanges = calculateComplement(ranges, [subParams.startDate, endDate]);
-
-      let subTotalBars = 0;
-
-      if (missingRanges.length > 0) {
-        for (const [rangeStart, rangeEnd] of missingRanges) {
-          const bars = await marketDataService.getBarsFromBroker({
-            brokerType: subParams.brokerType,
-            startDate: rangeStart,
-            endDate: rangeEnd,
-            interval: subParams.interval,
-            symbol: subParams.symbol,
+    await Promise.all(
+      subJobs.map(async ({ job: subJob, symbol, interval }) => {
+        try {
+          const result = await subJob.waitUntilFinished(queueEvents);
+          results.push({
+            symbol,
+            interval,
+            status: 'success',
+            totalBars: result?.totalBars ?? 0,
           });
-
-          const { count, total } = await writeBars(
-            subParams.brokerType,
-            subParams.symbol,
-            subParams.interval,
-            bars.list,
-          );
-
-          subTotalBars += count;
-
-          // 更新 barOverview
-          const newRanges = calculateUnion(ranges, [subParams.startDate, endDate]);
-          writeBarOverview({
-            version: 1,
-            brokerType: subParams.brokerType,
-            symbol: subParams.symbol,
-            interval: subParams.interval,
-            ranges: newRanges,
-            updatedAt: new Date().toISOString(),
-            count: total,
+        } catch (err: any) {
+          results.push({
+            symbol,
+            interval,
+            status: 'failed',
+            totalBars: 0,
+            error: err.message,
           });
         }
-      }
+        completed++;
+        await job.updateProgress(Math.round((completed / total) * 100));
+      }),
+    );
 
-      totalDownloaded += subTotalBars;
-      results.push({ symbol, interval, totalBars: subTotalBars });
-
-      // 更新总进度
-      const progress = Math.round(((i + 1) / jobs.length) * 100);
-      await job.updateProgress(progress);
-    }
+    // 3. 聚合统计
+    const successResults = results.filter((r) => r.status === 'success');
+    const failedResults = results.filter((r) => r.status === 'failed');
+    const totalBars = successResults.reduce((sum, r) => sum + r.totalBars, 0);
 
     await job.updateProgress(100);
-    console.log(`任务 ${job.id}: 批量下载完成，共 ${totalDownloaded} 条数据`);
+    console.log(
+      `[批量下载 ${job.id}] 完成, 成功 ${successResults.length}/${total}, ` +
+        `失败 ${failedResults.length}/${total}, 共 ${totalBars} 条数据`,
+    );
 
-    return { results, totalBars: totalDownloaded };
-  } catch (error) {
-    console.error(`任务 ${job.id} 执行失败: ${error.message}`, error.stack);
-    throw new Error(`批量下载失败: ${error.message}`);
+    return {
+      results: successResults,
+      errors: failedResults.length > 0 ? failedResults : undefined,
+      totalBars,
+      totalSuccess: successResults.length,
+      totalFailed: failedResults.length,
+    };
+  } finally {
+    await queueEvents.close();
+    await queue.close();
   }
+}
+
+/** 生成 symbol × interval 笛卡尔积 */
+function generateCombinations(
+  symbols: string[],
+  intervals: Interval[],
+): { symbol: string; interval: Interval }[] {
+  const combos: { symbol: string; interval: Interval }[] = [];
+  for (const symbol of symbols) {
+    for (const interval of intervals) {
+      combos.push({ symbol, interval });
+    }
+  }
+  return combos;
 }
 
 /**
