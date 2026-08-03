@@ -108,7 +108,7 @@ export function readBarOverview(brokerName: string, symbol: string, interval: In
     return JSON.parse(raw) as BarOverviewRecord;
   } catch (e) {
     console.error(e);
-    throw new Error('read bar overview file error');
+    throw new Error('read bar overview file error', { cause: e });
   }
 }
 
@@ -143,7 +143,7 @@ export function listBarOverviews(): BarOverviewRecord[] {
         result.push(JSON.parse(raw) as BarOverviewRecord);
       } catch (e) {
         console.error(e);
-        throw new Error('list bar overview files error');
+        throw new Error('list bar overview files error', { cause: e });
       }
     }
   }
@@ -195,7 +195,7 @@ export function readContracts(brokerType: string): ContractData[] {
     return JSON.parse(raw) as ContractData[];
   } catch (e) {
     console.error(e);
-    throw new Error('read contracts file error');
+    throw new Error('read contracts file error', { cause: e });
   }
 }
 
@@ -316,6 +316,6 @@ export async function readBars(
     return result;
   } catch (e) {
     console.error(e);
-    throw new Error('read parquet file error');
+    throw new Error('read parquet file error', { cause: e });
   }
 }
