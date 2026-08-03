@@ -1,11 +1,19 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { BacktestingApi } from '../types/backtesting';
+import type { BacktestingSetting } from '../types/backtesting';
 import type { Response } from 'src/types/common';
 
 import { BacktestingService } from './backtesting.service';
 // import { BacktestingCleanupService } from './backtesting-cleanup.service';
 
 import { response } from 'src/utils';
+import {
+  CreateBacktestingDto,
+  QueryBacktestingDto,
+  QueryManyBacktestingDto,
+  RemoveBacktestingDto,
+  JobStatusDto,
+} from './dto/backtesting.dto';
 
 
 
@@ -20,7 +28,7 @@ export class BacktestingController {
    * 开始回测（异步）
    */
   @Post('create')
-  async create(@Body() request: BacktestingApi.CreateRequest): Promise<Response<{ jobId: string; message: string }>> {
+  async create(@Body() request: CreateBacktestingDto): Promise<Response<{ jobId: string; message: string }>> {
     const result = await this.backtestingService.createBacktesting(request);
 
     return response(result);
@@ -30,7 +38,7 @@ export class BacktestingController {
    * 获取任务状态
    */
   @Post('job/status')
-  async getJobStatus(@Body() body: { jobId: string }): Promise<Response<{
+  async getJobStatus(@Body() body: JobStatusDto): Promise<Response<{
     status: string;
     progress?: unknown;
     data?: unknown;
@@ -45,7 +53,7 @@ export class BacktestingController {
    * 获取回测结果
    */
   @Post('query')
-  async query(@Body() request: BacktestingApi.QueryRequest): Promise<Response<BacktestingApi.QueryResponse>> {
+  async query(@Body() request: QueryBacktestingDto): Promise<Response<BacktestingApi.QueryResponse>> {
     const backtestingResult = await this.backtestingService.getBacktestingResult(request.id);
 
     return response({ model: backtestingResult });
@@ -55,14 +63,14 @@ export class BacktestingController {
    * 获取回测历史列表
    */
   @Post('queryMany')
-  async queryMany(@Body() request: BacktestingApi.QueryManyRequest): Promise<Response<BacktestingApi.QueryManyResponse>> {
-    const { data, total } = await this.backtestingService.getBacktestingResults(request);
+  async queryMany(@Body() request: QueryManyBacktestingDto): Promise<Response<BacktestingApi.QueryManyResponse>> {
+    const { data, total } = await this.backtestingService.getBacktestingResults(request as any);
     return response({ models: data, total });
   }
 
   /** 删除回测历史 */
   @Post('remove')
-  async remove(@Body() request: BacktestingApi.RemoveRequest): Promise<Response<BacktestingApi.RemoveResponse>> {
+  async remove(@Body() request: RemoveBacktestingDto): Promise<Response<BacktestingApi.RemoveResponse>> {
     await this.backtestingService.removeBacktesting(request.id);
     return response();
   }

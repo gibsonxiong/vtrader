@@ -5,7 +5,7 @@ import { ValidationPipe, Logger } from '@nestjs/common';
 import cookieParser from 'cookie-parser';
 
 import { AppModule } from './app.module';
-import { AllExceptionsFilter, LoggingInterceptor } from './common';
+import { AllExceptionsFilter, LoggingInterceptor, ValidationException } from './common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -23,7 +23,13 @@ async function bootstrap() {
     new ValidationPipe({
       transform: true,
       whitelist: true,
-      forbidNonWhitelisted: true,
+      forbidNonWhitelisted: false,
+      exceptionFactory: (errors) => {
+        const messages = errors
+          .map((e) => Object.values(e.constraints ?? {}).join('; '))
+          .join(' | ');
+        return new ValidationException(messages);
+      },
     }),
   );
 

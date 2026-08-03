@@ -39,6 +39,8 @@
     "axios": "catalog:",
     "bignumber.js": "^9.3.1",
     "bullmq": "^5.81.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "cookie-parser": "^1.4.7",
     "dayjs": "catalog:",
     "http-proxy-agent": "^7.0.2",

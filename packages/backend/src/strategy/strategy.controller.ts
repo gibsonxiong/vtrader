@@ -3,6 +3,7 @@ import { Controller, Post, Body } from '@nestjs/common';
 import { StrategyService } from './strategy.service';
 import type { ParamConfig, StrategyParamDTO } from '../types/strategy';
 import { response } from 'src/utils';
+import { StrategyDetailDto } from './dto/strategy.dto';
 
 function toTypeString(t: ParamConfig['type']): string {
   if (t === String) return 'string';
@@ -27,7 +28,7 @@ export class StrategyController {
 
   // POST /strategy/strategy_class/detail
   @Post('strategy_class/detail')
-  async getStrategyParams(@Body() body: { name: string }): Promise<Response<StrategyParamDTO>> {
+  async getStrategyParams(@Body() body: StrategyDetailDto): Promise<Response<StrategyParamDTO>> {
     const strategies = await this.strategyService.getStategieConfigs();
     const s = strategies.find((i) => i.name === body.name);
     if (!s) return response({});

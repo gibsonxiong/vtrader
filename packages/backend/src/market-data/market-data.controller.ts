@@ -4,8 +4,25 @@ import { Post, Body } from '@nestjs/common';
 import { MarketDataService } from './market-data.service';
 import type { Response } from 'src/types/common';
 import type { BarData, ContractData } from '../types/common';
-import type { DownloadParams, GetBarsParams, GetAllContractsParams, SyncContractsParams, BatchDownloadBarsParams, DeleteBarOverviewParams, BarOverviewRecord } from '../types/market-data';
+import type {
+  GetAllContractsParams,
+  SyncContractsParams,
+  GetBarsParams,
+  DownloadParams,
+  BatchDownloadBarsParams,
+  DeleteBarOverviewParams,
+  BarOverviewRecord,
+} from '../types/market-data';
 import { response } from 'src/utils';
+import {
+  GetAllContractsDto,
+  SyncContractsDto,
+  GetBarsDto,
+  DownloadDto,
+  BatchDownloadDto,
+  DeleteBarOverviewDto,
+  JobStatusDto,
+} from './dto/market-data.dto';
 
 @Controller('market-data')
 export class MarketDataController {
@@ -17,9 +34,9 @@ export class MarketDataController {
   @Post('getContracts')
   async getAllContracts(
     @Body()
-    body: GetAllContractsParams
+    body: GetAllContractsDto,
   ): Promise<Response<ContractData[]>> {
-    const data = await this.marketDataService.getAllContracts(body);
+    const data = await this.marketDataService.getAllContracts(body as GetAllContractsParams);
     return response(data);
   }
 
@@ -29,9 +46,9 @@ export class MarketDataController {
   @Post('syncContracts')
   async syncContracts(
     @Body()
-    body: SyncContractsParams
+    body: SyncContractsDto,
   ): Promise<Response<{ count: number }>> {
-    const count = await this.marketDataService.syncContracts(body);
+    const count = await this.marketDataService.syncContracts(body as SyncContractsParams);
     return response({ count });
   }
 
@@ -41,9 +58,9 @@ export class MarketDataController {
   @Post('getBars')
   async getBars(
     @Body()
-    body: GetBarsParams,
+    body: GetBarsDto,
   ): Promise<Response<{ list: BarData[]; total: number }>> {
-    const data = await this.marketDataService.getBars(body);
+    const data = await this.marketDataService.getBars(body as GetBarsParams);
     return response(data);
   }
 
@@ -62,9 +79,9 @@ export class MarketDataController {
   @Post('download')
   async downloadBars(
     @Body()
-    body: DownloadParams,
+    body: DownloadDto,
   ): Promise<Response<{ jobId: string; message: string }>> {
-    const data = await this.marketDataService.downloadBarsAsync(body);
+    const data = await this.marketDataService.downloadBarsAsync(body as DownloadParams);
     return response(data);
   }
 
@@ -74,7 +91,7 @@ export class MarketDataController {
   @Post('download/status')
   async getDownloadStatus(
     @Body()
-    body: { jobId: string },
+    body: JobStatusDto,
   ): Promise<Response<{
     status: string;
     progress?: unknown;
@@ -92,9 +109,9 @@ export class MarketDataController {
   @Post('batchDownload')
   async batchDownloadBars(
     @Body()
-    body: BatchDownloadBarsParams,
+    body: BatchDownloadDto,
   ): Promise<Response<{ jobId: string; message: string }>> {
-    const data = await this.marketDataService.batchDownloadBarsAsync(body);
+    const data = await this.marketDataService.batchDownloadBarsAsync(body as BatchDownloadBarsParams);
     return response(data);
   }
 
@@ -104,9 +121,9 @@ export class MarketDataController {
   @Post('deleteBarOverview')
   async deleteBarOverview(
     @Body()
-    body: DeleteBarOverviewParams,
+    body: DeleteBarOverviewDto,
   ): Promise<Response<DeleteBarOverviewParams>> {
-    const data = await this.marketDataService.deleteBarOverview(body);
+    const data = await this.marketDataService.deleteBarOverview(body as DeleteBarOverviewParams);
     return response(data);
   }
 }
