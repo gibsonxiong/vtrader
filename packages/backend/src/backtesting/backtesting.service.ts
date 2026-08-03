@@ -148,7 +148,7 @@ export class BacktestingService {
     const job = await this.backtestingQueue.getJob(jobId);
     
     if (!job) {
-      return { status: 'not_found', message: '任务不存在' };
+      return { status: 'unkown', failedReason: '任务不存在' };
     }
 
     const state = await job.getState();

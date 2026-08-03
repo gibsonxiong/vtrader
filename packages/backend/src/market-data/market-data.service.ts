@@ -355,7 +355,7 @@ export class MarketDataService {
     const job = await this.downloadQueue.getJob(jobId);
 
     if (!job) {
-      return { status: 'not_found', message: '任务不存在' };
+      return { status: 'unkown', failedReason: '任务不存在' };
     }
 
     const state = await job.getState();

@@ -30,7 +30,12 @@ export class BacktestingController {
    * 获取任务状态
    */
   @Post('job/status')
-  async getJobStatus(@Body() body: { jobId: string }): Promise<Response<any>> {
+  async getJobStatus(@Body() body: { jobId: string }): Promise<Response<{
+    status: string;
+    progress?: unknown;
+    data?: unknown;
+    failedReason?: string;
+  }>> {
     const status = await this.backtestingService.getJobStatus(body.jobId);
 
     return response(status);
