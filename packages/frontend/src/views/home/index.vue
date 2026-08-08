@@ -6,6 +6,7 @@ import type { BrokerConfig, BrokerType } from '@vtrader/backend/api'
 import { showLoadingToast, showToast } from '../../ui/mobile'
 import { useContractStore } from '@/stores/contract'
 import { formatBrokerType } from '@/utils/broker'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 const contractStore = useContractStore()
@@ -147,25 +148,6 @@ function goContracts(brokerType: string) {
   margin-bottom: 16px;
   color: #666;
   text-align: center;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
-
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .cards {

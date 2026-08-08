@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
+import Pagination from '@/components/Pagination.vue'
 interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
 
 const router = useRouter()
@@ -17,16 +18,11 @@ const emit = defineEmits<{
   (e: 'page-change', page: number): void
 }>()
 
+const totalPages = computed(() => Math.ceil(props.total / props.pageSize))
+
 function goDetail(id: number) {
   router.push({ name: 'backtest-detail', params: { id } })
 }
-
-const currentPage = ref(props.page)
-watch(() => props.page, (v) => { currentPage.value = v })
-watch(currentPage, (v) => { emit('page-change', v) })
-
-const totalPages = ref(Math.ceil(props.total / props.pageSize))
-watch(() => props.total, (v) => { totalPages.value = Math.ceil(v / props.pageSize) })
 </script>
 
 <template>
@@ -70,11 +66,12 @@ watch(() => props.total, (v) => { totalPages.value = Math.ceil(v / props.pageSiz
       </div>
     </div>
 
-    <div v-if="total > pageSize" class="pagination">
-      <button class="page-btn" :disabled="currentPage <= 1" @click="currentPage = currentPage - 1">上一页</button>
-      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-      <button class="page-btn" :disabled="currentPage >= totalPages" @click="currentPage = currentPage + 1">下一页</button>
-    </div>
+    <Pagination
+      v-if="total > pageSize"
+      :page="page"
+      :total-pages="totalPages"
+      @page-change="emit('page-change', $event)"
+    />
   </div>
 </template>
 
@@ -144,34 +141,8 @@ watch(() => props.total, (v) => { totalPages.value = Math.ceil(v / props.pageSiz
   color: #bbb;
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 16px 0;
-}
-
-.page-btn {
-  padding: 6px 12px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-btn:active:not(:disabled) {
-  background: #e0e0e0;
-}
-
-.page-info {
-  font-size: 14px;
-  color: #666;
+.cell-value.balance {
+  color: #1677ff;
+  font-weight: 500;
 }
 </style>

@@ -4,6 +4,8 @@ import { showToast } from '@/ui/mobile'
 import { brokerConfigApi } from '@vtrader/backend/api'
 import type { BrokerConfig, BrokerType } from '@vtrader/backend/api'
 import { formatBrokerType } from '@/utils/broker'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import NavBar from '@/components/NavBar.vue'
 
 const brokerTypes: { key: BrokerType; label: string }[] = [
   { key: 'BINANCE_LINEAR', label: formatBrokerType('BINANCE_LINEAR') },
@@ -139,10 +141,11 @@ async function handleDelete() {
 <template>
   <div class="page broker-page">
     <!-- 顶部标题栏 -->
-    <div class="header">
-      <h2>经纪商管理</h2>
-      <button class="add-btn" @click="openCreateForm">+ 新增</button>
-    </div>
+    <NavBar title="经纪商管理">
+      <template #right>
+        <button class="add-btn" @click="openCreateForm">+ 新增</button>
+      </template>
+    </NavBar>
 
     <!-- Tab 栏 -->
     <div class="tabs">
@@ -173,9 +176,7 @@ async function handleDelete() {
       </div>
     </div>
 
-    <div v-else class="loading-container">
-      <div class="loading-spinner"></div>
-    </div>
+    <LoadingSpinner v-else />
 
     <!-- 新增/编辑 Popup -->
     <m-popup
@@ -266,19 +267,6 @@ async function handleDelete() {
 .broker-page {
   min-height: 100vh;
   background: #f5f5f5;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  background: #fff;
-}
-
-.header h2 {
-  font-size: 18px;
-  margin: 0;
 }
 
 .add-btn {
@@ -386,25 +374,6 @@ async function handleDelete() {
 
 .delete-btn:active {
   background: #fef2f2;
-}
-
-.loading-container {
-  display: flex;
-  justify-content: center;
-  padding: 40px 0;
-}
-
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .form-container {

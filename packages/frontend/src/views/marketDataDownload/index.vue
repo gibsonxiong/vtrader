@@ -6,6 +6,8 @@ import type { BrokerType, ContractData, Interval, DownloadJobStatus } from '@vtr
 import { useContractStore } from '@/stores/contract'
 import { showToast, showLoadingToast, closeToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
+import NavBar from '@/components/NavBar.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 
@@ -237,13 +239,7 @@ function onEndDateConfirm(date: Date) {
 
 <template>
   <div class="download-page">
-    <div class="nav-bar">
-      <button class="nav-back" @click="router.back()">
-        <i class="iconfont icon-left"></i>
-      </button>
-      <span class="nav-title">下载市场数据</span>
-      <span class="nav-right"></span>
-    </div>
+    <NavBar title="数据下载" />
 
     <div class="form-container">
       <!-- BrokerType 选择 -->
@@ -332,9 +328,7 @@ function onEndDateConfirm(date: Date) {
       @cancel="showBrokerPicker = false"
     >
       <div class="broker-picker">
-        <div v-if="loadingBrokers" class="loading-container">
-          <div class="loading-spinner"></div>
-        </div>
+        <LoadingSpinner v-if="loadingBrokers" />
         <div v-else>
           <div
             v-for="broker in brokerOptions"
@@ -358,9 +352,7 @@ function onEndDateConfirm(date: Date) {
       @cancel="showContractPicker = false"
     >
       <div class="contract-picker">
-        <div v-if="loadingContracts" class="loading-container">
-          <div class="loading-spinner"></div>
-        </div>
+        <LoadingSpinner v-if="loadingContracts" />
         <div v-else-if="contracts.length === 0" class="empty-text">
           请先选择 BrokerType
         </div>
@@ -434,34 +426,6 @@ function onEndDateConfirm(date: Date) {
 .download-page {
   min-height: 100vh;
   background: #f5f5f5;
-}
-
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-}
-
-.nav-back {
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: #1677ff;
-  cursor: pointer;
-  padding: 0;
-}
-
-.nav-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.nav-right {
-  width: 50px;
 }
 
 .form-container {
@@ -562,28 +526,6 @@ function onEndDateConfirm(date: Date) {
 .contract-option .iconfont {
   color: #1677ff;
   font-size: 20px;
-}
-
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  gap: 8px;
-  color: #999;
-}
-
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .broker-picker {

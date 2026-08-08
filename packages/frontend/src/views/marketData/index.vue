@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { marketDataApi } from '@vtrader/backend/api'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 
@@ -73,10 +74,7 @@ function formatDateRange(ranges: [string, string][] | undefined): string {
       </button>
     </div>
 
-    <div v-if="loadingOverviews" class="loading-container">
-      <div class="loading-spinner"></div>
-      <span>加载中...</span>
-    </div>
+    <LoadingSpinner v-if="loadingOverviews" />
 
     <div v-else-if="Object.keys(fileOverviewsByBroker).length === 0" class="empty-text">
       暂无概览数据
@@ -144,28 +142,6 @@ function formatDateRange(ranges: [string, string][] | undefined): string {
 
 .download-btn:active {
   background: #0958d9;
-}
-
-.loading-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  gap: 8px;
-  color: #999;
-}
-
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 .empty-text {

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
+import Pagination from '@/components/Pagination.vue'
 interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
 
 const props = defineProps<{
@@ -53,11 +54,11 @@ function onPageChange(page: number) {
         </span>
       </div>
     </div>
-    <div v-if="totalPages > 1" class="pagination">
-      <button class="page-btn" :disabled="currentPage <= 1" @click="onPageChange(currentPage - 1)">上一页</button>
-      <span class="page-info">{{ currentPage }} / {{ totalPages }}</span>
-      <button class="page-btn" :disabled="currentPage >= totalPages" @click="onPageChange(currentPage + 1)">下一页</button>
-    </div>
+    <Pagination
+      :page="currentPage"
+      :total-pages="totalPages"
+      @page-change="onPageChange"
+    />
   </div>
 </template>
 
@@ -183,36 +184,5 @@ function onPageChange(page: number) {
 .trade-item .trade-value {
   flex: 1;
   text-align: right;
-}
-
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.page-btn {
-  padding: 6px 12px;
-  background: #f5f5f5;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-btn:active:not(:disabled) {
-  background: #e0e0e0;
-}
-
-.page-info {
-  font-size: 14px;
-  color: #666;
 }
 </style>

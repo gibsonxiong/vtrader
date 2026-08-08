@@ -4,10 +4,12 @@ import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { backtestingApi, marketDataApi } from '@vtrader/backend/api'
+import NavBar from '@/components/NavBar.vue'
 import type { BarData, Backtesting, Interval } from '@vtrader/backend/api'
 import EquityCurve from './components/EquityCurve.vue'
 import TradeList from './components/TradeList.vue'
 import KLineChart from './components/KLineChart.vue'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
 interface EquityCurvePoint { time: string; equity: number; returnRate: number }
@@ -118,18 +120,9 @@ function formatPercent(val: number): string {
 
 <template>
   <div class="page detail-page">
-    <div class="nav-bar">
-      <button class="nav-back" @click="router.back()">
-        <i class="iconfont icon-left"></i>
-      </button>
-      <span class="nav-title">回测详情</span>
-      <span class="nav-right"></span>
-    </div>
+    <NavBar title="回测详情" />
 
-    <div v-if="loading" class="loading">
-      <div class="loading-spinner"></div>
-      <span>加载详情中...</span>
-    </div>
+    <LoadingSpinner v-if="loading" />
 
     <template v-if="detail">
       <div class="section">
@@ -233,54 +226,8 @@ function formatPercent(val: number): string {
   background: #f5f5f5;
 }
 
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-}
-
-.nav-back {
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: #1677ff;
-  cursor: pointer;
-  padding: 0;
-}
-
-.nav-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-}
-
-.nav-right {
-  width: 50px;
-}
-
-.loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 80px 0;
-  gap: 8px;
-  color: #999;
-}
-
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.detail-page {
+  padding-bottom: 20px;
 }
 
 .section {

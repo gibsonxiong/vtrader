@@ -6,6 +6,7 @@ import { strategyApi, brokerConfigApi, backtestingApi } from '@vtrader/backend/a
 import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import StrategyParams from './components/StrategyParams.vue'
+import NavBar from '@/components/NavBar.vue'
 
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -302,13 +303,7 @@ function getIntervalLabel() {
 
 <template>
   <div class="page">
-    <div class="nav-bar">
-      <button class="nav-back" @click="router.back()">
-        <i class="iconfont icon-left"></i>
-      </button>
-      <span class="nav-title">新建回测</span>
-      <span class="nav-right"></span>
-    </div>
+    <NavBar title="新建回测" />
 
     <div class="form-container">
       <div class="card">
@@ -439,33 +434,6 @@ function getIntervalLabel() {
 .page {
   min-height: 100vh;
   background: #f5f5f5;
-}
-
-.nav-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-}
-
-.nav-back {
-  background: none;
-  border: none;
-  font-size: 14px;
-  color: #1677ff;
-  cursor: pointer;
-  padding: 0;
-}
-
-.nav-title {
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.nav-right {
-  width: 40px;
 }
 
 .form-container {

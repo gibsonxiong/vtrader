@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { onMounted, computed, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useContractStore } from '@/stores/contract'
 import { showToast, showLoadingToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
+import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import NavBar from '@/components/NavBar.vue'
 import type { BrokerType } from '@vtrader/backend/api'
 
 const route = useRoute()
-const router = useRouter()
 const contractStore = useContractStore()
 
 const brokerType = computed(() => route.query.brokerType as BrokerType)
@@ -83,25 +84,19 @@ async function handleSync() {
   }
 }
 
-function goBack() {
-  router.back()
-}
-
 onMounted(loadContracts)
 </script>
 
 <template>
   <div class="page contracts-page">
     <!-- 顶部导航 -->
-    <div class="header">
-      <button class="back-btn" @click="goBack">
-        <i class="iconfont icon-left"></i>
-      </button>
-      <span class="title">{{ formatBrokerType(brokerType) }}</span>
-      <button class="sync-btn" @click="handleSync" :disabled="contractStore.loading">
-        同步
-      </button>
-    </div>
+    <NavBar :title="formatBrokerType(brokerType)">
+      <template #right>
+        <button class="sync-btn" @click="handleSync" :disabled="contractStore.loading">
+          同步
+        </button>
+      </template>
+    </NavBar>
 
     <!-- 搜索框 -->
     <div class="search-bar">
@@ -157,10 +152,7 @@ onMounted(loadContracts)
     </div>
 
     <!-- 加载中 -->
-    <div class="loading-state" v-else>
-      <div class="loading-spinner"></div>
-      <span>加载中...</span>
-    </div>
+    <LoadingSpinner v-else />
   </div>
 </template>
 
@@ -169,41 +161,6 @@ onMounted(loadContracts)
   min-height: 100vh;
   background: #f5f5f5;
   padding-bottom: 20px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: #fff;
-  border-bottom: 1px solid #eee;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-}
-
-.back-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #333;
-  border-radius: 8px;
-}
-
-.back-btn:active {
-  background: #f0f0f0;
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #222;
 }
 
 .sync-btn {
@@ -350,27 +307,5 @@ onMounted(loadContracts)
   font-size: 14px;
 }
 
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 60px 20px;
-  color: #999;
-  font-size: 14px;
-}
 
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid #eee;
-  border-top-color: #1677ff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
 </style>
