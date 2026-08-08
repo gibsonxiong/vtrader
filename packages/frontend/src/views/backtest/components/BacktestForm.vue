@@ -4,6 +4,7 @@ import { showToast } from '@/ui/mobile'
 import { strategyApi, brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
 import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
+import StrategyParams from './StrategyParams.vue'
 
 interface StrategyParamMeta { label: string; default: number; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -108,6 +109,9 @@ const intervalData = intervals.map(i => ({ label: i.text, value: i.value }))
 // 日期选择器
 const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
+
+// 策略参数弹窗
+const showParamsPopup = ref(false)
 
 // 将 Date 对象转换为 YYYY-MM-DD 字符串
 function formatDateValue(date: Date): string {
@@ -263,6 +267,12 @@ function handleSubmit() {
     showToast('请选择结束日期')
     return
   }
+  // 显示策略参数弹窗
+  showParamsPopup.value = true
+}
+
+function handleParamsConfirm(params: Record<string, number>) {
+  form.params = params
   emit('submit', { ...form })
   visible.value = false
 }
@@ -291,20 +301,6 @@ function getIntervalLabel() {
             <i class="iconfont icon-right"></i>
           </div>
         </div>
-
-        <!-- Dynamic strategy params -->
-        <template v-if="currentStrategyMeta">
-          <div v-for="(meta, key) in currentStrategyMeta.params" :key="key" class="form-item">
-            <div class="form-label">{{ meta.label }}</div>
-            <input
-              type="number"
-              class="form-input"
-              :value="form.params[key]"
-              :placeholder="'请输入' + meta.label"
-              @input="form.params[key] = Number(($event.target as HTMLInputElement).value)"
-            />
-          </div>
-        </template>
 
         <!-- 交易对 -->
         <div class="form-item" @click="showSymbolPicker = true">
@@ -410,6 +406,14 @@ function getIntervalLabel() {
       <button class="footer-btn" @click="handleSubmit">开始回测</button>
     </template>
   </m-popup>
+
+  <!-- 策略参数配置弹窗 -->
+  <StrategyParams
+    v-model:visible="showParamsPopup"
+    :strategy-meta="currentStrategyMeta"
+    :params="form.params"
+    @confirm="handleParamsConfirm"
+  />
 </template>
 
 <style scoped>

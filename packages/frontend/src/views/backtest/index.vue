@@ -14,9 +14,9 @@ async function waitBacktestFinished(jobId: string) {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await backtestingApi.jobStatus({ jobId })
     const status = res.data?.status
-    const resultId = res.data?.result?.id
+    const resultId = res.data?.data?.resultId
     if (status === 'completed' && resultId) return resultId
-    if (status === 'failed') throw new Error(res.data?.error || '回测执行失败')
+    if (status === 'failed') throw new Error(res.data?.failedReason || '回测执行失败')
     await new Promise((resolve) => window.setTimeout(resolve, 1000))
   }
   throw new Error('回测执行超时，请稍后在列表查看结果')
