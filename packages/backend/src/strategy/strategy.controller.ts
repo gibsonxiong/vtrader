@@ -9,9 +9,6 @@ function toTypeString(t: ParamConfig['type']): string {
   if (t === String) return 'string';
   if (t === Number) return 'number';
   if (t === Boolean) return 'boolean';
-  if (t === Array) return 'array';
-  if (t === Object) return 'object';
-  if (t === Function) return 'function';
   return 'unknown';
 }
 

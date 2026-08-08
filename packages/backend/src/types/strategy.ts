@@ -43,10 +43,7 @@ export interface ParamConfig {
   type:
     | StringConstructor
     | NumberConstructor
-    | BooleanConstructor
-    | FunctionConstructor
-    | ObjectConstructor
-    | ArrayConstructor;
+    | BooleanConstructor;
   default?: any;
 }
 
