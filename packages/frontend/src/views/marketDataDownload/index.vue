@@ -11,6 +11,9 @@ import { formatBrokerType } from '@/utils/broker'
 import NavBar from '@/components/NavBar.vue'
 import PickerInput from '@/components/PickerInput.vue'
 import DatePickerInput from '@/components/DatePickerInput.vue'
+import Button from '@/components/Button.vue'
+import CellGroup from '@/components/CellGroup.vue'
+import Cell from '@/components/Cell.vue'
 
 const router = useRouter()
 
@@ -188,54 +191,51 @@ onUnmounted(() => {
     <NavBar title="数据下载" />
 
     <div class="form-container">
-      <!-- BrokerType 选择 -->
-      <div class="form-item">
-        <div class="form-label">BrokerType</div>
-        <PickerInput v-model="brokerType" :data="brokerOptions" title="选择 BrokerType" placeholder="请选择 BrokerType" />
-      </div>
+      <CellGroup bordered>
+        <!-- BrokerType 选择 -->
+        <Cell title="BrokerType">
+          <PickerInput v-model="brokerType" :data="brokerOptions" title="选择 BrokerType" placeholder="请选择 BrokerType" />
+        </Cell>
 
-      <!-- 交易对选择 -->
-      <div class="form-item">
-        <div class="form-label">交易对</div>
-        <PickerInput
-          v-model="symbols"
-          :data="contractData"
-          title="选择交易对"
-          placeholder="请选择交易对"
-          :multiple="true"
-          :loading="loadingContracts"
-          emptyText="请先选择 BrokerType"
-        />
-      </div>
+        <!-- 交易对选择 -->
+        <Cell title="交易对">
+          <PickerInput
+            v-model="symbols"
+            :data="contractData"
+            title="选择交易对"
+            placeholder="请选择交易对"
+            :multiple="true"
+            :loading="loadingContracts"
+            emptyText="请先选择 BrokerType"
+          />
+        </Cell>
 
-      <!-- 时间周期选择 -->
-      <div class="form-item">
-        <div class="form-label">时间周期</div>
-        <PickerInput
-          v-model="intervals"
-          :data="intervalOptions"
-          title="选择时间周期"
-          placeholder="请选择时间周期"
-          :multiple="true"
-        />
-      </div>
+        <!-- 时间周期选择 -->
+        <Cell title="时间周期">
+          <PickerInput
+            v-model="intervals"
+            :data="intervalOptions"
+            title="选择时间周期"
+            placeholder="请选择时间周期"
+            :multiple="true"
+          />
+        </Cell>
 
-      <!-- 开始日期 -->
-      <div class="form-item">
-        <div class="form-label">开始日期</div>
-        <DatePickerInput v-model="startDate" title="选择开始日期" placeholder="选择开始日期" />
-      </div>
+        <!-- 开始日期 -->
+        <Cell title="开始日期">
+          <DatePickerInput v-model="startDate" title="选择开始日期" placeholder="选择开始日期" />
+        </Cell>
 
-      <!-- 结束日期 -->
-      <div class="form-item">
-        <div class="form-label">结束日期</div>
-        <DatePickerInput v-model="endDate" title="选择结束日期" placeholder="选择结束日期" />
-      </div>
+        <!-- 结束日期 -->
+        <Cell title="结束日期">
+          <DatePickerInput v-model="endDate" title="选择结束日期" placeholder="选择结束日期" />
+        </Cell>
+      </CellGroup>
 
       <!-- 下载按钮 -->
-      <button class="primary-btn" @click="doDownload" :disabled="downloading">
+      <Button :loading="downloading" :mt="8" @click="doDownload">
         {{ downloading ? '下载中...' : '下载数据' }}
-      </button>
+      </Button>
 
       <!-- 进度展示 -->
       <div v-if="downloading || downloadStatus" class="progress-container">
@@ -259,23 +259,6 @@ onUnmounted(() => {
 .form-container {
   background: #fff;
   padding: 16px;
-}
-
-.primary-btn {
-  width: 100%;
-  height: 40px;
-  background: #1677ff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 15px;
-  cursor: pointer;
-  margin-top: 8px;
-}
-
-.primary-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
 }
 
 .progress-container {

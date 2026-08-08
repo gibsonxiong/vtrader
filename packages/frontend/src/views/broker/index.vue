@@ -9,6 +9,9 @@ import NavBar from '@/components/NavBar.vue'
 import Input from '@/components/Input.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
 import PickerInput from '@/components/PickerInput.vue'
+import Button from '@/components/Button.vue'
+import CellGroup from '@/components/CellGroup.vue'
+import Cell from '@/components/Cell.vue'
 
 const brokerTypes: { key: BrokerType; label: string }[] = [
   { key: 'BINANCE_LINEAR', label: formatBrokerType('BINANCE_LINEAR') },
@@ -181,42 +184,40 @@ async function handleDelete() {
     >
       <div class="form-container">
         <form @submit.prevent="handleFormSubmit">
-          <div class="form-item">
-            <div class="form-label">经纪商名称</div>
-            <Input
-              v-model="formName"
-              placeholder="请输入经纪商名称"
-            />
-          </div>
-
-          <!-- 新增模式：显示类型、API Key、API Secret -->
-          <template v-if="!isEdit">
-            <div class="form-item">
-              <div class="form-label">经纪商类型</div>
-              <PickerInput v-model="formBrokerType" :data="typeOptions" title="选择经纪商类型" placeholder="请选择经纪商类型" />
-            </div>
-
-            <div class="form-item">
-              <div class="form-label">API Key</div>
+          <CellGroup bordered>
+            <Cell title="经纪商名称">
               <Input
-                v-model="formApiKey"
-                placeholder="请输入 API Key"
+                v-model="formName"
+                placeholder="请输入经纪商名称"
               />
-            </div>
+            </Cell>
 
-            <div class="form-item">
-              <div class="form-label">API Secret</div>
-              <PasswordInput
-                v-model="formApiSecret"
-                placeholder="请输入 API Secret"
-              />
-            </div>
-          </template>
+            <!-- 新增模式：显示类型、API Key、API Secret -->
+            <template v-if="!isEdit">
+              <Cell title="经纪商类型">
+                <PickerInput v-model="formBrokerType" :data="typeOptions" title="选择经纪商类型" placeholder="请选择经纪商类型" />
+              </Cell>
+
+              <Cell title="API Key">
+                <Input
+                  v-model="formApiKey"
+                  placeholder="请输入 API Key"
+                />
+              </Cell>
+
+              <Cell title="API Secret">
+                <PasswordInput
+                  v-model="formApiSecret"
+                  placeholder="请输入 API Secret"
+                />
+              </Cell>
+            </template>
+          </CellGroup>
 
         </form>
       </div>
       <template #footer>
-        <button class="footer-btn" @click="handleFormSubmit">{{ isEdit ? '保存' : '添加' }}</button>
+        <Button @click="handleFormSubmit">{{ isEdit ? '更新' : '保存' }}</Button>
       </template>
     </m-popup>
 
@@ -356,20 +357,5 @@ async function handleDelete() {
 
 .form-actions {
   padding: 20px 0 0;
-}
-
-.primary-btn {
-  width: 100%;
-  height: 40px;
-  background: #1677ff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 15px;
-  cursor: pointer;
-}
-
-.primary-btn:active {
-  background: #0958d9;
 }
 </style>

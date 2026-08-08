@@ -3,6 +3,8 @@ import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import Pagination from '@/components/Pagination.vue'
+import CellGroup from '@/components/CellGroup.vue'
+import Cell from '@/components/Cell.vue'
 interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
 
 const router = useRouter()
@@ -45,20 +47,11 @@ function goDetail(id: number) {
           <m-tag color="primary" fill="outline">{{ record.symbol }}</m-tag>
         </div>
 
-        <div class="cell-group">
-          <div class="cell">
-            <span class="cell-title">日期范围</span>
-            <span class="cell-value">{{ dayjs(record.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(record.endDate).format('YYYY-MM-DD') }}</span>
-          </div>
-          <div class="cell">
-            <span class="cell-title">初始资金</span>
-            <span class="cell-value">{{ record.initialCapital.toLocaleString() + ' USDT' }}</span>
-          </div>
-          <div class="cell">
-            <span class="cell-title">最终资金</span>
-            <span class="cell-value">{{ record.finalCapital.toLocaleString() + ' USDT' }}</span>
-          </div>
-        </div>
+        <CellGroup>
+          <Cell title="日期范围">{{ dayjs(record.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(record.endDate).format('YYYY-MM-DD') }}</Cell>
+          <Cell title="初始资金">{{ record.initialCapital.toLocaleString() + ' USDT' }}</Cell>
+          <Cell title="最终资金">{{ record.finalCapital.toLocaleString() + ' USDT' }}</Cell>
+        </CellGroup>
 
         <div class="card-footer">
           <span class="date">{{ dayjs(record.createdAt).format('YYYY-MM-DD HH:mm:ss') }}</span>
@@ -113,25 +106,6 @@ function goDetail(id: number) {
   color: #333;
 }
 
-.cell-group {
-  padding: 8px 16px;
-}
-
-.cell {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 14px;
-}
-
-.cell-title {
-  color: #666;
-}
-
-.cell-value {
-  color: #333;
-}
-
 .card-footer {
   padding: 0px 16px 10px;
 }
@@ -139,10 +113,5 @@ function goDetail(id: number) {
 .card-footer .date {
   font-size: 12px;
   color: #bbb;
-}
-
-.cell-value.balance {
-  color: #1677ff;
-  font-weight: 500;
 }
 </style>

@@ -12,6 +12,9 @@ import NavBar from '@/components/NavBar.vue'
 import NumberInput from '@/components/NumberInput.vue'
 import PickerInput from '@/components/PickerInput.vue'
 import DatePickerInput from '@/components/DatePickerInput.vue'
+import Button from '@/components/Button.vue'
+import CellGroup from '@/components/CellGroup.vue'
+import Cell from '@/components/Cell.vue'
 
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -255,48 +258,44 @@ async function handleParamsConfirm(params: Record<string, any>) {
     <NavBar title="新建回测" />
 
     <div class="form-container">
-        <!-- 策略 -->
-        <div class="form-item">
-          <div class="form-label">策略</div>
-          <PickerInput v-model="form.strategy" :data="strategyData" title="选择策略" placeholder="请选择策略" />
-        </div>
+        <CellGroup bordered>
+          <!-- 策略 -->
+          <Cell title="策略">
+            <PickerInput v-model="form.strategy" :data="strategyData" title="选择策略" placeholder="请选择策略" />
+          </Cell>
 
-        <!-- 交易对 -->
-        <div class="form-item">
-          <div class="form-label">交易对</div>
-          <PickerInput v-model="form.symbol" :data="symbolData" title="选择交易对" placeholder="请选择交易对" />
-        </div>
+          <!-- 交易对 -->
+          <Cell title="交易对">
+            <PickerInput v-model="form.symbol" :data="symbolData" title="选择交易对" placeholder="请选择交易对" />
+          </Cell>
 
-        <!-- 周期 -->
-        <div class="form-item">
-          <div class="form-label">周期</div>
-          <PickerInput v-model="form.interval" :data="intervalData" title="选择周期" placeholder="请选择周期" />
-        </div>
+          <!-- 周期 -->
+          <Cell title="周期">
+            <PickerInput v-model="form.interval" :data="intervalData" title="选择周期" placeholder="请选择周期" />
+          </Cell>
 
-        <!-- 开始日期 -->
-        <div class="form-item">
-          <div class="form-label">开始日期</div>
-          <DatePickerInput v-model="form.startDate" title="选择开始日期" placeholder="请选择开始日期" />
-        </div>
+          <!-- 开始日期 -->
+          <Cell title="开始日期">
+            <DatePickerInput v-model="form.startDate" title="选择开始日期" placeholder="请选择开始日期" />
+          </Cell>
 
-        <!-- 结束日期 -->
-        <div class="form-item">
-          <div class="form-label">结束日期</div>
-          <DatePickerInput v-model="form.endDate" title="选择结束日期" placeholder="请选择结束日期" />
-        </div>
+          <!-- 结束日期 -->
+          <Cell title="结束日期">
+            <DatePickerInput v-model="form.endDate" title="选择结束日期" placeholder="请选择结束日期" />
+          </Cell>
 
-        <!-- 初始资金 -->
-        <div class="form-item">
-          <div class="form-label">初始资金 (USDT)</div>
-          <NumberInput
-            v-model="form.initialCapital"
-            placeholder="请输入初始资金"
-          />
-        </div>
+          <!-- 初始资金 -->
+          <Cell title="初始资金 (USDT)">
+            <NumberInput
+              v-model="form.initialCapital"
+              placeholder="请输入初始资金"
+            />
+          </Cell>
+        </CellGroup>
 
-      <button class="submit-btn" :disabled="submitting" @click="handleSubmit">
+      <Button :loading="submitting" :mt="24" @click="handleSubmit">
         {{ submitting ? '创建中...' : '开始回测' }}
-      </button>
+      </Button>
     </div>
 
     <!-- 策略参数配置弹窗 -->
@@ -319,44 +318,4 @@ async function handleParamsConfirm(params: Record<string, any>) {
   background: #fff;
 }
 
-.form-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  border-bottom: 1px solid #f5f5f5;
-  cursor: pointer;
-}
-
-.form-item:last-child {
-  border-bottom: none;
-}
-
-.form-label {
-  font-size: 14px;
-  color: #333;
-  width: 100px;
-  flex-shrink: 0;
-}
-
-.submit-btn {
-  width: 100%;
-  margin-top: 24px;
-  padding: 12px;
-  background: #1677ff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.submit-btn:active {
-  background: #0958d9;
-}
-
-.submit-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
 </style>

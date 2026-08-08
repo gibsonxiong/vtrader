@@ -2,6 +2,8 @@
 import { reactive, ref, watch } from 'vue'
 import Input from '@/components/Input.vue'
 import NumberInput from '@/components/NumberInput.vue'
+import CellGroup from '@/components/CellGroup.vue'
+import Cell from '@/components/Cell.vue'
 
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -94,34 +96,33 @@ function handleConfirm() {
         </div>
         <div class="form-container">
           <template v-if="strategyMeta">
-            <template v-for="(meta, key) in strategyMeta.params" :key="key">
-              <!-- number -->
-              <div v-if="isNumber(key)" class="form-item">
-                <div class="form-label">{{ meta.label }}</div>
-                <NumberInput
-                  v-model="localParams[key]"
-                  :placeholder="'请输入' + meta.label"
-                />
-              </div>
+            <CellGroup bordered>
+              <template v-for="(meta, key) in strategyMeta.params" :key="key">
+                <!-- number -->
+                <Cell v-if="isNumber(key)" :title="meta.label">
+                  <NumberInput
+                    v-model="localParams[key]"
+                    :placeholder="'请输入' + meta.label"
+                  />
+                </Cell>
 
-              <!-- string -->
-              <div v-else-if="!isBoolean(key)" class="form-item">
-                <div class="form-label">{{ meta.label }}</div>
-                <Input
-                  v-model="localParams[key]"
-                  :placeholder="'请输入' + meta.label"
-                />
-              </div>
+                <!-- string -->
+                <Cell v-else-if="!isBoolean(key)" :title="meta.label">
+                  <Input
+                    v-model="localParams[key]"
+                    :placeholder="'请输入' + meta.label"
+                  />
+                </Cell>
 
-              <!-- boolean -->
-              <div v-else class="form-item">
-                <div class="form-label">{{ meta.label }}</div>
-                  <label class="switch">
-                    <input type="checkbox" v-model="localParams[key]" />
-                    <span class="switch-slider"></span>
-                  </label>
-              </div>
-            </template>
+                <!-- boolean -->
+                <Cell v-else :title="meta.label">
+                    <label class="switch">
+                      <input type="checkbox" v-model="localParams[key]" />
+                      <span class="switch-slider"></span>
+                    </label>
+                </Cell>
+              </template>
+            </CellGroup>
           </template>
         </div>
         <div class="modal-footer">
@@ -184,21 +185,6 @@ function handleConfirm() {
   overflow-y: auto;
   flex: 1;
   padding: 0;
-}
-.form-item {
-  display: flex;
-  align-items: center;
-  padding: 10px 0;
-  border-bottom: 1px solid #f5f5f5;
-}
-.form-item:last-child {
-  border-bottom: none;
-}
-.form-label {
-  font-size: 14px;
-  color: #333;
-  width: 100px;
-  flex-shrink: 0;
 }
 .form-control {
   flex: 1;

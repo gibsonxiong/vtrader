@@ -10,6 +10,8 @@ import EquityCurve from './components/EquityCurve.vue'
 import TradeList from './components/TradeList.vue'
 import KLineChart from './components/KLineChart.vue'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import CellGroup from '@/components/CellGroup.vue'
+import Cell from '@/components/Cell.vue'
 
 interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
 interface EquityCurvePoint { time: string; equity: number; returnRate: number }
@@ -132,20 +134,11 @@ function formatPercent(val: number): string {
             <m-tag color="primary" fill="outline">{{ detail.symbol }}</m-tag>
           </div>
 
-          <div class="cell-group">
-            <div class="cell">
-              <span class="cell-title">日期范围</span>
-              <span class="cell-value">{{ dayjs(detail.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(detail.endDate).format('YYYY-MM-DD') }}</span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">初始资金</span>
-              <span class="cell-value">{{ detail.initialCapital.toLocaleString() + ' USDT' }}</span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">最终资金</span>
-              <span class="cell-value">{{ detail.finalCapital.toLocaleString() + ' USDT' }}</span>
-            </div>
-          </div>
+          <CellGroup>
+            <Cell title="日期范围">{{ dayjs(detail.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(detail.endDate).format('YYYY-MM-DD') }}</Cell>
+            <Cell title="初始资金">{{ detail.initialCapital.toLocaleString() + ' USDT' }}</Cell>
+            <Cell title="最终资金">{{ detail.finalCapital.toLocaleString() + ' USDT' }}</Cell>
+          </CellGroup>
         </div>
       </div>
 
@@ -155,12 +148,9 @@ function formatPercent(val: number): string {
           <div class="card-header">
             <span class="strategy">策略参数</span>
           </div>
-          <div class="cell-group">
-            <div class="cell" v-for="(val, key) in detail.params" :key="key">
-              <span class="cell-title">{{ key }}</span>
-              <span class="cell-value">{{ String(val) }}</span>
-            </div>
-          </div>
+          <CellGroup>
+            <Cell v-for="(val, key) in detail.params" :key="key" :title="key">{{ String(val) }}</Cell>
+          </CellGroup>
         </div>
       </div>
 
@@ -170,40 +160,24 @@ function formatPercent(val: number): string {
           <div class="card-header">
             <span class="strategy">绩效指标</span>
           </div>
-          <div class="cell-group">
-            <div class="cell">
-              <span class="cell-title">总收益率</span>
-              <span class="cell-value"><span v-number-color="detail.metrics.totalReturn">{{ formatPercent(detail.metrics.totalReturn) }}</span></span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">年化收益率</span>
-              <span class="cell-value"><span v-number-color="detail.metrics.annualReturn">{{ formatPercent(detail.metrics.annualReturn) }}</span></span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">最大回撤</span>
-              <span class="cell-value"><span style="color:#22c55e;font-weight:600">{{ (detail.metrics.maxDrawdown * 100).toFixed(2) }}%</span></span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">夏普比率</span>
-              <span class="cell-value">{{ detail.metrics.sharpeRatio.toFixed(2) }}</span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">胜率</span>
-              <span class="cell-value"><span v-number-color="detail.metrics.winRate - 0.5">{{ (detail.metrics.winRate * 100).toFixed(1) }}%</span></span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">盈亏比</span>
-              <span class="cell-value">{{ detail.metrics.profitLossRatio === 9999 ? '∞' : detail.metrics.profitLossRatio.toFixed(2) }}</span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">总交易次数</span>
-              <span class="cell-value">{{ detail.metrics.totalTrades }}</span>
-            </div>
-            <div class="cell">
-              <span class="cell-title">日均交易次数</span>
-              <span class="cell-value">{{ detail.metrics.avgDailyTrades }}</span>
-            </div>
-          </div>
+          <CellGroup>
+            <Cell title="总收益率">
+              <span v-number-color="detail.metrics.totalReturn">{{ formatPercent(detail.metrics.totalReturn) }}</span>
+            </Cell>
+            <Cell title="年化收益率">
+              <span v-number-color="detail.metrics.annualReturn">{{ formatPercent(detail.metrics.annualReturn) }}</span>
+            </Cell>
+            <Cell title="最大回撤">
+              <span style="color:#22c55e;font-weight:600">{{ (detail.metrics.maxDrawdown * 100).toFixed(2) }}%</span>
+            </Cell>
+            <Cell title="夏普比率">{{ detail.metrics.sharpeRatio.toFixed(2) }}</Cell>
+            <Cell title="胜率">
+              <span v-number-color="detail.metrics.winRate - 0.5">{{ (detail.metrics.winRate * 100).toFixed(1) }}%</span>
+            </Cell>
+            <Cell title="盈亏比">{{ detail.metrics.profitLossRatio === 9999 ? '∞' : detail.metrics.profitLossRatio.toFixed(2) }}</Cell>
+            <Cell title="总交易次数">{{ detail.metrics.totalTrades }}</Cell>
+            <Cell title="日均交易次数">{{ detail.metrics.avgDailyTrades }}</Cell>
+          </CellGroup>
         </div>
       </div>
 
@@ -254,24 +228,7 @@ function formatPercent(val: number): string {
   color: #333;
 }
 
-.cell-group {
-  padding: 8px 16px;
-}
 
-.cell {
-  display: flex;
-  justify-content: space-between;
-  padding: 6px 0;
-  font-size: 14px;
-}
-
-.cell-title {
-  color: #666;
-}
-
-.cell-value {
-  color: #333;
-}
 
 .empty-state {
   text-align: center;

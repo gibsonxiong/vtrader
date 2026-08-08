@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BacktestList from './components/BacktestList.vue'
 import { backtestingApi } from '@vtrader/backend/api'
+import Button from '@/components/Button.vue'
 
 interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
 
@@ -55,9 +56,9 @@ function onPageChange(newPage: number) {
 
 <template>
   <div class="page backtest-page">
-    <button class="primary-btn" @click="router.push({ name: 'backtest-create' })">
+    <Button @click="router.push({ name: 'backtest-create' })">
       + 新增回测
-    </button>
+    </Button>
 
     <BacktestList
       :records="records"
@@ -73,21 +74,5 @@ function onPageChange(newPage: number) {
 .page {
   padding: 16px;
   min-height: 100vh;
-}
-
-.primary-btn {
-  width: 100%;
-  padding: 12px;
-  background: #1677ff;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.primary-btn:active {
-  background: #0958d9;
 }
 </style>
