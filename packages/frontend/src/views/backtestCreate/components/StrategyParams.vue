@@ -180,6 +180,7 @@ function handleConfirm() {
   width: 36px;
 }
 .form-container {
+  background: #fff;
   overflow-y: auto;
   flex: 1;
   padding: 0;

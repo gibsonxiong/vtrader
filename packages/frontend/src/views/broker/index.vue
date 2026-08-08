@@ -8,6 +8,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import NavBar from '@/components/NavBar.vue'
 import Input from '@/components/Input.vue'
 import PasswordInput from '@/components/PasswordInput.vue'
+import PickerInput from '@/components/PickerInput.vue'
 
 const brokerTypes: { key: BrokerType; label: string }[] = [
   { key: 'BINANCE_LINEAR', label: formatBrokerType('BINANCE_LINEAR') },
@@ -26,7 +27,6 @@ const formName = ref('')
 const formBrokerType = ref<BrokerType>('BINANCE_LINEAR')
 const formApiKey = ref('')
 const formApiSecret = ref('')
-const showTypePicker = ref(false)
 
 // 删除确认
 const showDeleteModal = ref(false)
@@ -36,10 +36,6 @@ const typeOptions = brokerTypes.map(t => ({ label: t.label, value: t.key }))
 
 const filteredBrokers = computed(() =>
   brokers.value.filter(b => b.brokerType === activeTab.value)
-)
-
-const typeLabel = computed(() =>
-  brokerTypes.find(t => t.key === formBrokerType.value)?.label ?? ''
 )
 
 async function fetchBrokers() {
@@ -74,11 +70,6 @@ function openEditForm(broker: BrokerConfig) {
   formApiKey.value = ''
   formApiSecret.value = ''
   showForm.value = true
-}
-
-function onTypePickerUpdate(value: string[]) {
-  formBrokerType.value = (value[0] as BrokerType) ?? 'BINANCE_LINEAR'
-  showTypePicker.value = false
 }
 
 async function handleFormSubmit() {
@@ -200,12 +191,9 @@ async function handleDelete() {
 
           <!-- 新增模式：显示类型、API Key、API Secret -->
           <template v-if="!isEdit">
-            <div class="form-item" @click="showTypePicker = true">
+            <div class="form-item">
               <div class="form-label">经纪商类型</div>
-              <div class="form-control">
-                <span>{{ typeLabel || '请选择经纪商类型' }}</span>
-                <i class="iconfont icon-right"></i>
-              </div>
+              <PickerInput v-model="formBrokerType" :data="typeOptions" title="选择经纪商类型" placeholder="请选择经纪商类型" />
             </div>
 
             <div class="form-item">
@@ -226,17 +214,6 @@ async function handleDelete() {
           </template>
 
         </form>
-
-        <!-- 类型选择器 -->
-        <m-picker
-          v-model:open="showTypePicker"
-          :value="[formBrokerType]"
-          :data="[typeOptions]"
-          :cols="1"
-          :cascade="false"
-          title="选择经纪商类型"
-          @update:value="onTypePickerUpdate"
-        />
       </div>
       <template #footer>
         <button class="footer-btn" @click="handleFormSubmit">{{ isEdit ? '保存' : '添加' }}</button>
@@ -373,6 +350,7 @@ async function handleDelete() {
 }
 
 .form-container {
+  background: #fff;
   padding: 20px 16px 30px;
 }
 

@@ -1,13 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import { marketDataApi } from '@vtrader/backend/api'
 import type { BrokerType, ContractData, Interval, DownloadJobStatus } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import { showToast, showLoadingToast, closeToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
 import NavBar from '@/components/NavBar.vue'
-import LoadingSpinner from '@/components/LoadingSpinner.vue'
+import PickerInput from '@/components/PickerInput.vue'
+import DatePickerInput from '@/components/DatePickerInput.vue'
 
 const router = useRouter()
 
@@ -15,8 +18,8 @@ const router = useRouter()
 const brokerType = ref('')
 const symbols = ref<string[]>([])
 const intervals = ref<string[]>([])
-const startDate = ref('')
-const endDate = ref('')
+const startDate = ref<Dayjs>()
+const endDate = ref<Dayjs>()
 
 // 状态
 const downloading = ref(false)
@@ -29,12 +32,8 @@ const pollTimer = ref<ReturnType<typeof setInterval> | null>(null)
 const contractStore = useContractStore()
 
 // Broker/Contract 选择相关
-const showBrokerPicker = ref(false)
-const showContractPicker = ref(false)
-const showIntervalPicker = ref(false)
 const brokerOptions = ref<{ label: string; value: string }[]>([])
 const contracts = ref<ContractData[]>([])
-const loadingBrokers = ref(false)
 const loadingContracts = ref(false)
 
 // 获取 broker 列表
@@ -52,9 +51,8 @@ async function loadBrokers() {
 }
 
 // 选择 broker 后加载合约
-async function onBrokerSelected(type: string) {
-  brokerType.value = type
-  showBrokerPicker.value = false
+watch(() => brokerType.value, async (type) => {
+  if (!type) return
   loadingContracts.value = true
   contracts.value = []
   try {
@@ -65,22 +63,12 @@ async function onBrokerSelected(type: string) {
   } finally {
     loadingContracts.value = false
   }
-}
+})
 
-// 切换合约选择
-function toggleContract(contract: ContractData) {
-  const idx = symbols.value.indexOf(contract.symbol)
-  if (idx === -1) {
-    symbols.value.push(contract.symbol)
-  } else {
-    symbols.value.splice(idx, 1)
-  }
-}
-
-// 确认合约选择
-function confirmContractSelection() {
-  showContractPicker.value = false
-}
+// 合约数据转换
+const contractData = computed(() =>
+  contracts.value.map((c) => ({ label: c.symbol, value: c.symbol }))
+)
 
 // 时间周期选项
 const intervalOptions = [
@@ -94,21 +82,6 @@ const intervalOptions = [
   { label: '1周', value: '1w' },
   { label: '1月', value: '1M' },
 ]
-
-// 切换时间周期选择
-function toggleInterval(value: string) {
-  const idx = intervals.value.indexOf(value)
-  if (idx === -1) {
-    intervals.value.push(value)
-  } else {
-    intervals.value.splice(idx, 1)
-  }
-}
-
-// 确认时间周期选择
-function confirmIntervalSelection() {
-  showIntervalPicker.value = false
-}
 
 // 下载数据
 async function doDownload() {
@@ -126,8 +99,8 @@ async function doDownload() {
       brokerType: brokerType.value as BrokerType,
       symbols: symbols.value,
       intervals: intervals.value as Interval[],
-      startDate: startDate.value,
-      endDate: endDate.value,
+      startDate: startDate.value!.format('YYYY-MM-DD'),
+      endDate: endDate.value!.format('YYYY-MM-DD'),
     })
 
     const jobId = res.data?.jobId
@@ -208,33 +181,6 @@ onMounted(() => {
 onUnmounted(() => {
   stopPolling()
 })
-
-// 日期选择器
-const showStartDatePicker = ref(false)
-const showEndDatePicker = ref(false)
-
-// 将 Date 对象转换为 YYYY-MM-DD 字符串
-function formatDateValue(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-// 将 YYYY-MM-DD 字符串转换为 Date 对象
-function parseDateValue(dateStr: string): Date {
-  return new Date(dateStr)
-}
-
-function onStartDateConfirm(date: Date) {
-  startDate.value = formatDateValue(date)
-  showStartDatePicker.value = false
-}
-
-function onEndDateConfirm(date: Date) {
-  endDate.value = formatDateValue(date)
-  showEndDatePicker.value = false
-}
 </script>
 
 <template>
@@ -245,62 +191,45 @@ function onEndDateConfirm(date: Date) {
       <!-- BrokerType 选择 -->
       <div class="form-item">
         <div class="form-label">BrokerType</div>
-        <div class="form-control" @click="showBrokerPicker = true">
-          <span :class="{ placeholder: !brokerType }">
-            {{ brokerType || '请选择 BrokerType' }}
-          </span>
-          <i class="iconfont icon-right"></i>
-        </div>
+        <PickerInput v-model="brokerType" :data="brokerOptions" title="选择 BrokerType" placeholder="请选择 BrokerType" />
       </div>
 
       <!-- 交易对选择 -->
       <div class="form-item">
         <div class="form-label">交易对</div>
-        <div class="form-control" @click="showContractPicker = true">
-          <span :class="{ placeholder: symbols.length === 0 }">
-            {{ symbols.length > 0 ? `已选 ${symbols.length} 个交易对` : '请选择交易对' }}
-          </span>
-          <i class="iconfont icon-right"></i>
-        </div>
-        <div v-if="symbols.length > 0" class="selected-tags">
-          <span v-for="s in symbols" :key="s" class="tag">{{ s }}</span>
-        </div>
+        <PickerInput
+          v-model="symbols"
+          :data="contractData"
+          title="选择交易对"
+          placeholder="请选择交易对"
+          :multiple="true"
+          :loading="loadingContracts"
+          emptyText="请先选择 BrokerType"
+        />
       </div>
 
       <!-- 时间周期选择 -->
       <div class="form-item">
         <div class="form-label">时间周期</div>
-        <div class="form-control" @click="showIntervalPicker = true">
-          <span :class="{ placeholder: intervals.length === 0 }">
-            {{ intervals.length > 0 ? `已选 ${intervals.length} 个周期` : '请选择时间周期' }}
-          </span>
-          <i class="iconfont icon-right"></i>
-        </div>
-        <div v-if="intervals.length > 0" class="selected-tags">
-          <span v-for="i in intervals" :key="i" class="tag">{{ i }}</span>
-        </div>
+        <PickerInput
+          v-model="intervals"
+          :data="intervalOptions"
+          title="选择时间周期"
+          placeholder="请选择时间周期"
+          :multiple="true"
+        />
       </div>
 
       <!-- 开始日期 -->
       <div class="form-item">
         <div class="form-label">开始日期</div>
-        <div class="form-control" @click="showStartDatePicker = true">
-          <span :class="{ placeholder: !startDate }">
-            {{ startDate || '选择开始日期' }}
-          </span>
-          <i class="iconfont icon-right"></i>
-        </div>
+        <DatePickerInput v-model="startDate" title="选择开始日期" placeholder="选择开始日期" />
       </div>
 
       <!-- 结束日期 -->
       <div class="form-item">
         <div class="form-label">结束日期</div>
-        <div class="form-control" @click="showEndDatePicker = true">
-          <span :class="{ placeholder: !endDate }">
-            {{ endDate || '选择结束日期' }}
-          </span>
-          <i class="iconfont icon-right"></i>
-        </div>
+        <DatePickerInput v-model="endDate" title="选择结束日期" placeholder="选择结束日期" />
       </div>
 
       <!-- 下载按钮 -->
@@ -318,108 +247,7 @@ function onEndDateConfirm(date: Date) {
       </div>
     </div>
 
-    <!-- BrokerType 选择器 -->
-    <m-popup
-      v-model:open="showBrokerPicker"
-      placement="bottom"
-      title="选择 BrokerType"
-      :showOk="false"
-      :showCancel="false"
-      @cancel="showBrokerPicker = false"
-    >
-      <div class="broker-picker">
-        <LoadingSpinner v-if="loadingBrokers" />
-        <div v-else>
-          <div
-            v-for="broker in brokerOptions"
-            :key="broker.value"
-            class="broker-option"
-            :class="{ active: brokerType === broker.value }"
-            @click="onBrokerSelected(broker.value)"
-          >
-            {{ broker.label }}
-          </div>
-        </div>
-      </div>
-    </m-popup>
-
-    <!-- 合约多选弹窗 -->
-    <m-popup
-      v-model:open="showContractPicker"
-      placement="bottom"
-      title="选择交易对"
-      :showOk="false"
-      @cancel="showContractPicker = false"
-    >
-      <div class="contract-picker">
-        <LoadingSpinner v-if="loadingContracts" />
-        <div v-else-if="contracts.length === 0" class="empty-text">
-          请先选择 BrokerType
-        </div>
-        <div v-else>
-          <div
-            v-for="contract in contracts"
-            :key="contract.symbol"
-            class="contract-option"
-            :class="{ selected: symbols.includes(contract.symbol) }"
-            @click="toggleContract(contract)"
-          >
-            <div class="contract-info">
-              <span class="contract-symbol">{{ contract.symbol }}</span>
-              <span v-if="contract.name" class="contract-name">{{ contract.name }}</span>
-            </div>
-            <i class="iconfont icon-check" v-if="symbols.includes(contract.symbol)"></i>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <button class="footer-btn" @click="confirmContractSelection">确定</button>
-      </template>
-    </m-popup>
-
-    <!-- 时间周期多选弹窗 -->
-    <m-popup
-      v-model:open="showIntervalPicker"
-      placement="bottom"
-      title="选择时间周期"
-      :showOk="false"
-      @cancel="showIntervalPicker = false"
-    >
-      <div class="interval-picker">
-        <div
-          v-for="option in intervalOptions"
-          :key="option.value"
-          class="interval-option"
-          :class="{ selected: intervals.includes(option.value) }"
-          @click="toggleInterval(option.value)"
-        >
-          <span class="interval-label">{{ option.label }}</span>
-          <i class="iconfont icon-check" v-if="intervals.includes(option.value)"></i>
-        </div>
-      </div>
-      <template #footer>
-        <button class="footer-btn" @click="confirmIntervalSelection">确定</button>
-      </template>
-    </m-popup>
-
-    <!-- 开始日期选择器 -->
-    <m-date-picker
-      v-model:open="showStartDatePicker"
-      :value="startDate ? parseDateValue(startDate) : new Date()"
-      mode="date"
-      title="选择开始日期"
-      @ok="onStartDateConfirm"
-    />
-
-    <!-- 结束日期选择器 -->
-    <m-date-picker
-      v-model:open="showEndDatePicker"
-      :value="endDate ? parseDateValue(endDate) : new Date()"
-      mode="date"
-      title="选择结束日期"
-      @ok="onEndDateConfirm"
-    />
-  </div>
+    </div>
 </template>
 
 <style scoped>
@@ -429,121 +257,8 @@ function onEndDateConfirm(date: Date) {
 }
 
 .form-container {
+  background: #fff;
   padding: 16px;
-}
-
-.selected-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.tag {
-  display: inline-block;
-  padding: 2px 8px;
-  background: #e6f4ff;
-  color: #1677ff;
-  border-radius: 4px;
-  font-size: 12px;
-}
-
-.contract-picker {
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.contract-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f5f5f5;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.contract-option:active {
-  background: #f5f5f5;
-}
-
-
-
-.contract-info {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.contract-symbol {
-  font-weight: 500;
-  font-size: 15px;
-  color: #333;
-}
-
-.contract-name {
-  font-size: 12px;
-  color: #999;
-}
-
-.empty-text {
-  text-align: center;
-  padding: 20px;
-  color: #999;
-}
-
-.interval-picker {
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.interval-option {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 16px;
-  border-bottom: 1px solid #f5f5f5;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.interval-option:active {
-  background: #f5f5f5;
-}
-
-
-
-.interval-label {
-  font-size: 15px;
-  color: #333;
-}
-
-.interval-option .iconfont {
-  color: #1677ff;
-  font-size: 20px;
-}
-
-.contract-option .iconfont {
-  color: #1677ff;
-  font-size: 20px;
-}
-
-.broker-picker {
-  max-height: 50vh;
-  overflow-y: auto;
-}
-
-.broker-option {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f5f5f5;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.broker-option:active,
-.broker-option.active {
-  background: #e6f4ff;
-  color: #1677ff;
 }
 
 .primary-btn {

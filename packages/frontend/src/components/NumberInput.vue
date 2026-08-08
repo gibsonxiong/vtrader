@@ -50,6 +50,7 @@ function onClear() {
   outline: none;
   width: 100%;
   box-sizing: border-box;
+  line-height: 18px;
 }
 .input:focus {
   border-color: #1677ff;

@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import dayjs from 'dayjs'
+import type { Dayjs } from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { strategyApi, brokerConfigApi, backtestingApi } from '@vtrader/backend/api'
 import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
@@ -8,6 +10,8 @@ import { useContractStore } from '@/stores/contract'
 import StrategyParams from './components/StrategyParams.vue'
 import NavBar from '@/components/NavBar.vue'
 import NumberInput from '@/components/NumberInput.vue'
+import PickerInput from '@/components/PickerInput.vue'
+import DatePickerInput from '@/components/DatePickerInput.vue'
 
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -16,8 +20,8 @@ interface BacktestConfig {
   strategy: string
   symbol: string
   brokerType: string
-  startDate: string
-  endDate: string
+  startDate: Dayjs
+  endDate: Dayjs
   initialCapital: number
   interval: string
   params: Record<string, any>
@@ -62,8 +66,8 @@ function getDefaultForm(): BacktestConfig {
     strategy: firstStrategy?.name ?? '',
     symbol: getDefaultSymbol(),
     brokerType: getDefaultBrokerType(),
-    startDate: '2025-01-01',
-    endDate: '2025-05-01',
+    startDate: dayjs('2025-01-01'),
+    endDate: dayjs('2025-05-01'),
     initialCapital: 10000,
     interval: '1m',
     params: firstStrategy ? buildStrategyParams(firstStrategy) : {},
@@ -89,30 +93,13 @@ watch(() => form.strategy, (name) => {
   }
 })
 
-const showStrategyPicker = ref(false)
 const strategyData = computed(() => strategies.value.map((s) => ({ label: s.label, value: s.name })))
 
-const showSymbolPicker = ref(false)
 const symbolData = computed(() => symbols.value.map((item) => ({ label: item.label, value: item.symbol })))
 
-const showIntervalPicker = ref(false)
 const intervalData = intervals.map(i => ({ label: i.text, value: i.value }))
 
-const showStartDatePicker = ref(false)
-const showEndDatePicker = ref(false)
-
 const showParamsPopup = ref(false)
-
-function formatDateValue(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
-}
-
-function parseDateValue(dateStr: string): Date {
-  return new Date(dateStr)
-}
 
 async function loadContracts() {
   const brokerRes = await brokerConfigApi.list()
@@ -189,39 +176,10 @@ onMounted(async () => {
   loadingSymbols.value = false
 })
 
-function onStrategyUpdate(value: string[]) {
-  const strategyName = value[0] ?? ''
-  form.strategy = strategyName
-  const meta = strategies.value.find((s) => s.name === strategyName)
-  if (meta) {
-    currentStrategyMeta.value = meta
-    form.params = buildStrategyParams(meta)
-  }
-  showStrategyPicker.value = false
-}
-
-function onSymbolUpdate(value: string[]) {
-  const selectedSymbol = value[0] ?? ''
-  const selectedContract = symbols.value.find((item) => item.symbol === selectedSymbol)
-  form.symbol = selectedSymbol
+watch(() => form.symbol, (symbol) => {
+  const selectedContract = symbols.value.find((item) => item.symbol === symbol)
   form.brokerType = selectedContract?.brokerType ?? ''
-  showSymbolPicker.value = false
-}
-
-function onIntervalUpdate(value: string[]) {
-  form.interval = value[0] ?? '1m'
-  showIntervalPicker.value = false
-}
-
-function onStartDateUpdate(date: Date) {
-  form.startDate = formatDateValue(date)
-  showStartDatePicker.value = false
-}
-
-function onEndDateUpdate(date: Date) {
-  form.endDate = formatDateValue(date)
-  showEndDatePicker.value = false
-}
+})
 
 async function waitBacktestFinished(jobId: string) {
   const maxAttempts = 120
@@ -243,8 +201,8 @@ async function createBacktest(data: BacktestConfig) {
     strategySetting: data.params ?? {},
     symbol: data.symbol,
     interval: data.interval as any,
-    startDate: data.startDate,
-    endDate: data.endDate,
+    startDate: data.startDate.format('YYYY-MM-DD'),
+    endDate: data.endDate.format('YYYY-MM-DD'),
     commissionRate: 0.0005,
     assetBalance: data.initialCapital,
     assetName: 'USDT',
@@ -290,16 +248,6 @@ async function handleParamsConfirm(params: Record<string, any>) {
     submitting.value = false
   }
 }
-
-function getStrategyLabel() {
-  return strategies.value.find(s => s.name === form.strategy)?.label ?? ''
-}
-function getSymbolLabel() {
-  return symbols.value.find(s => s.symbol === form.symbol)?.label ?? ''
-}
-function getIntervalLabel() {
-  return intervals.find(i => i.value === form.interval)?.text ?? ''
-}
 </script>
 
 <template>
@@ -307,50 +255,34 @@ function getIntervalLabel() {
     <NavBar title="新建回测" />
 
     <div class="form-container">
-      <div class="card">
         <!-- 策略 -->
-        <div class="form-item" @click="showStrategyPicker = true">
+        <div class="form-item">
           <div class="form-label">策略</div>
-          <div class="form-control">
-            <span :class="{ placeholder: !form.strategy }">{{ getStrategyLabel() || '请选择策略' }}</span>
-            <i class="iconfont icon-right"></i>
-          </div>
+          <PickerInput v-model="form.strategy" :data="strategyData" title="选择策略" placeholder="请选择策略" />
         </div>
 
         <!-- 交易对 -->
-        <div class="form-item" @click="showSymbolPicker = true">
+        <div class="form-item">
           <div class="form-label">交易对</div>
-          <div class="form-control">
-            <span :class="{ placeholder: !form.symbol }">{{ getSymbolLabel() || '请选择交易对' }}</span>
-            <i class="iconfont icon-right"></i>
-          </div>
+          <PickerInput v-model="form.symbol" :data="symbolData" title="选择交易对" placeholder="请选择交易对" />
         </div>
 
         <!-- 周期 -->
-        <div class="form-item" @click="showIntervalPicker = true">
+        <div class="form-item">
           <div class="form-label">周期</div>
-          <div class="form-control">
-            <span :class="{ placeholder: !form.interval }">{{ getIntervalLabel() || '请选择周期' }}</span>
-            <i class="iconfont icon-right"></i>
-          </div>
+          <PickerInput v-model="form.interval" :data="intervalData" title="选择周期" placeholder="请选择周期" />
         </div>
 
         <!-- 开始日期 -->
-        <div class="form-item" @click="showStartDatePicker = true">
+        <div class="form-item">
           <div class="form-label">开始日期</div>
-          <div class="form-control">
-            <span :class="{ placeholder: !form.startDate }">{{ form.startDate || '请选择开始日期' }}</span>
-            <i class="iconfont icon-right"></i>
-          </div>
+          <DatePickerInput v-model="form.startDate" title="选择开始日期" placeholder="请选择开始日期" />
         </div>
 
         <!-- 结束日期 -->
-        <div class="form-item" @click="showEndDatePicker = true">
+        <div class="form-item">
           <div class="form-label">结束日期</div>
-          <div class="form-control">
-            <span :class="{ placeholder: !form.endDate }">{{ form.endDate || '请选择结束日期' }}</span>
-            <i class="iconfont icon-right"></i>
-          </div>
+          <DatePickerInput v-model="form.endDate" title="选择结束日期" placeholder="请选择结束日期" />
         </div>
 
         <!-- 初始资金 -->
@@ -361,63 +293,11 @@ function getIntervalLabel() {
             placeholder="请输入初始资金"
           />
         </div>
-      </div>
 
       <button class="submit-btn" :disabled="submitting" @click="handleSubmit">
         {{ submitting ? '创建中...' : '开始回测' }}
       </button>
     </div>
-
-    <!-- 策略选择器 -->
-    <m-picker
-      v-model:open="showStrategyPicker"
-      :value="form.strategy ? [form.strategy] : []"
-      :data="[strategyData]"
-      :cols="1"
-      :cascade="false"
-      title="选择策略"
-      @update:value="onStrategyUpdate"
-    />
-
-    <!-- 交易对选择器 -->
-    <m-picker
-      v-model:open="showSymbolPicker"
-      :value="form.symbol ? [form.symbol] : []"
-      :data="[symbolData]"
-      :cols="1"
-      :cascade="false"
-      title="选择交易对"
-      @update:value="onSymbolUpdate"
-    />
-
-    <!-- 周期选择器 -->
-    <m-picker
-      v-model:open="showIntervalPicker"
-      :value="form.interval ? [form.interval] : []"
-      :data="[intervalData]"
-      :cols="1"
-      :cascade="false"
-      title="选择周期"
-      @update:value="onIntervalUpdate"
-    />
-
-    <!-- 开始日期选择器 -->
-    <m-date-picker
-      v-model:open="showStartDatePicker"
-      :value="form.startDate ? parseDateValue(form.startDate) : new Date()"
-      mode="date"
-      title="选择开始日期"
-      @ok="onStartDateUpdate"
-    />
-
-    <!-- 结束日期选择器 -->
-    <m-date-picker
-      v-model:open="showEndDatePicker"
-      :value="form.endDate ? parseDateValue(form.endDate) : new Date()"
-      mode="date"
-      title="选择结束日期"
-      @ok="onEndDateUpdate"
-    />
 
     <!-- 策略参数配置弹窗 -->
     <StrategyParams
@@ -436,14 +316,7 @@ function getIntervalLabel() {
 }
 
 .form-container {
-  padding: 12px;
-}
-
-.card {
   background: #fff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 .form-item {
@@ -463,19 +336,6 @@ function getIntervalLabel() {
   color: #333;
   width: 100px;
   flex-shrink: 0;
-}
-
-.form-control {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  color: #333;
-}
-
-.form-control .placeholder {
-  color: #999;
 }
 
 .submit-btn {
