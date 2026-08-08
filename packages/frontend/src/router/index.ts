@@ -32,6 +32,11 @@ const router = createRouter({
       component: () => import('@/views/broker/index.vue'),
     },
     {
+      path: '/backtest/create',
+      name: 'backtest-create',
+      component: () => import('@/views/backtestCreate/index.vue'),
+    },
+    {
       path: '/backtest/detail/:id',
       name: 'backtest-detail',
       component: () => import('@/views/backtestDetail/index.vue'),

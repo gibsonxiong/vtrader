@@ -1,18 +1,14 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import { showToast } from '@/ui/mobile'
-import { strategyApi, brokerConfigApi, marketDataApi } from '@vtrader/backend/api'
+import { strategyApi, brokerConfigApi, backtestingApi } from '@vtrader/backend/api'
 import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
-import StrategyParams from './StrategyParams.vue'
+import StrategyParams from './components/StrategyParams.vue'
 
 interface StrategyParamMeta { label: string; default: number; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
-
-const emit = defineEmits<{
-  (e: 'close'): void
-  (e: 'submit', data: BacktestConfig): void
-}>()
 
 interface BacktestConfig {
   strategy: string
@@ -31,14 +27,14 @@ interface SymbolOption {
   label: string
 }
 
-const visible = defineModel<boolean>('visible', { default: false })
-
+const router = useRouter()
 const contractStore = useContractStore()
 
 const strategies = ref<StrategyMeta[]>([])
 const symbols = ref<SymbolOption[]>([])
 const loadingStrategies = ref(false)
 const loadingSymbols = ref(false)
+const submitting = ref(false)
 
 const intervals = [
   { text: '1 分钟', value: '1m' },
@@ -49,8 +45,6 @@ const intervals = [
   { text: '4 小时', value: '4h' },
   { text: '1 天', value: '1d' },
 ]
-
-const currentDate = new Date()
 
 function getDefaultSymbol() {
   return symbols.value[0]?.symbol ?? ''
@@ -76,7 +70,6 @@ function getDefaultForm(): BacktestConfig {
 
 const form = reactive<BacktestConfig>(getDefaultForm())
 
-// Current strategy meta for params display
 const currentStrategyMeta = ref<StrategyMeta | null>(null)
 
 function buildStrategyParams(meta: StrategyMeta): Record<string, number> {
@@ -94,26 +87,20 @@ watch(() => form.strategy, (name) => {
   }
 })
 
-// 策略选择器
 const showStrategyPicker = ref(false)
 const strategyData = computed(() => strategies.value.map((s) => ({ label: s.label, value: s.name })))
 
-// 交易对选择器
 const showSymbolPicker = ref(false)
 const symbolData = computed(() => symbols.value.map((item) => ({ label: item.label, value: item.symbol })))
 
-// 周期选择器
 const showIntervalPicker = ref(false)
 const intervalData = intervals.map(i => ({ label: i.text, value: i.value }))
 
-// 日期选择器
 const showStartDatePicker = ref(false)
 const showEndDatePicker = ref(false)
 
-// 策略参数弹窗
 const showParamsPopup = ref(false)
 
-// 将 Date 对象转换为 YYYY-MM-DD 字符串
 function formatDateValue(date: Date): string {
   const year = date.getFullYear()
   const month = String(date.getMonth() + 1).padStart(2, '0')
@@ -121,7 +108,6 @@ function formatDateValue(date: Date): string {
   return `${year}-${month}-${day}`
 }
 
-// 将 YYYY-MM-DD 字符串转换为 Date 对象
 function parseDateValue(dateStr: string): Date {
   return new Date(dateStr)
 }
@@ -201,20 +187,9 @@ onMounted(async () => {
   loadingSymbols.value = false
 })
 
-// 弹窗打开时重置为默认值
-watch(visible, (val) => {
-  if (val) {
-    Object.assign(form, getDefaultForm())
-    // 同步更新策略元数据
-    const meta = strategies.value.find((s) => s.name === form.strategy)
-    currentStrategyMeta.value = meta ?? null
-  }
-})
-
 function onStrategyUpdate(value: string[]) {
   const strategyName = value[0] ?? ''
   form.strategy = strategyName
-  // 直接更新策略元数据和参数
   const meta = strategies.value.find((s) => s.name === strategyName)
   if (meta) {
     currentStrategyMeta.value = meta
@@ -246,6 +221,36 @@ function onEndDateUpdate(date: Date) {
   showEndDatePicker.value = false
 }
 
+async function waitBacktestFinished(jobId: string) {
+  const maxAttempts = 120
+  for (let i = 0; i < maxAttempts; i++) {
+    const res = await backtestingApi.jobStatus({ jobId })
+    const status = res.data?.status
+    const resultId = res.data?.data?.resultId
+    if (status === 'completed' && resultId) return resultId
+    if (status === 'failed') throw new Error(res.data?.failedReason || '回测执行失败')
+    await new Promise((resolve) => window.setTimeout(resolve, 1000))
+  }
+  throw new Error('回测执行超时，请稍后在列表查看结果')
+}
+
+async function createBacktest(data: BacktestConfig) {
+  const createRes = await backtestingApi.create({
+    brokerType: data.brokerType as any,
+    strategyName: data.strategy,
+    strategySetting: data.params ?? {},
+    symbol: data.symbol,
+    interval: data.interval as any,
+    startDate: data.startDate,
+    endDate: data.endDate,
+    commissionRate: 0.0005,
+    assetBalance: data.initialCapital,
+    assetName: 'USDT',
+  })
+  const id = await waitBacktestFinished(createRes.data.jobId)
+  return { id }
+}
+
 function handleSubmit() {
   if (!form.strategy) {
     showToast('请选择策略')
@@ -267,17 +272,23 @@ function handleSubmit() {
     showToast('请选择结束日期')
     return
   }
-  // 显示策略参数弹窗
   showParamsPopup.value = true
 }
 
-function handleParamsConfirm(params: Record<string, number>) {
+async function handleParamsConfirm(params: Record<string, number>) {
   form.params = params
-  emit('submit', { ...form })
-  visible.value = false
+  submitting.value = true
+  try {
+    const res = await createBacktest({ ...form })
+    showToast('回测创建成功')
+    router.push({ name: 'backtest-detail', params: { id: res.id } })
+  } catch (error) {
+    showToast(error instanceof Error ? error.message : '回测创建失败')
+  } finally {
+    submitting.value = false
+  }
 }
 
-// 获取显示文本
 function getStrategyLabel() {
   return strategies.value.find(s => s.name === form.strategy)?.label ?? ''
 }
@@ -290,9 +301,17 @@ function getIntervalLabel() {
 </script>
 
 <template>
-  <m-popup v-model:open="visible" placement="bottom" title="回测配置" :showOk="false" :showCancel="false" style="maxHeight: 85vh">
+  <div class="page">
+    <div class="nav-bar">
+      <button class="nav-back" @click="router.back()">
+        <i class="iconfont icon-left"></i>
+      </button>
+      <span class="nav-title">新建回测</span>
+      <span class="nav-right"></span>
+    </div>
+
     <div class="form-container">
-      <form @submit.prevent="handleSubmit">
+      <div class="card">
         <!-- 策略 -->
         <div class="form-item" @click="showStrategyPicker = true">
           <div class="form-label">策略</div>
@@ -348,95 +367,178 @@ function getIntervalLabel() {
             placeholder="请输入初始资金"
           />
         </div>
+      </div>
 
-      </form>
-
-      <!-- 策略选择器 -->
-      <m-picker
-        v-model:open="showStrategyPicker"
-        :value="form.strategy ? [form.strategy] : []"
-        :data="[strategyData]"
-        :cols="1"
-        :cascade="false"
-        title="选择策略"
-        @update:value="onStrategyUpdate"
-      />
-
-      <!-- 交易对选择器 -->
-      <m-picker
-        v-model:open="showSymbolPicker"
-        :value="form.symbol ? [form.symbol] : []"
-        :data="[symbolData]"
-        :cols="1"
-        :cascade="false"
-        title="选择交易对"
-        @update:value="onSymbolUpdate"
-      />
-
-      <!-- 周期选择器 -->
-      <m-picker
-        v-model:open="showIntervalPicker"
-        :value="form.interval ? [form.interval] : []"
-        :data="[intervalData]"
-        :cols="1"
-        :cascade="false"
-        title="选择周期"
-        @update:value="onIntervalUpdate"
-      />
-
-      <!-- 开始日期选择器 -->
-      <m-date-picker
-        v-model:open="showStartDatePicker"
-        :value="form.startDate ? parseDateValue(form.startDate) : new Date()"
-        mode="date"
-        title="选择开始日期"
-        @ok="onStartDateUpdate"
-      />
-
-      <!-- 结束日期选择器 -->
-      <m-date-picker
-        v-model:open="showEndDatePicker"
-        :value="form.endDate ? parseDateValue(form.endDate) : new Date()"
-        mode="date"
-        title="选择结束日期"
-        @ok="onEndDateUpdate"
-      />
+      <button class="submit-btn" :disabled="submitting" @click="handleSubmit">
+        {{ submitting ? '创建中...' : '开始回测' }}
+      </button>
     </div>
-    <template #footer>
-      <button class="footer-btn" @click="handleSubmit">开始回测</button>
-    </template>
-  </m-popup>
 
-  <!-- 策略参数配置弹窗 -->
-  <StrategyParams
-    v-model:visible="showParamsPopup"
-    :strategy-meta="currentStrategyMeta"
-    :params="form.params"
-    @confirm="handleParamsConfirm"
-  />
+    <!-- 策略选择器 -->
+    <m-picker
+      v-model:open="showStrategyPicker"
+      :value="form.strategy ? [form.strategy] : []"
+      :data="[strategyData]"
+      :cols="1"
+      :cascade="false"
+      title="选择策略"
+      @update:value="onStrategyUpdate"
+    />
+
+    <!-- 交易对选择器 -->
+    <m-picker
+      v-model:open="showSymbolPicker"
+      :value="form.symbol ? [form.symbol] : []"
+      :data="[symbolData]"
+      :cols="1"
+      :cascade="false"
+      title="选择交易对"
+      @update:value="onSymbolUpdate"
+    />
+
+    <!-- 周期选择器 -->
+    <m-picker
+      v-model:open="showIntervalPicker"
+      :value="form.interval ? [form.interval] : []"
+      :data="[intervalData]"
+      :cols="1"
+      :cascade="false"
+      title="选择周期"
+      @update:value="onIntervalUpdate"
+    />
+
+    <!-- 开始日期选择器 -->
+    <m-date-picker
+      v-model:open="showStartDatePicker"
+      :value="form.startDate ? parseDateValue(form.startDate) : new Date()"
+      mode="date"
+      title="选择开始日期"
+      @ok="onStartDateUpdate"
+    />
+
+    <!-- 结束日期选择器 -->
+    <m-date-picker
+      v-model:open="showEndDatePicker"
+      :value="form.endDate ? parseDateValue(form.endDate) : new Date()"
+      mode="date"
+      title="选择结束日期"
+      @ok="onEndDateUpdate"
+    />
+
+    <!-- 策略参数配置弹窗 -->
+    <StrategyParams
+      v-model:visible="showParamsPopup"
+      :strategy-meta="currentStrategyMeta"
+      :params="form.params"
+      @confirm="handleParamsConfirm"
+    />
+  </div>
 </template>
 
 <style scoped>
+.page {
+  min-height: 100vh;
+  background: #f5f5f5;
+}
+
+.nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+
+.nav-back {
+  background: none;
+  border: none;
+  font-size: 14px;
+  color: #1677ff;
+  cursor: pointer;
+  padding: 0;
+}
+
+.nav-title {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.nav-right {
+  width: 40px;
+}
+
 .form-container {
-  padding: 20px 16px 30px;
+  padding: 12px;
 }
 
-.form-actions {
-  padding: 20px 16px 0;
+.card {
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.primary-btn {
+.form-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #f5f5f5;
+  cursor: pointer;
+}
+
+.form-item:last-child {
+  border-bottom: none;
+}
+
+.form-label {
+  font-size: 14px;
+  color: #333;
+  width: 100px;
+  flex-shrink: 0;
+}
+
+.form-control {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #333;
+}
+
+.form-control .placeholder {
+  color: #999;
+}
+
+.form-input {
+  flex: 1;
+  border: none;
+  font-size: 14px;
+  color: #333;
+  text-align: right;
+  outline: none;
+  background: transparent;
+}
+
+.submit-btn {
   width: 100%;
-  height: 40px;
+  margin-top: 24px;
+  padding: 12px;
   background: #1677ff;
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 500;
   cursor: pointer;
 }
 
-.primary-btn:disabled {
+.submit-btn:active {
+  background: #0958d9;
+}
+
+.submit-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

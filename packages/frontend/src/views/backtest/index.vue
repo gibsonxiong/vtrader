@@ -1,43 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from '@/ui/mobile'
-import BacktestForm from './components/BacktestForm.vue'
 import BacktestList from './components/BacktestList.vue'
 import { backtestingApi } from '@vtrader/backend/api'
 
-interface CreateBacktestParams { strategy: string; symbol: string; brokerType: string; startDate: string; endDate: string; initialCapital: number; interval: string; params?: Record<string, number> }
 interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
-
-async function waitBacktestFinished(jobId: string) {
-  const maxAttempts = 120
-  for (let i = 0; i < maxAttempts; i++) {
-    const res = await backtestingApi.jobStatus({ jobId })
-    const status = res.data?.status
-    const resultId = res.data?.data?.resultId
-    if (status === 'completed' && resultId) return resultId
-    if (status === 'failed') throw new Error(res.data?.failedReason || '回测执行失败')
-    await new Promise((resolve) => window.setTimeout(resolve, 1000))
-  }
-  throw new Error('回测执行超时，请稍后在列表查看结果')
-}
-
-async function createBacktest(data: CreateBacktestParams) {
-  const createRes = await backtestingApi.create({
-    brokerType: data.brokerType as any,
-    strategyName: data.strategy,
-    strategySetting: data.params ?? {},
-    symbol: data.symbol,
-    interval: data.interval as any,
-    startDate: data.startDate,
-    endDate: data.endDate,
-    commissionRate: 0.0005,
-    assetBalance: data.initialCapital,
-    assetName: 'USDT',
-  })
-  const id = await waitBacktestFinished(createRes.data.jobId)
-  return { id }
-}
 
 function toNumber(value: number | string | null | undefined) {
   return Number(value ?? 0)
@@ -66,7 +33,6 @@ async function getBacktestList(params?: { page?: number; pageSize?: number }) {
 
 const router = useRouter()
 
-const showForm = ref(false)
 const records = ref<BacktestRecord[]>([])
 const total = ref(0)
 const page = ref(1)
@@ -85,21 +51,11 @@ function onPageChange(newPage: number) {
   fetchList()
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
-
-async function handleSubmit(data: CreateBacktestParams) {
-  try {
-    const res = await createBacktest(data)
-    showToast('回测创建成功')
-    router.push({ name: 'backtest-detail', params: { id: res.id } })
-  } catch (error) {
-    showToast(error instanceof Error ? error.message : '回测创建失败')
-  }
-}
 </script>
 
 <template>
   <div class="page backtest-page">
-    <button class="primary-btn" @click="showForm = true">
+    <button class="primary-btn" @click="router.push({ name: 'backtest-create' })">
       + 新增回测
     </button>
 
@@ -110,8 +66,6 @@ async function handleSubmit(data: CreateBacktestParams) {
       :page-size="pageSize"
       @page-change="onPageChange"
     />
-
-    <BacktestForm v-model:visible="showForm" @submit="handleSubmit" />
   </div>
 </template>
 
