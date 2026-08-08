@@ -511,16 +511,6 @@ function getIntervalLabel() {
   color: #999;
 }
 
-.form-input {
-  flex: 1;
-  border: none;
-  font-size: 14px;
-  color: #333;
-  text-align: right;
-  outline: none;
-  background: transparent;
-}
-
 .submit-btn {
   width: 100%;
   margin-top: 24px;

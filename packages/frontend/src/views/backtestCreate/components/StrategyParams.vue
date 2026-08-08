@@ -4,6 +4,8 @@ import { reactive, ref, watch } from 'vue'
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
 
+const STORAGE_KEY = 'backtest_strategy_params'
+
 const props = defineProps<{
   strategyMeta: StrategyMeta | null
   params: Record<string, any>
@@ -16,6 +18,7 @@ const emit = defineEmits<{
 }>()
 
 const localParams = reactive<Record<string, any>>({})
+const remember = ref(true)
 
 // Temporary input values for array/object editors
 const arrayInputs = reactive<Record<string, string>>({})
@@ -33,23 +36,54 @@ function isArray(key: string) { return getType(key) === 'array' }
 function isObject(key: string) { return getType(key) === 'object' }
 function isFunction(key: string) { return getType(key) === 'function' }
 
+function getStorageKey() {
+  const name = props.strategyMeta?.name ?? 'default'
+  return `${STORAGE_KEY}_${name}`
+}
+
+function loadSavedParams(): Record<string, any> | null {
+  try {
+    const raw = localStorage.getItem(getStorageKey())
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
+}
+
+function saveParams(data: Record<string, any>) {
+  try {
+    localStorage.setItem(getStorageKey(), JSON.stringify(data))
+  } catch {
+    // ignore
+  }
+}
+
+function initParams(source: Record<string, any>) {
+  Object.keys(localParams).forEach(k => delete localParams[k])
+  Object.assign(localParams, JSON.parse(JSON.stringify(source)))
+  for (const key of Object.keys(source)) {
+    arrayInputs[key] = ''
+    objectKeyInputs[key] = ''
+    objectValueInputs[key] = ''
+  }
+}
+
 // Initialize localParams when modal opens
 watch(
   () => [visible.value, props.params] as const,
   ([v]) => {
     if (v) {
-      Object.keys(localParams).forEach(k => delete localParams[k])
-      Object.assign(localParams, JSON.parse(JSON.stringify(props.params)))
-      // Initialize array/object inputs
-      for (const key of Object.keys(props.params)) {
-        arrayInputs[key] = ''
-        objectKeyInputs[key] = ''
-        objectValueInputs[key] = ''
-      }
+      const saved = loadSavedParams()
+      initParams(saved ?? props.params)
     }
   },
   { immediate: true },
 )
+
+function handleReset() {
+  localStorage.removeItem(getStorageKey())
+  initParams(props.params)
+}
 
 // Array helpers
 function ensureArray(key: string) {
@@ -100,7 +134,11 @@ function removeObjectEntry(key: string, entryKey: string) {
 }
 
 function handleConfirm() {
-  emit('confirm', JSON.parse(JSON.stringify(localParams)))
+  const data = JSON.parse(JSON.stringify(localParams))
+  if (remember.value) {
+    saveParams(data)
+  }
+  emit('confirm', data)
   visible.value = false
 }
 </script>
@@ -110,7 +148,9 @@ function handleConfirm() {
     <div v-if="visible" class="overlay" @click.self="visible = false">
       <div class="modal">
         <div class="modal-header">
+          <button class="btn-reset" @click="handleReset">重置</button>
           <span class="modal-title">策略参数</span>
+          <span class="header-spacer"></span>
         </div>
         <div class="form-container">
           <template v-if="strategyMeta">
@@ -202,7 +242,10 @@ function handleConfirm() {
           </template>
         </div>
         <div class="modal-footer">
-          <button class="btn-cancel" @click="visible = false">取消</button>
+          <label class="remember-label">
+            <input type="checkbox" v-model="remember" />
+            <span>记住参数</span>
+          </label>
           <button class="btn-confirm" @click="handleConfirm">确认并开始回测</button>
         </div>
       </div>
@@ -231,7 +274,9 @@ function handleConfirm() {
   padding: 20px 20px 16px;
 }
 .modal-header {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 16px;
   flex-shrink: 0;
 }
@@ -239,6 +284,17 @@ function handleConfirm() {
   font-size: 17px;
   font-weight: 600;
   color: #333;
+}
+.btn-reset {
+  background: none;
+  border: none;
+  color: #1677ff;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+}
+.header-spacer {
+  width: 36px;
 }
 .form-container {
   overflow-y: auto;
@@ -421,11 +477,23 @@ function handleConfirm() {
 
 .modal-footer {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-top: 16px;
   flex-shrink: 0;
 }
-.btn-cancel,
+.remember-label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.remember-label input {
+  margin: 0;
+}
 .btn-confirm {
   flex: 1;
   padding: 10px 0;
@@ -433,12 +501,6 @@ function handleConfirm() {
   border-radius: 6px;
   font-size: 15px;
   cursor: pointer;
-}
-.btn-cancel {
-  background: #f5f5f5;
-  color: #666;
-}
-.btn-confirm {
   background: #1677ff;
   color: #fff;
 }
