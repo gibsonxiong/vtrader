@@ -7,7 +7,7 @@ import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import StrategyParams from './components/StrategyParams.vue'
 
-interface StrategyParamMeta { label: string; default: number; type?: string }
+interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
 
 interface BacktestConfig {
@@ -18,7 +18,7 @@ interface BacktestConfig {
   endDate: string
   initialCapital: number
   interval: string
-  params: Record<string, number>
+  params: Record<string, any>
 }
 
 interface SymbolOption {
@@ -72,8 +72,8 @@ const form = reactive<BacktestConfig>(getDefaultForm())
 
 const currentStrategyMeta = ref<StrategyMeta | null>(null)
 
-function buildStrategyParams(meta: StrategyMeta): Record<string, number> {
-  const defaults: Record<string, number> = {}
+function buildStrategyParams(meta: StrategyMeta): Record<string, any> {
+  const defaults: Record<string, any> = {}
   for (const [key, paramMeta] of Object.entries(meta.params)) {
     defaults[key] = paramMeta.default
   }
@@ -148,7 +148,7 @@ onMounted(async () => {
           const params = Object.fromEntries(
             Object.entries(detailRes.data ?? {}).map(([key, value]) => [
               key,
-              { label: key, default: Number((value as any).value ?? 0), type: (value as any).type },
+              { label: key, default: (value as any).value, type: (value as any).type },
             ]),
           )
           return { name, label: name, params }
@@ -275,7 +275,7 @@ function handleSubmit() {
   showParamsPopup.value = true
 }
 
-async function handleParamsConfirm(params: Record<string, number>) {
+async function handleParamsConfirm(params: Record<string, any>) {
   form.params = params
   submitting.value = true
   try {
