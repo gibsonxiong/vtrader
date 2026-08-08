@@ -12,7 +12,7 @@ import { Context } from '../context';
  */
 export default class RSIStrategy extends Strategy {
   @param({
-    type: String,
+    type: Number,
     default: 14,
   })
   rsiWindow!: number;
@@ -54,7 +54,7 @@ export default class RSIStrategy extends Strategy {
 
     const rsiResult = rsi({
       values: ctx.am.close,
-      period: this.rsiWindow,
+      period: Number(this.rsiWindow),
     });
 
     if (this.currentOrderId) return;

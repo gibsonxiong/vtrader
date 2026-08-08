@@ -6,11 +6,11 @@ import { pathToFileURL } from 'url';
 
 import { MarketDataController } from './market-data.controller';
 import { MarketDataService } from './market-data.service';
-import { BrokerManagerModule } from 'src/broker-manager/broker-manager.module';
+import { BrokerModule } from 'src/broker/broker.module';
 
 @Module({
   imports: [
-    BrokerManagerModule,
+    BrokerModule,
     BullModule.registerQueue({
       name: 'market-data-download',
       processors: [

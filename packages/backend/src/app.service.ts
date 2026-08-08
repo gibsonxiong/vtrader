@@ -6,7 +6,7 @@ import { MarketDataService } from './market-data/market-data.service';
 import { BacktestingService } from './backtesting/backtesting.service';
 import type { OptimizerSetting } from './types/backtesting';
 import { StrategyService } from './strategy/strategy.service';
-import { BrokerManagerService } from './broker-manager/broker-manager.service';
+import { BrokerManagerService } from './broker/broker-manager.service';
 import { BarGenerator } from './strategy/bar-generator';
 // import { mockBars } from './mock/bars';
 // import { gridStrategyOptimizationExample } from './strategy/optimization/optimization-example';

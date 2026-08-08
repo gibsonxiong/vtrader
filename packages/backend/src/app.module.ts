@@ -8,7 +8,8 @@ import { BullMQAdapter } from '@bull-board/api/bullMQAdapter';
 
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { BrokerManagerModule } from './broker-manager/broker-manager.module';
+import { DatabaseModule } from './database/database.module';
+import { BrokerModule } from './broker/broker.module';
 import { MarketDataModule } from './market-data/market-data.module';
 import { StrategyModule } from './strategy/strategy.module';
 import { BacktestingModule } from './backtesting/backtesting.module';
@@ -18,6 +19,7 @@ import { WsGateway } from './ws/ws.gateway';
   imports: [
     ConfigModule.forRoot(),
     ScheduleModule.forRoot(),
+    DatabaseModule,
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST || 'localhost',
@@ -25,7 +27,6 @@ import { WsGateway } from './ws/ws.gateway';
         password: process.env.REDIS_PASSWORD,
       },
     }),
-    // Bull Board 队列监控仪表板
     BullBoardModule.forRoot({
       route: '/admin/queues',
       adapter: ExpressAdapter,
@@ -43,7 +44,7 @@ import { WsGateway } from './ws/ws.gateway';
     StrategyModule,
     BacktestingModule,
     MarketDataModule,
-    BrokerManagerModule,
+    BrokerModule,
   ],
   controllers: [AppController],
   providers: [AppService, WsGateway],

@@ -37,7 +37,7 @@ export abstract class Strategy {
   public trades: TradeData[] = [];
 
   public ctxs: Map<string, Context>;
-  
+
   public inited: boolean = false;
   public trading: boolean = false;
 
@@ -54,7 +54,7 @@ export abstract class Strategy {
     return 100;
   }
 
-  constructor(props: StrategyProps) {
+  _init(props: StrategyProps) {
     this.engine = props.engine;
     this.symbols = props.symbols;
     this.ctxs = new Map();
@@ -65,6 +65,7 @@ export abstract class Strategy {
 
     this.startTotalValue = this.calcTotalValue();
   }
+
   initCtxs(props: StrategyProps): void {
     const asset = new Asset(props.assetName, props.assetBalance);
     this.assets.push(asset);
@@ -98,7 +99,7 @@ export abstract class Strategy {
   //   });
   // }
 
-  onInitContext(ctx: Context) {}
+  onInitContext(ctx: Context) { }
 
   /**
    * 获取策略参数字典
@@ -137,7 +138,7 @@ export abstract class Strategy {
     this.inited = true;
   }
 
-  public onInit(): void {}
+  public onInit(): void { }
 
   /**
    * 策略启动
@@ -149,7 +150,7 @@ export abstract class Strategy {
     this.onStart();
     this.trading = true;
   }
-  public onStart(): void {}
+  public onStart(): void { }
 
   /**
    * 策略停止
@@ -161,7 +162,7 @@ export abstract class Strategy {
     this.onStop();
     this.trading = false;
   }
-  public onStop(): void {}
+  public onStop(): void { }
 
   /**
    * K线数据更新
@@ -171,13 +172,13 @@ export abstract class Strategy {
     if (!ctx) {
       return;
     }
-    
+
     ctx.am.add(bar);
     ctx.longPos.updateByPrice(bar.close);
     ctx.shortPos.updateByPrice(bar.close);
     await this.onBar(bar, ctx);
   }
-  public onBar(bar: BarData, ctx: Context): Promise<void> | void {}
+  public onBar(bar: BarData, ctx: Context): Promise<void> | void { }
 
   /**
    * 委托状态更新
@@ -190,7 +191,7 @@ export abstract class Strategy {
     if (!ctx) {
       return;
     }
-    
+
     this.orders.set(order.orderId, newOrder);
 
     ctx.asset.updateByOrder(newOrder);
@@ -203,7 +204,7 @@ export abstract class Strategy {
   /**
    * 委托状态更新
    */
-  public onOrder(order: OrderData, ctx: Context): void {}
+  public onOrder(order: OrderData, ctx: Context): void { }
 
   /**
    * 成交信息更新
@@ -226,7 +227,7 @@ export abstract class Strategy {
     this.onTrade(trade, ctx);
   }
 
-  public onTrade(trade: TradeData, ctx: Context): void {}
+  public onTrade(trade: TradeData, ctx: Context): void { }
 
   /**
    * 开-多仓
@@ -277,7 +278,7 @@ export abstract class Strategy {
    */
   public async sendOrder(params: Omit<SendOrderParams, 'orderId'>): Promise<string> {
     const { symbol, direction, offset, price, volume } = params;
-    
+
     const fixedPirce = roundTo(price, 0.1);
     const fixedVolume = roundTo(volume, 0.001);
     const fixedAmount = new BigNumber(fixedPirce * fixedVolume).toNumber();
@@ -296,7 +297,7 @@ export abstract class Strategy {
       throw new Error('未找到该策略上下文');
     }
 
-    if (offset === Offset.OPEN && 
+    if (offset === Offset.OPEN &&
       ctx.asset.available < fixedAmount
     ) {
       // console.error(`可用资金不足，无法下单[开${direction === Direction.LONG ? '多' : '空'}]`);
@@ -367,8 +368,8 @@ export abstract class Strategy {
   /**
    * 撤销所有委托
    */
-  public async cancelAllOrders(params: {symbol?: string}): Promise<void> {
-    const {symbol} = params;
+  public async cancelAllOrders(params: { symbol?: string }): Promise<void> {
+    const { symbol } = params;
     for (let [orderId, order] of this.orders) {
       if (canOrderCancel(order)) continue;
 
@@ -399,7 +400,7 @@ export abstract class Strategy {
     const totalValue = this.calcTotalValue();
     const date = dayjs(timestamp).format('YYYY-MM-DD');
     const recordData = this.records.get(date);
-  
+
     if (recordData) {
       // 更新当日收盘价
       recordData.timestamp = timestamp;

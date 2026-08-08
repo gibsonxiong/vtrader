@@ -13,12 +13,12 @@ import dayjs from 'dayjs';
 import { Injectable, Scope } from '@nestjs/common';
 import { Strategy } from '../strategy/strategy';
 import { StrategyService } from '../strategy/strategy.service';
-import { BrokerManagerService } from '../broker-manager/broker-manager.service';
+import { BrokerManagerService } from '../broker/broker-manager.service';
 import { SendOrderParams, CancelOrderParams, StrategyEngine, RecordData } from '../types/strategy';
 import { BacktestingSetting, BacktestingResult } from '../types/backtesting';
 import { SendOrderRequest, CancelOrderRequest, HistoryRequest } from '../types/broker';
-import { MockBroker } from '../broker-manager/brokers/mock/mock-broker';
-import { Broker } from '../broker-manager/broker';
+import { MockBroker } from '../broker/brokers/mock/mock-broker';
+import { Broker } from '../broker/broker';
 
 /**
  * 机器人引擎

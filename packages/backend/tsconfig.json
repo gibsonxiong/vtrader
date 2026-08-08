@@ -11,6 +11,7 @@
     "target": "es2022",
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
       "src/*": ["src/*"]
@@ -22,5 +23,6 @@
     "noImplicitAny": true,
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true
-  }
+  },
+  "exclude": ["node_modules", "dist", "mikro-orm.config.ts"]
 }

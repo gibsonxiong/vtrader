@@ -1,7 +1,7 @@
 import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
-import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
+import { BrokerManagerService } from 'src/broker/broker-manager.service';
 import type { SubscribeRequest } from '../types/broker';
 
 @WebSocketGateway({

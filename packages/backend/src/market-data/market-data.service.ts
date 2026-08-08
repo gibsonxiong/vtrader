@@ -5,9 +5,9 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import dayjs from 'dayjs';
 import { Interval } from '../types/common';
-import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
-import { BrokerConfigService } from 'src/broker-manager/broker-config.service';
-import { INTERVAL_VT2DAYJS } from '../broker-manager/brokers/binance-linear';
+import { BrokerManagerService } from 'src/broker/broker-manager.service';
+import { BrokerService } from 'src/broker/broker.service';
+import { INTERVAL_VT2DAYJS } from '../broker/brokers/binance-linear';
 import {
   deleteBarOverviewFiles,
   listBarOverviews,
@@ -114,7 +114,7 @@ function calculateUnion(
 export class MarketDataService {
   constructor(
     private brokerMgr: BrokerManagerService,
-    private brokerConfigService: BrokerConfigService,
+    private brokerService: BrokerService,
     @InjectQueue('market-data-download') private readonly downloadQueue?: Queue,
   ) {}
 

@@ -1,8 +1,5 @@
 import { Interval, type BarData, type TradeData } from './common';
-import { Backtesting, Prisma } from '../../generated/client';
 import type { BrokerType } from './broker';
-
-export type { Backtesting } from '../../generated/client';
 
 /**
  * 回测设置接口
@@ -92,13 +89,18 @@ export namespace BacktestingApi {
   }
 
   export interface QueryResponse {
-    model: Backtesting | null;
+    model: Record<string, any> | null;
   }
 
-  export interface QueryManyRequest extends Prisma.BacktestingFindManyArgs {}
+  export interface QueryManyRequest {
+    where?: Record<string, any>;
+    skip?: number;
+    take?: number;
+    orderBy?: Record<string, any>;
+  }
 
   export interface QueryManyResponse {
-    models: Backtesting[];
+    models: Record<string, any>[];
     total: number;
   }
 

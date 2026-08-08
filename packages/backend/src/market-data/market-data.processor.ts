@@ -5,9 +5,10 @@
 
 import { SandboxedJob, Queue, QueueEvents, Job } from 'bullmq';
 import dayjs from 'dayjs';
-import { PrismaService } from 'src/prisma.service';
-import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
-import { BrokerConfigService } from 'src/broker-manager/broker-config.service';
+import { getORM } from 'src/database/get-orm';
+import { Broker } from 'src/entities/broker.entity';
+import { BrokerService } from 'src/broker/broker.service';
+import { BrokerManagerService } from 'src/broker/broker-manager.service';
 import { MarketDataService } from './market-data.service';
 import type { DownloadParams, BatchDownloadBarsParams } from '../types/market-data';
 import type { Interval } from '../types/common';
@@ -17,11 +18,23 @@ import {
 } from 'src/utils';
 
 // 进程级单例（只创建一次）
-const prisma = new PrismaService();
-const brokerConfigService = new BrokerConfigService(prisma);
-const brokerManagerService = new BrokerManagerService(brokerConfigService);
-// 沙盒模式下不使用队列注入，传 undefined
-const marketDataService = new MarketDataService(brokerManagerService, brokerConfigService, undefined);
+let services: {
+  brokerService: BrokerService;
+  brokerManagerService: BrokerManagerService;
+  marketDataService: MarketDataService;
+} | null = null;
+
+async function getServices() {
+  if (services) return services;
+  const orm = await getORM();
+  const em = orm.em;
+  const brokerService = new BrokerService(em, em.getRepository(Broker));
+  await brokerService.refreshCache();
+  const brokerManagerService = new BrokerManagerService(brokerService);
+  const marketDataService = new MarketDataService(brokerManagerService, brokerService, undefined);
+  services = { brokerService, brokerManagerService, marketDataService };
+  return services;
+}
 
 // Redis 连接配置（与 app.module.ts 中 BullModule.forRoot 保持一致）
 const connection = {
@@ -121,6 +134,8 @@ async function download(job: SandboxedJob<DownloadParams>) {
   const { data: params } = job;
   console.log(`开始处理下载任务 ${job.id}: ${params.symbol} / ${params.interval}`);
 
+  const { marketDataService } = await getServices();
+
   try {
     await job.updateProgress(0);
 
@@ -210,6 +225,7 @@ async function download(job: SandboxedJob<DownloadParams>) {
  */
 async function batchDownload(job: SandboxedJob<BatchDownloadBarsParams>) {
   const { data } = job;
+  const { marketDataService } = await getServices();
   const combinations = generateCombinations(data.symbols, data.intervals);
   console.log(
     `[批量下载 ${job.id}] 开始, ${data.symbols.length} symbols × ${data.intervals.length} intervals = ${combinations.length} 个子任务`,

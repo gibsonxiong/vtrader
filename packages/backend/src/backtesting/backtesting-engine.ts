@@ -13,10 +13,10 @@ import dayjs from 'dayjs';
 import { Injectable, Scope } from '@nestjs/common';
 import { Strategy } from 'src/strategy/strategy';
 import { StrategyService } from 'src/strategy/strategy.service';
-import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
+import { BrokerManagerService } from 'src/broker/broker-manager.service';
 import { SendOrderParams, CancelOrderParams, StrategyEngine, RecordData } from 'src/types/strategy';
 import type { BacktestingSetting, BacktestingResult } from 'src/types/backtesting';
-import { MockBroker } from 'src/broker-manager/brokers/mock/mock-broker';
+import { MockBroker } from 'src/broker/brokers/mock/mock-broker';
 
 /**
  * 回测引擎
@@ -132,8 +132,6 @@ export class BacktestingEngine implements StrategyEngine {
   async runBacktesting(): Promise<void> {
     this.writeLog('开始运行回测');
 
-    await this.loadData();
-
     if (this.historyData.length === 0) {
       throw new Error('历史数据为空，回测结束');
     }
@@ -142,10 +140,12 @@ export class BacktestingEngine implements StrategyEngine {
     this.strategy.start();
     this.writeLog('策略启动完成');
 
-    this.writeLog('回放历史数据中...');
+    const total = this.historyData.length;
+    this.writeLog(`回放历史数据中... 共 ${total} 条`);
 
     // 遍历历史数据
-    for (const data of this.historyData) {
+    for (let i = 0; i < total; i++) {
+      const data = this.historyData[i];
       this.broker.refresh(data);
       await this.handleBar(data as BarData);
     }

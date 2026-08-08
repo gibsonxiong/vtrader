@@ -1,10 +1,12 @@
 import { Queue, SandboxedJob, QueueEvents, Worker } from 'bullmq';
 import { BacktestingEngine } from './backtesting-engine';
 import { MarketDataService } from 'src/market-data/market-data.service';
-import { PrismaService } from 'src/prisma.service';
-import { BrokerManagerService } from 'src/broker-manager/broker-manager.service';
-import { BrokerConfigService } from 'src/broker-manager/broker-config.service';
+import { BrokerManagerService } from 'src/broker/broker-manager.service';
+import { BrokerService } from 'src/broker/broker.service';
+import { Broker } from 'src/entities/broker.entity';
+import { Backtesting } from 'src/entities/backtesting.entity';
 import { StrategyService } from 'src/strategy/strategy.service';
+import { getORM } from 'src/database/get-orm';
 import type { BacktestingSetting } from '../types/backtesting';
 import type { Interval } from '../types/common';
 import type { OptimizerSetting, TrialResult } from '../types/backtesting';
@@ -12,11 +14,28 @@ import { OptimizerFactory } from 'src/optimization/index';
 import { pathToFileURL } from 'url';
 import path from 'path';
 
-const prisma = new PrismaService();
-const brokerConfigService = new BrokerConfigService(prisma);
-const brokerManagerService = new BrokerManagerService(brokerConfigService);
-const marketDataService = new MarketDataService(brokerManagerService, brokerConfigService, undefined);
-const strategyService = new StrategyService();
+// 进程级单例（只创建一次）
+let ormInitPromise: ReturnType<typeof getORM> | null = null;
+let services: {
+  brokerService: BrokerService;
+  brokerManagerService: BrokerManagerService;
+  marketDataService: MarketDataService;
+  strategyService: StrategyService;
+} | null = null;
+
+async function getServices() {
+  if (services) return services;
+  const orm = await (ormInitPromise ??= getORM());
+  const em = orm.em;
+  const brokerService = new BrokerService(em, em.getRepository(Broker));
+  await brokerService.refreshCache();
+  const brokerManagerService = new BrokerManagerService(brokerService);
+  const marketDataService = new MarketDataService(brokerManagerService, brokerService, undefined);
+  const strategyService = new StrategyService();
+  services = { brokerService, brokerManagerService, marketDataService, strategyService };
+  return services;
+}
+
 const connection = {
   host: process.env.REDIS_HOST || 'localhost',
   port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -27,13 +46,11 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
   const { data: setting } = job;
   console.log(`开始处理回测任务 ${job.id}: ${setting.strategyName}`);
 
-  // 每次任务创建独立的 engine 实例，避免并发状态污染
+  const { brokerManagerService, marketDataService, strategyService } = await getServices();
   const engine = new BacktestingEngine(strategyService, brokerManagerService);
 
   try {
-    // 更新任务进度
     await job.updateProgress(0);
-    // 设置回测参数
     await engine.init({
       ...setting,
       dataLoader: async (symbol: string, interval: Interval, preloadCount: number) => {
@@ -51,34 +68,35 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
     await job.updateProgress(20);
     console.log(`任务 ${job.id}: 参数设置完成`);
 
-    // 加载数据
     await engine.loadData();
     await job.updateProgress(50);
     console.log(`任务 ${job.id}: 数据加载完成`);
 
-    // 运行回测
     await engine.runBacktesting();
     await job.updateProgress(80);
     const result = await engine.calculateResult();
 
-    const backtesting = await prisma.backtesting.create({
-      data: {
-        brokerId: result.brokerType,
-        symbol: result.symbol,
-        strategyName: result.strategyName,
-        interval: result.interval,
-        startDate: result.startDate,
-        endDate: result.endDate,
-        startBalance: result.startBalance,
-        endBalance: result.endBalance,
-        maxDrawdown: result.maxDrawdown,
-        maxDrawdownPercent: result.maxDrawdownPercent,
-        totalNetPnl: result.totalNetPnl,
-        totalReturnPercent: result.totalReturnPercent,
-        dailyResults: result.dailyResults as object,
-        trades: result.trades as any[],
-      }
+    const orm = await (ormInitPromise ??= getORM());
+    const em = orm.em.fork();
+    const backtesting = em.create(Backtesting, {
+      brokerId: result.brokerType,
+      symbol: result.symbol,
+      strategyName: result.strategyName,
+      interval: result.interval,
+      startDate: result.startDate,
+      endDate: result.endDate,
+      startBalance: String(result.startBalance),
+      endBalance: String(result.endBalance),
+      maxDrawdown: String(result.maxDrawdown),
+      maxDrawdownPercent: String(result.maxDrawdownPercent),
+      totalNetPnl: String(result.totalNetPnl),
+      totalReturnPercent: String(result.totalReturnPercent),
+      dailyResults: result.dailyResults as object,
+      trades: result.trades as any[],
+      createdAt: new Date(),
     });
+    await em.persistAndFlush(backtesting);
+
     await job.updateProgress(100);
     console.log(`任务 ${job.id}: 结果计算完成，结果ID: ${backtesting.id}`);
     
@@ -96,7 +114,8 @@ async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resu
   const { data } = job;
   console.log(`开始处理超优化任务 ${job.id}: ${data.strategyName}`);
 
-  // 创建新队列
+  const { brokerManagerService } = await getServices();
+
   const queueName = 'backtesting-optimizer-'+job.id;
   const queue = new Queue(queueName, {connection});
   const worker = new Worker(queueName, pathToFileURL(path.resolve(__dirname, './backtesting.processor.js')), {
@@ -106,7 +125,6 @@ async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resu
   });
   const queueEvents = new QueueEvents(queueName, {connection});
   
-  // 创建优化器
   const optimizer = OptimizerFactory.createOptimizer('grid', {
     ...data,
     trainModel: async (strategySetting: Record<string, any>): Promise<number> => {

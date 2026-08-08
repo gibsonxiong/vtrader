@@ -56,7 +56,7 @@ export interface CreateInstanceParam extends StrategyProps {
 
 export interface StrategyConfig {
   name: string;
-  strategyClass: new (props: StrategyProps) => Strategy;
+  strategyClass: new () => Strategy;
   paramConfigs: Record<string, ParamConfig>;
 }
 

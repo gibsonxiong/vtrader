@@ -49,7 +49,8 @@ export class StrategyService {
       const maps = await loadStrategyClasses();
 
       for (const [name, StrategyClass] of Object.entries(maps)) {
-        const instance = new StrategyClass({
+        const instance = new StrategyClass();
+        instance._init({
           engine: {} as any,
           symbols: [],
           assetBalance: 1000,
@@ -78,7 +79,8 @@ export class StrategyService {
     }
 
     const StrategyClass = strategyConfig.strategyClass;
-    const instance = new StrategyClass(param);
+    const instance = new StrategyClass();
+    instance._init(param);
 
     return instance;
   }
