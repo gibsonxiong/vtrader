@@ -7,6 +7,7 @@ import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import StrategyParams from './components/StrategyParams.vue'
 import NavBar from '@/components/NavBar.vue'
+import NumberInput from '@/components/NumberInput.vue'
 
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -355,10 +356,8 @@ function getIntervalLabel() {
         <!-- 初始资金 -->
         <div class="form-item">
           <div class="form-label">初始资金 (USDT)</div>
-          <input
-            type="number"
-            class="form-input"
-            v-model.number="form.initialCapital"
+          <NumberInput
+            v-model="form.initialCapital"
             placeholder="请输入初始资金"
           />
         </div>

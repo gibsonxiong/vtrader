@@ -6,6 +6,7 @@ import { showToast, showLoadingToast } from '@/ui/mobile'
 import { formatBrokerType } from '@/utils/broker'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import NavBar from '@/components/NavBar.vue'
+import Input from '@/components/Input.vue'
 import type { BrokerType } from '@vtrader/backend/api'
 
 const route = useRoute()
@@ -100,11 +101,10 @@ onMounted(loadContracts)
 
     <!-- 搜索框 -->
     <div class="search-bar">
-      <input
+      <Input
         v-model="searchText"
-        type="text"
         placeholder="搜索合约名称或符号..."
-        class="search-input"
+        clearable
       />
     </div>
 
@@ -185,20 +185,6 @@ onMounted(loadContracts)
 .search-bar {
   padding: 8px 12px;
   background: #fff;
-}
-
-.search-input {
-  width: 100%;
-  padding: 6px 10px;
-  border: 1px solid #e0e0e0;
-  border-radius: 6px;
-  font-size: 13px;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.search-input:focus {
-  border-color: #1677ff;
 }
 
 .stats-bar {

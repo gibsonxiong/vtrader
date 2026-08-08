@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { reactive, ref, watch } from 'vue'
+import Input from '@/components/Input.vue'
+import NumberInput from '@/components/NumberInput.vue'
 
 interface StrategyParamMeta { label: string; default: any; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
@@ -96,10 +98,8 @@ function handleConfirm() {
               <!-- number -->
               <div v-if="isNumber(key)" class="form-item">
                 <div class="form-label">{{ meta.label }}</div>
-                <input
-                  type="number"
-                  class="form-input"
-                  v-model.number="localParams[key]"
+                <NumberInput
+                  v-model="localParams[key]"
                   :placeholder="'请输入' + meta.label"
                 />
               </div>
@@ -107,9 +107,7 @@ function handleConfirm() {
               <!-- string -->
               <div v-else-if="!isBoolean(key)" class="form-item">
                 <div class="form-label">{{ meta.label }}</div>
-                <input
-                  type="text"
-                  class="form-input"
+                <Input
                   v-model="localParams[key]"
                   :placeholder="'请输入' + meta.label"
                 />
@@ -206,15 +204,6 @@ function handleConfirm() {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-}
-.form-input {
-  flex: 1;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 14px;
-  color: #333;
-  outline: none;
 }
 
 /* Switch */

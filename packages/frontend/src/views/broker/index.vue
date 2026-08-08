@@ -6,6 +6,8 @@ import type { BrokerConfig, BrokerType } from '@vtrader/backend/api'
 import { formatBrokerType } from '@/utils/broker'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import NavBar from '@/components/NavBar.vue'
+import Input from '@/components/Input.vue'
+import PasswordInput from '@/components/PasswordInput.vue'
 
 const brokerTypes: { key: BrokerType; label: string }[] = [
   { key: 'BINANCE_LINEAR', label: formatBrokerType('BINANCE_LINEAR') },
@@ -190,9 +192,7 @@ async function handleDelete() {
         <form @submit.prevent="handleFormSubmit">
           <div class="form-item">
             <div class="form-label">经纪商名称</div>
-            <input
-              type="text"
-              class="form-input"
+            <Input
               v-model="formName"
               placeholder="请输入经纪商名称"
             />
@@ -210,9 +210,7 @@ async function handleDelete() {
 
             <div class="form-item">
               <div class="form-label">API Key</div>
-              <input
-                type="text"
-                class="form-input"
+              <Input
                 v-model="formApiKey"
                 placeholder="请输入 API Key"
               />
@@ -220,9 +218,7 @@ async function handleDelete() {
 
             <div class="form-item">
               <div class="form-label">API Secret</div>
-              <input
-                type="password"
-                class="form-input"
+              <PasswordInput
                 v-model="formApiSecret"
                 placeholder="请输入 API Secret"
               />
