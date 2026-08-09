@@ -13,8 +13,8 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import CellGroup from '@/components/CellGroup.vue'
 import Cell from '@/components/Cell.vue'
 
-interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
-interface EquityCurvePoint { time: string; equity: number; returnRate: number }
+export interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
+export interface EquityCurvePoint { time: string; equity: number; returnRate: number }
 interface BacktestMetrics { totalReturn: number; annualReturn: number; maxDrawdown: number; sharpeRatio: number; winRate: number; profitLossRatio: number; totalTrades: number; avgDailyTrades: number }
 interface BacktestDetail { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; params: Record<string, number>; metrics: BacktestMetrics; trades: TradeRecord[]; kLines: BarData[]; equityCurve: EquityCurvePoint[] }
 

@@ -2,14 +2,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { marketDataApi } from '@vtrader/backend/api'
+import type { BarOverviewRecord } from '@vtrader/backend/api'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 
-interface MarketDataFileOverview { version: 1; brokerType: string; symbol: string; interval: string; ranges: [string, string][]; updatedAt: string; count?: number }
-
-// 文件概览缓存（按 brokerType 分组）
-const fileOverviewsByBroker = ref<Record<string, MarketDataFileOverview[]>>({})
+const fileOverviewsByBroker = ref<Record<string, BarOverviewRecord[]>>({})
 const loadingOverviews = ref(false)
 
 // 获取文件概览（按 brokerType 分组）
@@ -18,7 +16,7 @@ async function loadFileOverviews() {
   try {
     const res = await marketDataApi.getBarOverviews()
     const data = res.data ?? []
-    const grouped: Record<string, MarketDataFileOverview[]> = {}
+    const grouped: Record<string, BarOverviewRecord[]> = {}
     for (const overview of data) {
       const broker = overview.brokerType
       if (!grouped[broker]) grouped[broker] = []
@@ -29,7 +27,7 @@ async function loadFileOverviews() {
       files.sort((a, b) => a.symbol.localeCompare(b.symbol))
     }
     fileOverviewsByBroker.value = grouped
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('加载文件概览失败:', e)
   } finally {
     loadingOverviews.value = false

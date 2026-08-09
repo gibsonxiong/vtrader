@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { strategyApi, brokerConfigApi, backtestingApi } from '@vtrader/backend/api'
-import type { BrokerModel, ContractData } from '@vtrader/backend/api'
+import type { BrokerModel, BrokerType, ContractData, Interval } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import StrategyParams from './components/StrategyParams.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -16,18 +16,18 @@ import Button from '@/components/Button.vue'
 import CellGroup from '@/components/CellGroup.vue'
 import Cell from '@/components/Cell.vue'
 
-interface StrategyParamMeta { label: string; default: any; type?: string }
+interface StrategyParamMeta { label: string; default: string | number | boolean | undefined; type?: string }
 interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
 
 interface BacktestConfig {
-  strategy: string
+  strategyName: string
   symbol: string
   brokerType: string
   startDate: Dayjs
   endDate: Dayjs
-  initialCapital: number
+  assetBalance: number
   interval: string
-  params: Record<string, any>
+  strategySetting: Record<string, any>
 }
 
 interface SymbolOption {
@@ -66,14 +66,14 @@ function getDefaultBrokerType() {
 function getDefaultForm(): BacktestConfig {
   const firstStrategy = strategies.value[0]
   return {
-    strategy: firstStrategy?.name ?? '',
+    strategyName: firstStrategy?.name ?? '',
     symbol: getDefaultSymbol(),
     brokerType: getDefaultBrokerType(),
     startDate: dayjs('2025-01-01'),
     endDate: dayjs('2025-05-01'),
-    initialCapital: 10000,
+    assetBalance: 10000,
     interval: '1m',
-    params: firstStrategy ? buildStrategyParams(firstStrategy) : {},
+    strategySetting: firstStrategy ? buildStrategyParams(firstStrategy) : {},
   }
 }
 
@@ -89,10 +89,10 @@ function buildStrategyParams(meta: StrategyMeta): Record<string, any> {
   return defaults
 }
 
-watch(() => form.strategy, (name) => {
+watch(() => form.strategyName, (name) => {
   currentStrategyMeta.value = strategies.value.find((s) => s.name === name) ?? null
   if (currentStrategyMeta.value) {
-    form.params = buildStrategyParams(currentStrategyMeta.value)
+    form.strategySetting = buildStrategyParams(currentStrategyMeta.value)
   }
 })
 
@@ -113,7 +113,7 @@ async function loadContracts() {
   })
 
   for (const broker of brokers) {
-    const contracts = await contractStore.fetchContracts(broker.brokerType as any)
+    const contracts = await contractStore.fetchContracts(broker.brokerType)
     if (contracts.length > 0) {
       return contracts.map((c: ContractData) => ({
         brokerType: broker.brokerType,
@@ -140,7 +140,7 @@ onMounted(async () => {
           const params = Object.fromEntries(
             Object.entries(detailRes.data ?? {}).map(([key, value]) => [
               key,
-              { label: key, default: (value as any).value, type: (value as any).type },
+              { label: key, default: value.value, type: value.type },
             ]),
           )
           return { name, label: name, params }
@@ -155,9 +155,9 @@ onMounted(async () => {
     strategies.value = strategyResult.value
     const firstStrategy = strategies.value[0]
     if (firstStrategy) {
-      form.strategy = firstStrategy.name
+      form.strategyName = firstStrategy.name
       currentStrategyMeta.value = firstStrategy
-      form.params = buildStrategyParams(firstStrategy)
+      form.strategySetting = buildStrategyParams(firstStrategy)
     }
   } else {
     showToast('获取策略列表失败')
@@ -199,15 +199,15 @@ async function waitBacktestFinished(jobId: string) {
 
 async function createBacktest(data: BacktestConfig) {
   const createRes = await backtestingApi.create({
-    brokerType: data.brokerType as any,
-    strategyName: data.strategy,
-    strategySetting: data.params ?? {},
+    brokerType: data.brokerType as BrokerType,
+    strategyName: data.strategyName,
+    strategySetting: data.strategySetting ?? {},
     symbol: data.symbol,
-    interval: data.interval as any,
+    interval: data.interval as Interval,
     startDate: data.startDate.format('YYYY-MM-DD'),
     endDate: data.endDate.format('YYYY-MM-DD'),
     commissionRate: 0.0005,
-    assetBalance: data.initialCapital,
+    assetBalance: data.assetBalance,
     assetName: 'USDT',
   })
   const id = await waitBacktestFinished(createRes.data.jobId)
@@ -215,7 +215,7 @@ async function createBacktest(data: BacktestConfig) {
 }
 
 function handleSubmit() {
-  if (!form.strategy) {
+  if (!form.strategyName) {
     showToast('请选择策略')
     return
   }
@@ -238,8 +238,8 @@ function handleSubmit() {
   showParamsPopup.value = true
 }
 
-async function handleParamsConfirm(params: Record<string, any>) {
-  form.params = params
+async function handleParamsConfirm(strategySetting: Record<string, any>) {
+  form.strategySetting = strategySetting
   submitting.value = true
   try {
     const res = await createBacktest({ ...form })
@@ -261,7 +261,7 @@ async function handleParamsConfirm(params: Record<string, any>) {
         <CellGroup bordered>
           <!-- 策略 -->
           <Cell title="策略">
-            <PickerInput v-model="form.strategy" :data="strategyData" title="选择策略" placeholder="请选择策略" />
+            <PickerInput v-model="form.strategyName" :data="strategyData" title="选择策略" placeholder="请选择策略" />
           </Cell>
 
           <!-- 交易对 -->
@@ -287,7 +287,7 @@ async function handleParamsConfirm(params: Record<string, any>) {
           <!-- 初始资金 -->
           <Cell title="初始资金 (USDT)">
             <NumberInput
-              v-model="form.initialCapital"
+              v-model="form.assetBalance"
               placeholder="请输入初始资金"
             />
           </Cell>
@@ -302,7 +302,7 @@ async function handleParamsConfirm(params: Record<string, any>) {
     <StrategyParams
       v-model:visible="showParamsPopup"
       :strategy-meta="currentStrategyMeta"
-      :params="form.params"
+      :params="form.strategySetting"
       @confirm="handleParamsConfirm"
     />
   </div>
