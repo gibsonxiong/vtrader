@@ -1,7 +1,9 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
+import type { TradeData } from '../types/common';
+import type { BacktestingModel } from '../types/backtesting';
 
 @Entity({ tableName: 'backtesting' })
-export class Backtesting {
+export class Backtesting implements BacktestingModel {
   @PrimaryKey({ type: 'int', autoincrement: true })
   id!: number;
 
@@ -45,7 +47,7 @@ export class Backtesting {
   dailyResults!: object;
 
   @Property({ type: 'json' })
-  trades!: any[];
+  trades!: TradeData[];
 
   @Property({ type: 'datetime', defaultRaw: 'now()', fieldName: 'createdAt' })
   createdAt = new Date();

@@ -1,8 +1,9 @@
 import { Entity, PrimaryKey, Property } from '@mikro-orm/core';
 import { EncryptedStringType } from '../types/custom/encrypted-string.type';
+import type { BrokerModel, BrokerType } from '../types/broker';
 
 @Entity({ tableName: 'broker' })
-export class Broker {
+export class Broker implements BrokerModel {
   @PrimaryKey({ type: 'varchar', length: 36, defaultRaw: '(UUID())' })
   id!: string;
 
@@ -10,7 +11,7 @@ export class Broker {
   name!: string;
 
   @Property({ type: 'varchar', length: 50, fieldName: 'brokerType' })
-  brokerType!: string;
+  brokerType!: BrokerType;
 
   @Property({ type: EncryptedStringType, length: 500, fieldName: 'apiKey', hidden: true })
   apiKey!: string;

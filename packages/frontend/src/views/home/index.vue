@@ -2,7 +2,7 @@
 import { onMounted, ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { brokerConfigApi } from '@vtrader/backend/api'
-import type { BrokerConfig, BrokerType } from '@vtrader/backend/api'
+import type { BrokerModel, BrokerType } from '@vtrader/backend/api'
 import { showLoadingToast, showToast } from '../../ui/mobile'
 import { useContractStore } from '@/stores/contract'
 import { formatBrokerType } from '@/utils/broker'
@@ -13,7 +13,7 @@ const contractStore = useContractStore()
 
 const brokerCount = ref(0)
 const brokerLoading = ref(false)
-const brokers = ref<BrokerConfig[]>([])
+const brokers = ref<BrokerModel[]>([])
 
 const syncingBrokerType = ref<string | null>(null)
 

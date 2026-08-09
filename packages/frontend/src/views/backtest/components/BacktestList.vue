@@ -2,15 +2,19 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
+import type { BacktestingModel } from '@vtrader/backend/api'
 import Pagination from '@/components/Pagination.vue'
 import CellGroup from '@/components/CellGroup.vue'
 import Cell from '@/components/Cell.vue'
-interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
+
+function toNumber(value: string | number | null | undefined) {
+  return Number(value ?? 0)
+}
 
 const router = useRouter()
 
 const props = defineProps<{
-  records: BacktestRecord[]
+  records: BacktestingModel[]
   total: number
   page: number
   pageSize: number
@@ -43,14 +47,14 @@ function goDetail(id: number) {
     <div v-else class="list">
       <div v-for="record in records" :key="record.id" class="card" @click="goDetail(record.id)">
         <div class="card-header">
-          <span class="strategy">{{ record.strategy }}</span>
+          <span class="strategy">{{ record.strategyName }}</span>
           <m-tag color="primary" fill="outline">{{ record.symbol }}</m-tag>
         </div>
 
         <CellGroup>
           <Cell title="日期范围">{{ dayjs(record.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(record.endDate).format('YYYY-MM-DD') }}</Cell>
-          <Cell title="初始资金">{{ record.initialCapital.toLocaleString() + ' USDT' }}</Cell>
-          <Cell title="最终资金">{{ record.finalCapital.toLocaleString() + ' USDT' }}</Cell>
+          <Cell title="初始资金">{{ toNumber(record.startBalance).toLocaleString() + ' USDT' }}</Cell>
+          <Cell title="最终资金">{{ toNumber(record.endBalance).toLocaleString() + ' USDT' }}</Cell>
         </CellGroup>
 
         <div class="card-footer">

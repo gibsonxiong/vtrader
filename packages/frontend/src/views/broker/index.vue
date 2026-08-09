@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { showToast } from '@/ui/mobile'
 import { brokerConfigApi } from '@vtrader/backend/api'
-import type { BrokerConfig, BrokerType } from '@vtrader/backend/api'
+import type { BrokerModel, BrokerType } from '@vtrader/backend/api'
 import { formatBrokerType } from '@/utils/broker'
 import LoadingSpinner from '@/components/LoadingSpinner.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -19,13 +19,13 @@ const brokerTypes: { key: BrokerType; label: string }[] = [
 ]
 
 const activeTab = ref<BrokerType>('BINANCE_LINEAR')
-const brokers = ref<BrokerConfig[]>([])
+const brokers = ref<BrokerModel[]>([])
 const loading = ref(false)
 
 // 表单相关
 const showForm = ref(false)
 const isEdit = ref(false)
-const editingBroker = ref<BrokerConfig | null>(null)
+const editingBroker = ref<BrokerModel | null>(null)
 const formName = ref('')
 const formBrokerType = ref<BrokerType>('BINANCE_LINEAR')
 const formApiKey = ref('')
@@ -33,7 +33,7 @@ const formApiSecret = ref('')
 
 // 删除确认
 const showDeleteModal = ref(false)
-const deletingBroker = ref<BrokerConfig | null>(null)
+const deletingBroker = ref<BrokerModel | null>(null)
 
 const typeOptions = brokerTypes.map(t => ({ label: t.label, value: t.key }))
 
@@ -65,7 +65,7 @@ function openCreateForm() {
   showForm.value = true
 }
 
-function openEditForm(broker: BrokerConfig) {
+function openEditForm(broker: BrokerModel) {
   isEdit.value = true
   editingBroker.value = broker
   formName.value = broker.name
@@ -115,7 +115,7 @@ async function handleFormSubmit() {
   }
 }
 
-function confirmDelete(broker: BrokerConfig) {
+function confirmDelete(broker: BrokerModel) {
   deletingBroker.value = broker
   showDeleteModal.value = true
 }

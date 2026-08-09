@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { backtestingApi, marketDataApi } from '@vtrader/backend/api'
 import NavBar from '@/components/NavBar.vue'
-import type { BarData, Backtesting, Interval } from '@vtrader/backend/api'
+import type { BarData, Interval, BacktestingModel } from '@vtrader/backend/api'
 import EquityCurve from './components/EquityCurve.vue'
 import TradeList from './components/TradeList.vue'
 import KLineChart from './components/KLineChart.vue'
@@ -47,7 +47,7 @@ function toEquityCurve(dailyResults: any[], initialCapital: number): EquityCurve
 
 async function getBacktestDetail(id: number): Promise<BacktestDetail> {
   const detailRes = await backtestingApi.query({ id })
-  const model = detailRes.data?.model as Backtesting
+  const model = detailRes.data?.model as BacktestingModel
   if (!model) throw new Error('回测记录不存在')
 
   const initialCapital = toNumber(model.startBalance)

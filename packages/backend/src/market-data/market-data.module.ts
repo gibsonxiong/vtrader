@@ -6,7 +6,7 @@ import { pathToFileURL } from 'url';
 
 import { MarketDataController } from './market-data.controller';
 import { MarketDataService } from './market-data.service';
-import { BrokerModule } from 'src/broker/broker.module';
+import { BrokerModule } from '../broker/broker.module';
 
 @Module({
   imports: [

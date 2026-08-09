@@ -76,6 +76,25 @@ export interface TrialResult {
   score: number;
 }
 
+export interface BacktestingModel {
+  id: number;
+  brokerId: string;
+  strategyName: string;
+  symbol: string;
+  interval: string;
+  startDate: string;
+  endDate: string;
+  startBalance: string;
+  endBalance: string;
+  maxDrawdown: string;
+  maxDrawdownPercent: string;
+  totalNetPnl: string;
+  totalReturnPercent: string;
+  dailyResults: object;
+  trades: TradeData[];
+  createdAt: Date;
+}
+
 export namespace BacktestingApi {
   export interface CreateRequest extends BacktestingSetting {}
 
@@ -89,7 +108,7 @@ export namespace BacktestingApi {
   }
 
   export interface QueryResponse {
-    model: Record<string, any> | null;
+    model: BacktestingModel | null;
   }
 
   export interface QueryManyRequest {
@@ -100,7 +119,7 @@ export namespace BacktestingApi {
   }
 
   export interface QueryManyResponse {
-    models: Record<string, any>[];
+    models: BacktestingModel[];
     total: number;
   }
 

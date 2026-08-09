@@ -4,7 +4,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 
 const props = defineProps<{
-  modelValue: Dayjs
+  modelValue?: Dayjs
   title: string
   placeholder: string
 }>()

@@ -12,10 +12,6 @@
     "sourceMap": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "baseUrl": "./",
-    "paths": {
-      "src/*": ["src/*"]
-    },
     "incremental": false,
     "skipLibCheck": true,
     "strictNullChecks": true,
@@ -24,5 +20,6 @@
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true
   },
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "mikro-orm.config.ts"]
 }

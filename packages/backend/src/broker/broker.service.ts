@@ -3,12 +3,12 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { EntityManager, EntityRepository } from '@mikro-orm/mysql';
 import { InjectRepository } from '@mikro-orm/nestjs';
 import { Broker } from '../entities/broker.entity';
-import type { BrokerConfig, BrokerType } from '../types/broker';
+import type { BrokerModel, BrokerType } from '../types/broker';
 
 @Injectable()
 export class BrokerService implements OnModuleInit {
   private readonly logger = new Logger(BrokerService.name);
-  private cache: Map<string, BrokerConfig> = new Map();
+  private cache: Map<string, BrokerModel> = new Map();
 
   constructor(
     private readonly em: EntityManager,
@@ -31,11 +31,14 @@ export class BrokerService implements OnModuleInit {
         brokerType: b.brokerType as BrokerType,
         apiKey: b.apiKey,
         apiSecret: b.apiSecret,
+        isActive: b.isActive,
+        createdAt: b.createdAt,
+        updatedAt: b.updatedAt,
       });
     }
   }
 
-  async getAllConfigs(decrypt = false): Promise<BrokerConfig[]> {
+  async getAllConfigs(decrypt = false): Promise<BrokerModel[]> {
     if (this.cache.size === 0) {
       await this.refreshCache();
     }
@@ -47,12 +50,12 @@ export class BrokerService implements OnModuleInit {
     }));
   }
 
-  async getConfig(brokerId: string, decrypt = false): Promise<BrokerConfig | undefined> {
+  async getConfig(brokerId: string, decrypt = false): Promise<BrokerModel | undefined> {
     const configs = await this.getAllConfigs(decrypt);
     return configs.find((c) => c.id === brokerId);
   }
 
-  async getConfigByType(brokerType: BrokerType, decrypt = false): Promise<BrokerConfig[]> {
+  async getConfigByType(brokerType: BrokerType, decrypt = false): Promise<BrokerModel[]> {
     const configs = await this.getAllConfigs(decrypt);
     return configs.filter((c) => c.brokerType === brokerType);
   }

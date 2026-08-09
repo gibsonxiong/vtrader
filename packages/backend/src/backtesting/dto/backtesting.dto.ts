@@ -1,6 +1,6 @@
 import { IsString, IsNumber, IsOptional, IsObject } from 'class-validator';
-import type { BrokerType } from 'src/types/broker';
-import type { Interval } from 'src/types/common';
+import type { BrokerType } from '../../types/broker';
+import type { Interval } from '../../types/common';
 
 export class CreateBacktestingDto {
   @IsString()

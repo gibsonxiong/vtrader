@@ -1,21 +1,21 @@
-import type { Response } from 'src/types/common';
+import type { Response } from '../types/common';
 import { getHttp } from './http';
-import type { BrokerConfig, BrokerType } from 'src/types/broker';
+import type { BrokerModel, BrokerType } from '../types/broker';
 
 export const brokerConfigApi = {
   /** 获取所有 broker 配置（不返回密钥） */
   list() {
-    return getHttp().post<Response<BrokerConfig[]>>('/broker-config/list');
+    return getHttp().post<Response<BrokerModel[]>>('/broker-config/list');
   },
 
   /** 新增 broker */
   create(data: { name: string; brokerType: BrokerType; apiKey: string; apiSecret: string }) {
-    return getHttp().post<Response<BrokerConfig>>('/broker-config/create', data);
+    return getHttp().post<Response<BrokerModel>>('/broker-config/create', data);
   },
 
   /** 更新 broker（仅允许修改名称） */
   update(data: { id: string; name: string }) {
-    return getHttp().post<Response<BrokerConfig>>('/broker-config/update', data);
+    return getHttp().post<Response<BrokerModel>>('/broker-config/update', data);
   },
 
   /** 删除 broker（软删除） */

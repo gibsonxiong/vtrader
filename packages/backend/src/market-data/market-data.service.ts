@@ -5,8 +5,8 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import dayjs from 'dayjs';
 import { Interval } from '../types/common';
-import { BrokerManagerService } from 'src/broker/broker-manager.service';
-import { BrokerService } from 'src/broker/broker.service';
+import { BrokerManagerService } from '../broker/broker-manager.service';
+import { BrokerService } from '../broker/broker.service';
 import { INTERVAL_VT2DAYJS } from '../broker/brokers/binance-linear';
 import {
   deleteBarOverviewFiles,
@@ -17,8 +17,8 @@ import {
   writeBarOverview,
   writeBars,
   writeContracts,
-} from 'src/utils';
-import type { BrokerType } from 'src/types/broker';
+} from '../utils';
+import type { BrokerType } from '../types/broker';
 import type { GetAllContractsParams, SyncContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, DeleteBarOverviewParams, BarOverviewRecord } from '../types/market-data';
 
 

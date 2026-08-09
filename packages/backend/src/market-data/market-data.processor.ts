@@ -5,17 +5,17 @@
 
 import { SandboxedJob, Queue, QueueEvents, Job } from 'bullmq';
 import dayjs from 'dayjs';
-import { getORM } from 'src/database/get-orm';
-import { Broker } from 'src/entities/broker.entity';
-import { BrokerService } from 'src/broker/broker.service';
-import { BrokerManagerService } from 'src/broker/broker-manager.service';
+import { getORM } from '../database/get-orm';
+import { Broker } from '../entities/broker.entity';
+import { BrokerService } from '../broker/broker.service';
+import { BrokerManagerService } from '../broker/broker-manager.service';
 import { MarketDataService } from './market-data.service';
 import type { DownloadParams, BatchDownloadBarsParams } from '../types/market-data';
 import type { Interval } from '../types/common';
 import {
   writeBars,
   writeBarOverview,
-} from 'src/utils';
+} from '../utils';
 
 // 进程级单例（只创建一次）
 let services: {
@@ -285,13 +285,13 @@ async function batchDownload(job: SandboxedJob<BatchDownloadBarsParams>) {
             status: 'success',
             totalBars: result?.totalBars ?? 0,
           });
-        } catch (err: any) {
+        } catch (err: unknown) {
           results.push({
             symbol,
             interval,
             status: 'failed',
             totalBars: 0,
-            error: err.message,
+            error: (err as Error).message,
           });
         }
         completed++;

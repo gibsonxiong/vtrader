@@ -3,13 +3,8 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import BacktestList from './components/BacktestList.vue'
 import { backtestingApi } from '@vtrader/backend/api'
+import type { BacktestingModel } from '@vtrader/backend/api'
 import Button from '@/components/Button.vue'
-
-interface BacktestRecord { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; createdAt: string }
-
-function toNumber(value: number | string | null | undefined) {
-  return Number(value ?? 0)
-}
 
 async function getBacktestList(params?: { page?: number; pageSize?: number }) {
   const page = params?.page ?? 1
@@ -19,22 +14,13 @@ async function getBacktestList(params?: { page?: number; pageSize?: number }) {
     take: pageSize,
     orderBy: { id: 'desc' },
   })
-  const list: BacktestRecord[] = (res.data.models ?? []).map((model: any) => ({
-    id: model.id,
-    strategy: model.strategyName,
-    symbol: model.symbol,
-    startDate: model.startDate,
-    endDate: model.endDate,
-    initialCapital: toNumber(model.startBalance),
-    finalCapital: toNumber(model.endBalance),
-    createdAt: model.endDate,
-  }))
+  const list = res.data.models ?? []
   return { list, total: res.data.total ?? 0, page, pageSize }
 }
 
 const router = useRouter()
 
-const records = ref<BacktestRecord[]>([])
+const records = ref<BacktestingModel[]>([])
 const total = ref(0)
 const page = ref(1)
 const pageSize = 10

@@ -1,8 +1,8 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { BrokerService } from './broker.service';
-import { response } from 'src/utils';
-import type { Response } from 'src/types/common';
-import type { BrokerConfig, BrokerType } from '../types/broker';
+import { response } from '../utils';
+import type { Response } from '../types/common';
+import type { BrokerModel, BrokerType } from '../types/broker';
 import type { Broker } from '../entities/broker.entity';
 import { CreateBrokerDto, UpdateBrokerDto, RemoveBrokerDto } from './dto/broker-config.dto';
 
@@ -12,7 +12,7 @@ export class BrokerController {
 
   // 获取列表（不返回密钥）
   @Post('list')
-  async list(): Promise<Response<BrokerConfig[]>> {
+  async list(): Promise<Response<BrokerModel[]>> {
     const configs = await this.brokerService.getAllConfigs();
     return response(configs);
   }

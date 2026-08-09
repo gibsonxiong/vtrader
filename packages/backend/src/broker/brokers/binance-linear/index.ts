@@ -30,10 +30,10 @@ import {
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
-import { createHttp } from 'src/client/http';
-import type { Http } from 'src/types/client';
-import { createWs } from 'src/client/ws';
-import { Broker } from 'src/broker/broker';
+import { createHttp } from '../../../client/http';
+import type { Http } from '../../../types/client';
+import { createWs } from '../../../client/ws';
+import { Broker } from '../../broker';
 
 // ============================================================
 // constants.ts
@@ -249,8 +249,8 @@ class MdApi {
         this.ws.on('close', () => {
           this.broker.writeLog('市场数据WebSocket连接关闭');
         });
-      } catch (err: any) {
-        this.broker.writeLog(`市场数据WebSocket创建失败: ${err.message}（将继续运行，数据不可用）`);
+      } catch (err: unknown) {
+        this.broker.writeLog(`市场数据WebSocket创建失败: ${(err as Error).message}（将继续运行，数据不可用）`);
         resolve();
       }
     });
@@ -928,8 +928,8 @@ class TradeApi {
             this.broker.writeLog('交易WebSocket连接关闭');
           },
         });
-      } catch (err: any) {
-        this.broker.writeLog(`交易WebSocket创建失败: ${err.message}（将继续运行，交易不可用）`);
+      } catch (err: unknown) {
+        this.broker.writeLog(`交易WebSocket创建失败: ${(err as Error).message}（将继续运行，交易不可用）`);
         resolve();
       }
     });
@@ -1155,8 +1155,8 @@ class UserApi {
         this.ws.on('close', () => {
           this.broker.writeLog('用户数据WebSocket连接关闭');
         });
-      } catch (err: any) {
-        this.broker.writeLog(`用户数据WebSocket创建失败: ${err.message}（将继续运行，账户数据不可用）`);
+      } catch (err: unknown) {
+        this.broker.writeLog(`用户数据WebSocket创建失败: ${(err as Error).message}（将继续运行，账户数据不可用）`);
         resolve();
       }
     });

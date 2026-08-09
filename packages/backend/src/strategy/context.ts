@@ -1,7 +1,7 @@
 import { Direction, Offset } from '../types/common';
 import { SendOrderParams, CancelOrderParams, ContextProps } from '../types/strategy';
 import { Strategy } from './strategy';
-import { ArrayManger } from 'src/strategy/array-manager';
+import { ArrayManger } from './array-manager';
 import { Position } from './position';
 import { Asset } from './asset';
 

@@ -1,7 +1,7 @@
 import { WebSocketGateway, WebSocketServer, SubscribeMessage, MessageBody, ConnectedSocket, OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect } from '@nestjs/websockets';
 import type { Server, Socket } from 'socket.io';
 import { Injectable } from '@nestjs/common';
-import { BrokerManagerService } from 'src/broker/broker-manager.service';
+import { BrokerManagerService } from '../broker/broker-manager.service';
 import type { SubscribeRequest } from '../types/broker';
 
 @WebSocketGateway({
@@ -85,8 +85,8 @@ export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayD
             this.server.to(roomKey).emit('bar', bar);
           });
         }
-      } catch (err: any) {
-        client.emit('subscribeError', { brokerId, symbol, interval, message: `Broker连接失败: ${err.message}` });
+      } catch (err: unknown) {
+        client.emit('subscribeError', { brokerId, symbol, interval, message: `Broker连接失败: ${(err as Error).message}` });
         return false;
       }
     }

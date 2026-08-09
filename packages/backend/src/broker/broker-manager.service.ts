@@ -2,8 +2,8 @@ import { Injectable, Logger, OnModuleDestroy } from '@nestjs/common';
 import { Broker } from './broker';
 import { BrokerService } from './broker.service';
 import type { BrokerType, MockBrokerProps } from '../types/broker';
-import BinanceLinearBroker from 'src/broker/brokers/binance-linear';
-import BinanceLinearTestnetBroker from 'src/broker/brokers/binance-linear-testnet';
+import BinanceLinearBroker from './brokers/binance-linear';
+import BinanceLinearTestnetBroker from './brokers/binance-linear-testnet';
 import { MockBroker } from './brokers/mock/mock-broker';
 
 @Injectable()

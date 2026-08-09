@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 import type { Dayjs } from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { strategyApi, brokerConfigApi, backtestingApi } from '@vtrader/backend/api'
-import type { BrokerConfig, ContractData } from '@vtrader/backend/api'
+import type { BrokerModel, ContractData } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import StrategyParams from './components/StrategyParams.vue'
 import NavBar from '@/components/NavBar.vue'
@@ -106,7 +106,7 @@ const showParamsPopup = ref(false)
 
 async function loadContracts() {
   const brokerRes = await brokerConfigApi.list()
-  const brokers = (brokerRes.data ?? []).sort((a: BrokerConfig, b: BrokerConfig) => {
+  const brokers = (brokerRes.data ?? []).sort((a: BrokerModel, b: BrokerModel) => {
     const aIsTestnet = a.brokerType.includes('TESTNET')
     const bIsTestnet = b.brokerType.includes('TESTNET')
     return Number(aIsTestnet) - Number(bIsTestnet)
@@ -189,9 +189,9 @@ async function waitBacktestFinished(jobId: string) {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await backtestingApi.jobStatus({ jobId })
     const status = res.data?.status
-    const resultId = res.data?.data?.resultId
+    const resultId = res.data?.result?.id
     if (status === 'completed' && resultId) return resultId
-    if (status === 'failed') throw new Error(res.data?.failedReason || '回测执行失败')
+    if (status === 'failed') throw new Error(res.data?.error || '回测执行失败')
     await new Promise((resolve) => window.setTimeout(resolve, 1000))
   }
   throw new Error('回测执行超时，请稍后在列表查看结果')

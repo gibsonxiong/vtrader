@@ -3,7 +3,7 @@ import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, 
 import { DailyResultItem } from '../types/backtesting';
 import { StrategyEngine, SendOrderParams, CancelOrderParams, StrategyProps, RecordData, ParamConfig } from '../types/strategy';
 import { Context } from './context';
-import { genOrderId, canOrderCancel, roundTo, calculateStd } from 'src/utils';
+import { genOrderId, canOrderCancel, roundTo, calculateStd } from '../utils';
 import { BigNumber } from 'bignumber.js';
 import 'reflect-metadata';
 import { Asset } from './asset';

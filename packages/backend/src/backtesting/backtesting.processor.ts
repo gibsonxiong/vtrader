@@ -1,16 +1,16 @@
 import { Queue, SandboxedJob, QueueEvents, Worker } from 'bullmq';
 import { BacktestingEngine } from './backtesting-engine';
-import { MarketDataService } from 'src/market-data/market-data.service';
-import { BrokerManagerService } from 'src/broker/broker-manager.service';
-import { BrokerService } from 'src/broker/broker.service';
-import { Broker } from 'src/entities/broker.entity';
-import { Backtesting } from 'src/entities/backtesting.entity';
-import { StrategyService } from 'src/strategy/strategy.service';
-import { getORM } from 'src/database/get-orm';
+import { MarketDataService } from '../market-data/market-data.service';
+import { BrokerManagerService } from '../broker/broker-manager.service';
+import { BrokerService } from '../broker/broker.service';
+import { Broker } from '../entities/broker.entity';
+import { Backtesting } from '../entities/backtesting.entity';
+import { StrategyService } from '../strategy/strategy.service';
+import { getORM } from '../database/get-orm';
 import type { BacktestingSetting } from '../types/backtesting';
 import type { Interval } from '../types/common';
 import type { OptimizerSetting, TrialResult } from '../types/backtesting';
-import { OptimizerFactory } from 'src/optimization/index';
+import { OptimizerFactory } from '../optimization/index';
 import { pathToFileURL } from 'url';
 import path from 'path';
 
@@ -92,7 +92,7 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
       totalNetPnl: String(result.totalNetPnl),
       totalReturnPercent: String(result.totalReturnPercent),
       dailyResults: result.dailyResults as object,
-      trades: result.trades as any[],
+      trades: result.trades,
       createdAt: new Date(),
     });
     await em.persistAndFlush(backtesting);

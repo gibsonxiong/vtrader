@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { inject, type ComputedRef } from 'vue'
+import { inject, computed, type ComputedRef } from 'vue'
 
 defineProps<{
   title: string
 }>()
 
-const titlePosition = inject<ComputedRef<'left' | 'top'>>('cellTitlePosition')
+const titlePosition = inject<ComputedRef<'left' | 'top'>>('cellTitlePosition', computed(() => 'left' as const))
 const titleWidth = inject<ComputedRef<number>>('cellTitleWidth')
 </script>
 
 <template>
-  <div class="cell" :class="{ 'cell-top': titlePosition?.value === 'top' }">
-    <span class="cell-title" :style="titlePosition?.value !== 'top' ? { width: titleWidth + 'px' } : undefined">{{ title }}</span>
+  <div class="cell" :class="{ 'cell-top': titlePosition === 'top' }">
+    <span class="cell-title" :style="titlePosition !== 'top' ? { width: titleWidth + 'px' } : undefined">{{ title }}</span>
     <span class="cell-value"><slot /></span>
   </div>
 </template>

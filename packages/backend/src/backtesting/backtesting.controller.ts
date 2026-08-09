@@ -1,12 +1,12 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { BacktestingApi } from '../types/backtesting';
 import type { BacktestingSetting } from '../types/backtesting';
-import type { Response } from 'src/types/common';
+import type { Response } from '../types/common';
 
 import { BacktestingService } from './backtesting.service';
 // import { BacktestingCleanupService } from './backtesting-cleanup.service';
 
-import { response } from 'src/utils';
+import { response } from '../utils';
 import {
   CreateBacktestingDto,
   QueryBacktestingDto,

@@ -1,7 +1,7 @@
-import type { Response } from 'src/types/common';
+import type { Response } from '../types/common';
 import { getHttp } from './http';
-import type { BarData, ContractData } from 'src/types/common';
-import type { GetContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, SyncContractsParams } from 'src/types/market-data';
+import type { BarData, ContractData } from '../types/common';
+import type { GetContractsParams, GetBarsParams, DownloadParams, BatchDownloadBarsParams, SyncContractsParams, BarOverviewRecord } from '../types/market-data';
 
 /**
  * 下载任务状态
@@ -9,7 +9,7 @@ import type { GetContractsParams, GetBarsParams, DownloadParams, BatchDownloadBa
 export interface DownloadJobStatus {
   status: 'waiting' | 'active' | 'completed' | 'failed' | 'not_found';
   progress?: number;
-  data?: any;
+  data?: unknown;
   result?: {
     totalBars?: number;
     message?: string;
@@ -25,7 +25,7 @@ export interface DownloadJobStatus {
 
 export const marketDataApi = {
   getBarOverviews() {
-    return getHttp().post<Response<any[]>>(
+    return getHttp().post<Response<BarOverviewRecord[]>>(
       '/market-data/getBarOverviews',
     );
   },

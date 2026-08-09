@@ -1,6 +1,6 @@
-import type { Response } from 'src/types/common';
+import type { Response } from '../types/common';
 import { getHttp } from './http';
-import type { BacktestingApi } from 'src/types/backtesting';
+import type { BacktestingApi } from '../types/backtesting';
 
 export const backtestingApi = {
   create(params: BacktestingApi.CreateRequest) {

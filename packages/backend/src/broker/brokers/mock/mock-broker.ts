@@ -9,8 +9,8 @@ import {
   type MockBrokerProps,
   type BrokerType,
 } from '../../../types/broker';
-import { Broker } from 'src/broker/broker';
-import BinanceLinearBroker from '../binance-linear';
+import { Broker } from '../../broker';
+import BinanceLinearBroker from '../../brokers/binance-linear';
 let tradeCount: number = 0;
 
 

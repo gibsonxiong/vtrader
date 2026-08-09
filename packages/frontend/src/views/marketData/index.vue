@@ -6,7 +6,7 @@ import LoadingSpinner from '@/components/LoadingSpinner.vue'
 
 const router = useRouter()
 
-interface MarketDataFileOverview { version: 1; brokerType: string; symbol: string; interval: string; ranges: [string, string][]; updatedAt: string; count: number }
+interface MarketDataFileOverview { version: 1; brokerType: string; symbol: string; interval: string; ranges: [string, string][]; updatedAt: string; count?: number }
 
 // 文件概览缓存（按 brokerType 分组）
 const fileOverviewsByBroker = ref<Record<string, MarketDataFileOverview[]>>({})

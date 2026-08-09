@@ -2,7 +2,7 @@ import { Controller } from '@nestjs/common';
 
 import { Post, Body } from '@nestjs/common';
 import { MarketDataService } from './market-data.service';
-import type { Response } from 'src/types/common';
+import type { Response } from '../types/common';
 import type { BarData, ContractData } from '../types/common';
 import type {
   GetAllContractsParams,
@@ -13,7 +13,7 @@ import type {
   DeleteBarOverviewParams,
   BarOverviewRecord,
 } from '../types/market-data';
-import { response } from 'src/utils';
+import { response } from '../utils';
 import {
   GetAllContractsDto,
   SyncContractsDto,

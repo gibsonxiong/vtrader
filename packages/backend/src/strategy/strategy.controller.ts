@@ -1,8 +1,8 @@
-import type { Response } from 'src/types/common';
+import type { Response } from '../types/common';
 import { Controller, Post, Body } from '@nestjs/common';
 import { StrategyService } from './strategy.service';
 import type { ParamConfig, StrategyParamDTO } from '../types/strategy';
-import { response } from 'src/utils';
+import { response } from '../utils';
 import { StrategyDetailDto } from './dto/strategy.dto';
 
 function toTypeString(t: ParamConfig['type']): string {

@@ -1,5 +1,5 @@
-import type { Response } from 'src/types/common';
-import type { StrategyParamDTO } from 'src/types/strategy';
+import type { Response } from '../types/common';
+import type { StrategyParamDTO } from '../types/strategy';
 import { getHttp } from './http';
 
 export const strategyApi = {

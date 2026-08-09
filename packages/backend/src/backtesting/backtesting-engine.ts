@@ -7,16 +7,16 @@ import {
   Interval,
   OrderStatus,
   OrderType,
-} from 'src/types/common';
-import type { DailyResultItem } from 'src/types/backtesting';
+} from '../types/common';
+import type { DailyResultItem } from '../types/backtesting';
 import dayjs from 'dayjs';
 import { Injectable, Scope } from '@nestjs/common';
-import { Strategy } from 'src/strategy/strategy';
-import { StrategyService } from 'src/strategy/strategy.service';
-import { BrokerManagerService } from 'src/broker/broker-manager.service';
-import { SendOrderParams, CancelOrderParams, StrategyEngine, RecordData } from 'src/types/strategy';
-import type { BacktestingSetting, BacktestingResult } from 'src/types/backtesting';
-import { MockBroker } from 'src/broker/brokers/mock/mock-broker';
+import { Strategy } from '../strategy/strategy';
+import { StrategyService } from '../strategy/strategy.service';
+import { BrokerManagerService } from '../broker/broker-manager.service';
+import { SendOrderParams, CancelOrderParams, StrategyEngine, RecordData } from '../types/strategy';
+import type { BacktestingSetting, BacktestingResult } from '../types/backtesting';
+import { MockBroker } from '../broker/brokers/mock/mock-broker';
 
 /**
  * 回测引擎

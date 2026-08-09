@@ -5,7 +5,7 @@ import { ArrayManger } from '../array-manager';
 import * as talib from 'technicalindicators';
 import { BarGenerator } from '../bar-generator';
 import { Context } from '../context';
-import type { StrategyProps } from 'src/types/strategy';
+import type { StrategyProps } from '../../types/strategy';
 
 let gridId = 0;
 

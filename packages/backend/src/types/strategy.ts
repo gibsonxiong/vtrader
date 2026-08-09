@@ -23,7 +23,7 @@ export interface StrategyEngine {
   cancelOrder(params: CancelOrderParams): Promise<void>;
 }
 
-export type StrategyParamDTO = Record<string, { value: any; type: string }>;
+export type StrategyParamDTO = Record<string, { value: string | number | boolean | undefined; type: string }>;
 
 export interface StrategyProps {
   engine: StrategyEngine;
@@ -44,7 +44,7 @@ export interface ParamConfig {
     | StringConstructor
     | NumberConstructor
     | BooleanConstructor;
-  default?: any;
+  default?: string | number | boolean;
 }
 
 export interface CreateInstanceParam extends StrategyProps {

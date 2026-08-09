@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import dayjs from 'dayjs';
 import { OrderData, OrderStatus, BarData, TradeData, Interval } from './types/common';
-import type { Response } from 'src/types/common';
+import type { Response } from './types/common';
 import type { BarOverviewRecord } from './types/market-data';
 import type { ContractData } from './types/common';
 import { BigNumber } from 'bignumber.js';

@@ -11,12 +11,16 @@ export interface MockBrokerProps {
   assetFrozen?: number;
 }
 
-export interface BrokerConfig {
+export interface BrokerModel {
   id: string;
   name: string;
   brokerType: BrokerType;
   apiKey: string;
   apiSecret: string;
+  settings?: Record<string, any>;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**

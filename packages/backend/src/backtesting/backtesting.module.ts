@@ -6,8 +6,8 @@ import { MikroOrmModule } from '@mikro-orm/nestjs';
 import { pathToFileURL } from 'url';
 
 import { MarketDataModule } from '../market-data/market-data.module';
-import { StrategyModule } from 'src/strategy/strategy.module';
-import { BrokerModule } from 'src/broker/broker.module';
+import { StrategyModule } from '../strategy/strategy.module';
+import { BrokerModule } from '../broker/broker.module';
 import { BacktestingController } from './backtesting.controller';
 import { BacktestingService } from './backtesting.service';
 import { BacktestingEngine } from './backtesting-engine';
