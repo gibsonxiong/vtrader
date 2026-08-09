@@ -16,7 +16,7 @@ export interface BacktestingSetting {
   strategyName: string;
   strategySetting?: Record<string, any>;
   data?: BarData[];
-  dataLoader?: (symbol: string, interval: Interval, preloadCount: number) => Promise<BarData[]>;
+  dataLoader?: (symbol: string, interval: Interval, preloadCount: number) => AsyncGenerator<BarData>;
 }
 
 export interface DailyResultItem {

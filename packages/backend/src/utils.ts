@@ -222,7 +222,7 @@ export async function writeBars(brokerName: string, symbol: string, interval: In
       list.push(b);
     }
   });
-  list.sort((a, b) => b.timestamp - a.timestamp);
+  list.sort((a, b) => a.timestamp - b.timestamp);
 
   // 使用 Int64 存储时间戳，减少 Date 对象开销
   const timestamps = BigInt64Array.from(list.map((b) => BigInt(b.timestamp)));
@@ -296,8 +296,7 @@ export async function readBars(
       const closeArr = closeVec!.toArray() as unknown as Float64Array;
       const volArr = volVec!.toArray() as unknown as Float64Array;
 
-      const len = tsArr.length;
-      for (let i = 0; i < len; i++) {
+      for (let i = 0; i < tsArr.length; i++) {
         const t = Number(tsArr[i]);
         if (t < start || t > end) continue;
         result.push({
@@ -317,5 +316,66 @@ export async function readBars(
   } catch (e) {
     console.error(e);
     throw new Error('read parquet file error', { cause: e });
+  }
+}
+
+/**
+ * 流式读取K线数据，逐条 yield，避免全量加载到内存
+ */
+export async function* readBarsStream(
+  brokerName: string,
+  symbol: string,
+  interval: Interval,
+  startTime?: number,
+  endTime?: number,
+): AsyncGenerator<BarData> {
+  const filePath = getBarFilePath(brokerName, symbol, interval);
+  try {
+    const parquet = await initParquetWasm();
+    const { readParquet } = parquet;
+    const isExists = fs.existsSync(filePath);
+    if (!isExists) {
+      return;
+    }
+    const fileBuffer = fs.readFileSync(filePath);
+    const wasmTable = readParquet(new Uint8Array(fileBuffer));
+    const table = tableFromIPC(wasmTable.intoIPCStream());
+
+    const start = typeof startTime === 'number' ? startTime : -Infinity;
+    const end = typeof endTime === 'number' ? endTime : Infinity;
+
+    for (const batch of (table as any).batches as Table['batches']) {
+      const tsVec = batch.getChild('timestamp');
+      const openVec = batch.getChild('open');
+      const highVec = batch.getChild('high');
+      const lowVec = batch.getChild('low');
+      const closeVec = batch.getChild('close');
+      const volVec = batch.getChild('volume');
+
+      const tsArr = tsVec!.toArray() as unknown as any;
+      const openArr = openVec!.toArray() as unknown as Float64Array;
+      const highArr = highVec!.toArray() as unknown as Float64Array;
+      const lowArr = lowVec!.toArray() as unknown as Float64Array;
+      const closeArr = closeVec!.toArray() as unknown as Float64Array;
+      const volArr = volVec!.toArray() as unknown as Float64Array;
+
+      for (let i = 0; i < tsArr.length; i++) {
+        const t = Number(tsArr[i]);
+        if (t < start || t > end) continue;
+        yield {
+          symbol,
+          interval,
+          timestamp: t,
+          open: openArr[i],
+          close: closeArr[i],
+          high: highArr[i],
+          low: lowArr[i],
+          volume: volArr[i],
+        };
+      }
+    }
+  } catch (e) {
+    console.error(e);
+    throw new Error('read parquet stream error', { cause: e });
   }
 }

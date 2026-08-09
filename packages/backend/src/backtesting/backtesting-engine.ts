@@ -37,7 +37,7 @@ export class BacktestingEngine implements StrategyEngine {
   
   private datetime: Date;
   private bar: BarData;
-  private historyData: BarData[] = [];
+  private historyData: AsyncIterable<BarData> = [] as unknown as AsyncIterable<BarData>;
 
   private logs: string[] = [];
 
@@ -107,23 +107,22 @@ export class BacktestingEngine implements StrategyEngine {
 
     const { data, dataLoader, interval } = this.setting;
 
-    this.historyData = [];
-
     if (data) {
-      this.historyData = data;
+      this.historyData = toAsyncIterable(data);
     } else if (dataLoader) {
       const preloadCount = this.strategy.preloadCount();
-      for (let symbol of this.symbols) {
-        const bars = await dataLoader(symbol, interval, preloadCount);
-        this.historyData = this.historyData.concat(bars);
+      const streams = this.symbols.map((symbol) =>
+        dataLoader(symbol, interval, preloadCount),
+      );
+
+      if (streams.length === 1) {
+        this.historyData = streams[0];
+      } else {
+        this.historyData = mergeSortedStreams(streams);
       }
     }
 
-    this.historyData.sort((a, b) => {
-      return a.timestamp - b.timestamp;
-    });
-
-    this.writeLog(`历史数据加载完成，数据量：${this.historyData.length}`);
+    this.writeLog('历史数据加载完成');
   }
 
   /**
@@ -132,29 +131,23 @@ export class BacktestingEngine implements StrategyEngine {
   async runBacktesting(): Promise<void> {
     this.writeLog('开始运行回测');
 
-    if (this.historyData.length === 0) {
-      throw new Error('历史数据为空，回测结束');
-    }
-
     // 调用策略启动
     this.strategy.start();
     this.writeLog('策略启动完成');
 
-    const total = this.historyData.length;
-    this.writeLog(`回放历史数据中... 共 ${total} 条`);
-
-    // 遍历历史数据
-    for (let i = 0; i < total; i++) {
-      const data = this.historyData[i];
+    // 流式遍历历史数据
+    let count = 0;
+    for await (const data of this.historyData) {
+      console.log(new Date(data.timestamp));
       this.broker.refresh(data);
       await this.handleBar(data as BarData);
+      count++;
     }
+
+    this.writeLog(`回放历史数据完成，共 ${count} 条`);
 
     // 调用策略停止
     this.strategy.stop();
-    this.writeLog('回放历史数据完成');
-
-    // this.handleBacktestingEnd();
   }
 
   /**
@@ -317,5 +310,50 @@ export class BacktestingEngine implements StrategyEngine {
   private writeLog(msg: string): void {
     console.log(`${msg}`);
     this.logs.push(msg);
+  }
+}
+
+/**
+ * 将数组包装为异步可迭代对象
+ */
+export async function* toAsyncIterable<T>(items: T[]): AsyncGenerator<T> {
+  yield* items;
+}
+
+/**
+ * 多路归并排序：将多个已按时间戳排序的流合并为单一有序流
+ */
+export async function* mergeSortedStreams(
+  streams: AsyncGenerator<BarData>[],
+): AsyncGenerator<BarData> {
+  const iterators = streams.map((s) => s[Symbol.asyncIterator]());
+  const buffers: {
+    value: BarData;
+    iterator: AsyncIterator<BarData>;
+  }[] = [];
+
+  for (const it of iterators) {
+    const result = await it.next();
+    if (!result.done) {
+      buffers.push({ value: result.value, iterator: it });
+    }
+  }
+
+  while (buffers.length > 0) {
+    let minIdx = 0;
+    for (let i = 1; i < buffers.length; i++) {
+      if (buffers[i].value.timestamp < buffers[minIdx].value.timestamp) {
+        minIdx = i;
+      }
+    }
+
+    yield buffers[minIdx].value;
+
+    const result = await buffers[minIdx].iterator.next();
+    if (result.done) {
+      buffers.splice(minIdx, 1);
+    } else {
+      buffers[minIdx].value = result.value;
+    }
   }
 }

@@ -1,4 +1,5 @@
 import { Queue, SandboxedJob, QueueEvents, Worker } from 'bullmq';
+import dayjs from 'dayjs';
 import { BacktestingEngine } from './backtesting-engine';
 import { MarketDataService } from '../market-data/market-data.service';
 import { BrokerManagerService } from '../broker/broker-manager.service';
@@ -7,6 +8,8 @@ import { Broker } from '../entities/broker.entity';
 import { Backtesting } from '../entities/backtesting.entity';
 import { StrategyService } from '../strategy/strategy.service';
 import { getORM } from '../database/get-orm';
+import { readBarsStream } from '../utils';
+import { INTERVAL_VT2DAYJS } from '../broker/brokers/binance-linear';
 import type { BacktestingModel, BacktestingSetting } from '../types/backtesting';
 import type { Interval } from '../types/common';
 import type { OptimizerSetting, TrialResult } from '../types/backtesting';
@@ -53,16 +56,13 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
     await job.updateProgress(0);
     await engine.init({
       ...setting,
-      dataLoader: async (symbol: string, interval: Interval, preloadCount: number) => {
-        const bars = await marketDataService.getBarsFromDb({
-          brokerType: setting.brokerType,
-          symbol: symbol,
-          interval: interval,
-          startDate: setting.startDate,
-          endDate: setting.endDate,
-          preload: preloadCount,
-        });
-        return bars.list;
+      dataLoader: async function* (symbol: string, interval: Interval, preloadCount: number) {
+        const { marketDataService } = await getServices();
+        const start = dayjs(setting.startDate).startOf('day').valueOf();
+        const end = dayjs(setting.endDate).endOf('day').valueOf();
+        const [n, unit] = INTERVAL_VT2DAYJS[interval];
+        const startTime = dayjs(start).subtract(preloadCount * n, unit).valueOf();
+        yield* readBarsStream(setting.brokerType, symbol, interval, startTime, end);
       }
     });
     await job.updateProgress(20);
