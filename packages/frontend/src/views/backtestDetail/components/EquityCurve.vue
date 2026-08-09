@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import * as echarts from 'echarts'
-interface EquityCurvePoint { time: string; equity: number; returnRate: number }
+import type { EquityCurvePoint } from '../index.vue'
 
 const props = defineProps<{
   equityCurve: EquityCurvePoint[]

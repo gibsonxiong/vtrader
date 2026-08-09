@@ -1,6 +1,6 @@
 import type { BarData, ContractData } from '../types/common';
 
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import dayjs from 'dayjs';
@@ -355,7 +355,7 @@ export class MarketDataService {
     const job = await this.downloadQueue.getJob(jobId);
 
     if (!job) {
-      return { status: 'unkown', failedReason: '任务不存在' };
+      throw new NotFoundException('任务不存在');
     }
 
     const state = await job.getState();

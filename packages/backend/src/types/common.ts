@@ -206,3 +206,13 @@ export interface Response<T = undefined> {
   msg: string;
   data: T;
 }
+
+/**
+ * 任务状态接口
+ */
+export interface JobResult<T> {
+  status: string;
+  progress: number;
+  data: T;
+  failedReason: string;
+}

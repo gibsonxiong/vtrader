@@ -4,9 +4,7 @@ import Input from '@/components/Input.vue'
 import NumberInput from '@/components/NumberInput.vue'
 import CellGroup from '@/components/CellGroup.vue'
 import Cell from '@/components/Cell.vue'
-
-interface StrategyParamMeta { label: string; default: any; type?: string }
-interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
+import type { StrategyParamMeta, StrategyMeta } from '../index.vue'
 
 const STORAGE_KEY = 'backtest_strategy_params'
 

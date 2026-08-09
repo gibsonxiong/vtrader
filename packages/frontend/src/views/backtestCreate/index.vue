@@ -16,8 +16,8 @@ import Button from '@/components/Button.vue'
 import CellGroup from '@/components/CellGroup.vue'
 import Cell from '@/components/Cell.vue'
 
-interface StrategyParamMeta { label: string; default: string | number | boolean | undefined; type?: string }
-interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
+export interface StrategyParamMeta { label: string; default: string | number | boolean | undefined; type?: string }
+export interface StrategyMeta { name: string; label: string; params: Record<string, StrategyParamMeta> }
 
 interface BacktestConfig {
   strategyName: string
@@ -189,9 +189,9 @@ async function waitBacktestFinished(jobId: string) {
   for (let i = 0; i < maxAttempts; i++) {
     const res = await backtestingApi.jobStatus({ jobId })
     const status = res.data?.status
-    const resultId = res.data?.result?.id
+    const resultId = res.data?.data?.backtesting.id
     if (status === 'completed' && resultId) return resultId
-    if (status === 'failed') throw new Error(res.data?.error || '回测执行失败')
+    if (status === 'failed') throw new Error(res.data?.failedReason || '回测执行失败')
     await new Promise((resolve) => window.setTimeout(resolve, 1000))
   }
   throw new Error('回测执行超时，请稍后在列表查看结果')

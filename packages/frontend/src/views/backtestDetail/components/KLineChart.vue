@@ -2,7 +2,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { init, dispose, registerOverlay } from 'klinecharts'
 import type { BarData } from '@vtrader/backend/api'
-interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
+import type { TradeRecord } from '../index.vue'
 
 // 买卖点 tooltip 状态
 const tooltip = reactive({

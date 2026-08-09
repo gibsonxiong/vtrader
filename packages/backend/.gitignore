@@ -6,3 +6,9 @@ node_modules
 data/
 
 /generated/prisma
+
+# TypeScript 编译产物
+*.tsbuildinfo
+test/*.js
+test/*.js.map
+test/*.d.ts

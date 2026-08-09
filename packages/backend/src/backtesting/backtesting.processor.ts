@@ -7,7 +7,7 @@ import { Broker } from '../entities/broker.entity';
 import { Backtesting } from '../entities/backtesting.entity';
 import { StrategyService } from '../strategy/strategy.service';
 import { getORM } from '../database/get-orm';
-import type { BacktestingSetting } from '../types/backtesting';
+import type { BacktestingModel, BacktestingSetting } from '../types/backtesting';
 import type { Interval } from '../types/common';
 import type { OptimizerSetting, TrialResult } from '../types/backtesting';
 import { OptimizerFactory } from '../optimization/index';
@@ -42,7 +42,7 @@ const connection = {
   password: process.env.REDIS_PASSWORD,
 };
 
-async function backtesting(job: SandboxedJob<BacktestingSetting>) {
+async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: BacktestingModel }>) {
   const { data: setting } = job;
   console.log(`开始处理回测任务 ${job.id}: ${setting.strategyName}`);
 
@@ -100,9 +100,8 @@ async function backtesting(job: SandboxedJob<BacktestingSetting>) {
     await job.updateProgress(100);
     console.log(`任务 ${job.id}: 结果计算完成，结果ID: ${backtesting.id}`);
     
-    return { 
-      resultId: backtesting.id,
-      result,
+    return {
+      backtesting,
     };
   } catch (error) {
     console.error(`任务 ${job.id} 执行失败: ${error.message}`, error.stack);

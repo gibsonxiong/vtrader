@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import dayjs from 'dayjs'
 import Pagination from '@/components/Pagination.vue'
-interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
+import type { TradeRecord } from '../index.vue'
 
 const props = defineProps<{
   trades: TradeRecord[]

@@ -56,5 +56,3 @@ export interface BarOverviewRecord {
   updatedAt: string;
   count?: number;
 }
-
-

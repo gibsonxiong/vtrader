@@ -1,6 +1,6 @@
 import type { Response } from '../types/common';
 import { getHttp } from './http';
-import type { BacktestingApi } from '../types/backtesting';
+import type { BacktestingApi, JobStatusResult } from '../types/backtesting';
 
 export const backtestingApi = {
   create(params: BacktestingApi.CreateRequest) {
@@ -24,7 +24,7 @@ export const backtestingApi = {
     );
   },
   jobStatus(params: BacktestingApi.JobStatusRequest) {
-    return getHttp().post<Response<BacktestingApi.JobStatusResponse>>(
+    return getHttp().post<Response<JobStatusResult>>(
       '/backtesting/job/status', params,
     );
   },

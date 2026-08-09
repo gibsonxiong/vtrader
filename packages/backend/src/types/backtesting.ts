@@ -95,6 +95,15 @@ export interface BacktestingModel {
   createdAt: Date;
 }
 
+export interface JobStatusResult {
+  status: string;
+  progress: number;
+  data?: {
+    backtesting: BacktestingModel;
+  };
+  failedReason: string;
+}
+
 export namespace BacktestingApi {
   export interface CreateRequest extends BacktestingSetting {}
 
@@ -131,14 +140,5 @@ export namespace BacktestingApi {
 
   export interface JobStatusRequest {
     jobId: string;
-  }
-
-  export interface JobStatusResponse {
-    status: 'waiting' | 'active' | 'completed' | 'failed';
-    progress?: number;
-    result?: {
-      id: number;
-    };
-    error?: string;
   }
 }

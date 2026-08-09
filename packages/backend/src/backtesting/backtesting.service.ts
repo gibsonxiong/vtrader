@@ -6,7 +6,8 @@ import { InjectRepository } from '@mikro-orm/nestjs';
 import { MarketDataService } from '../market-data/market-data.service';
 import { BacktestingSetting } from '../types/backtesting';
 import { Backtesting } from '../entities/backtesting.entity';
-import type { OptimizerSetting } from '../types/backtesting';
+import type { JobStatusResult, OptimizerSetting } from '../types/backtesting';
+import { BusinessException, NotFoundException } from '../common/exceptions';
 
 @Injectable()
 export class BacktestingService {
@@ -72,15 +73,15 @@ export class BacktestingService {
     await this.repo.nativeDelete({ id });
   }
 
-  async getJobStatus(jobId: string) {
+  async getJobStatus(jobId: string): Promise<JobStatusResult> {
     const job = await this.backtestingQueue.getJob(jobId);
 
     if (!job) {
-      return { status: 'unkown', failedReason: '任务不存在' };
+      throw new NotFoundException('任务不存在');
     }
 
     const state = await job.getState();
-    const progress = job.progress;
+    const progress = job.progress as number;
 
     return {
       status: state,

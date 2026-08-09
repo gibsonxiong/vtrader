@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { BacktestingApi } from '../types/backtesting';
-import type { BacktestingSetting } from '../types/backtesting';
+import type { BacktestingModel, BacktestingSetting, JobStatusResult } from '../types/backtesting';
 import type { Response } from '../types/common';
 
 import { BacktestingService } from './backtesting.service';
@@ -38,12 +38,7 @@ export class BacktestingController {
    * 获取任务状态
    */
   @Post('job/status')
-  async getJobStatus(@Body() body: JobStatusDto): Promise<Response<{
-    status: string;
-    progress?: unknown;
-    data?: unknown;
-    failedReason?: string;
-  }>> {
+  async getJobStatus(@Body() body: JobStatusDto): Promise<Response<JobStatusResult>> {
     const status = await this.backtestingService.getJobStatus(body.jobId);
 
     return response(status);

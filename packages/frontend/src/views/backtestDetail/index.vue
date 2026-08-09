@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import dayjs from 'dayjs'
 import { showToast } from '@/ui/mobile'
@@ -15,10 +15,8 @@ import Cell from '@/components/Cell.vue'
 
 export interface TradeRecord { time: string; price: number; amount: number; profit: number; type: 'buy' | 'sell' }
 export interface EquityCurvePoint { time: string; equity: number; returnRate: number }
-interface BacktestMetrics { totalReturn: number; annualReturn: number; maxDrawdown: number; sharpeRatio: number; winRate: number; profitLossRatio: number; totalTrades: number; avgDailyTrades: number }
-interface BacktestDetail { id: number; strategy: string; symbol: string; startDate: string; endDate: string; initialCapital: number; finalCapital: number; params: Record<string, number>; metrics: BacktestMetrics; trades: TradeRecord[]; kLines: BarData[]; equityCurve: EquityCurvePoint[] }
 
-function toNumber(value: any): number {
+function toNumber(value: unknown): number {
   return Number(value ?? 0)
 }
 
@@ -38,65 +36,23 @@ function toTradeRecords(trades: any[]): TradeRecord[] {
   })
 }
 
-function toEquityCurve(dailyResults: any[], initialCapital: number): EquityCurvePoint[] {
+function toEquityCurve(dailyResults: any[], startBalance: number): EquityCurvePoint[] {
   return (dailyResults ?? []).map((item) => {
-    const equity = initialCapital + toNumber(item.accumNetPnl)
-    return { time: item.date, equity, returnRate: initialCapital === 0 ? 0 : (equity - initialCapital) / initialCapital }
+    const equity = startBalance + toNumber(item.accumNetPnl)
+    return { time: item.date, equity, returnRate: startBalance === 0 ? 0 : (equity - startBalance) / startBalance }
   })
-}
-
-async function getBacktestDetail(id: number): Promise<BacktestDetail> {
-  const detailRes = await backtestingApi.query({ id })
-  const model = detailRes.data?.model as BacktestingModel
-  if (!model) throw new Error('回测记录不存在')
-
-  const initialCapital = toNumber(model.startBalance)
-  const finalCapital = toNumber(model.endBalance)
-  const trades = toTradeRecords((model.trades ?? []) as any[])
-  const equityCurve = toEquityCurve((model.dailyResults ?? []) as any[], initialCapital)
-
-  const barRes = await marketDataApi.getBars({
-    brokerType: model.brokerId as any,
-    symbol: model.symbol,
-    interval: model.interval as Interval,
-    startDate: model.startDate,
-    endDate: model.endDate,
-    source: 'db', currentPage: 1, pageSize: 1000,
-  })
-
-  const totalTrades = trades.length
-  const positiveTrades = trades.filter(t => t.profit > 0)
-  const negativeTrades = trades.filter(t => t.profit < 0)
-  const avgProfit = positiveTrades.length ? positiveTrades.reduce((s, t) => s + t.profit, 0) / positiveTrades.length : 0
-  const avgLoss = negativeTrades.length ? Math.abs(negativeTrades.reduce((s, t) => s + t.profit, 0) / negativeTrades.length) : 0
-  const dayCount = Math.max(equityCurve.length, 1)
-
-  return {
-    id: model.id, 
-    strategy: model.strategyName, 
-    symbol: model.symbol,
-    startDate: model.startDate, 
-    endDate: model.endDate,
-    initialCapital, 
-    finalCapital, 
-    params: {},
-    metrics: {
-      totalReturn: toNumber(model.totalReturnPercent),
-      annualReturn: dayCount > 0 ? toNumber(model.totalReturnPercent) * (365 / dayCount) : 0,
-      maxDrawdown: toNumber(model.maxDrawdownPercent), sharpeRatio: 0,
-      winRate: totalTrades === 0 ? 0 : positiveTrades.length / totalTrades,
-      profitLossRatio: avgLoss === 0 ? 9999 : avgProfit / avgLoss,
-      totalTrades, avgDailyTrades: totalTrades / dayCount,
-    },
-    trades, 
-    kLines: barRes.data?.list || [], 
-    equityCurve,
-  }
 }
 
 const route = useRoute()
 const router = useRouter()
-const detail = ref<BacktestDetail | null>(null)
+
+const model = ref<BacktestingModel | null>(null)
+const startBalance = computed(() => toNumber(model.value?.startBalance))
+const endBalance = computed(() => toNumber(model.value?.endBalance))
+const trades = ref<TradeRecord[]>([])
+const kLines = ref<BarData[]>([])
+const equityCurve = ref<EquityCurvePoint[]>([])
+const metrics = ref({ totalReturn: 0, annualReturn: 0, maxDrawdown: 0, sharpeRatio: 0, winRate: 0, profitLossRatio: 0, totalTrades: 0, avgDailyTrades: 0 })
 const loading = ref(true)
 
 onMounted(async () => {
@@ -107,7 +63,41 @@ onMounted(async () => {
     return
   }
   try {
-    detail.value = await getBacktestDetail(id)
+    const detailRes = await backtestingApi.query({ id })
+    const m = detailRes.data?.model as BacktestingModel
+    if (!m) throw new Error('回测记录不存在')
+
+    model.value = m
+    trades.value = toTradeRecords((m.trades ?? []) as any[])
+    equityCurve.value = toEquityCurve((m.dailyResults ?? []) as any[], startBalance.value)
+
+    const barRes = await marketDataApi.getBars({
+      brokerType: m.brokerId as any,
+      symbol: m.symbol,
+      interval: m.interval as Interval,
+      startDate: m.startDate,
+      endDate: m.endDate,
+      source: 'db', currentPage: 1, pageSize: 1000,
+    })
+    kLines.value = barRes.data?.list || []
+
+    const t = trades.value
+    const positive = t.filter(x => x.profit > 0)
+    const negative = t.filter(x => x.profit < 0)
+    const avgProfit = positive.length ? positive.reduce((s, x) => s + x.profit, 0) / positive.length : 0
+    const avgLoss = negative.length ? Math.abs(negative.reduce((s, x) => s + x.profit, 0) / negative.length) : 0
+    const dayCount = Math.max(equityCurve.value.length, 1)
+
+    metrics.value = {
+      totalReturn: toNumber(m.totalReturnPercent),
+      annualReturn: dayCount > 0 ? toNumber(m.totalReturnPercent) * (365 / dayCount) : 0,
+      maxDrawdown: toNumber(m.maxDrawdownPercent),
+      sharpeRatio: 0,
+      winRate: t.length === 0 ? 0 : positive.length / t.length,
+      profitLossRatio: avgLoss === 0 ? 9999 : avgProfit / avgLoss,
+      totalTrades: t.length,
+      avgDailyTrades: t.length / dayCount,
+    }
   } catch {
     // toast 已在拦截器中处理
   } finally {
@@ -126,66 +116,54 @@ function formatPercent(val: number): string {
 
     <LoadingSpinner v-if="loading" />
 
-    <template v-if="detail">
+    <template v-if="model">
       <div class="section">
         <div class="card">
           <div class="card-header">
-            <span class="strategy">{{ detail.strategy }}</span>
-            <m-tag color="primary" fill="outline">{{ detail.symbol }}</m-tag>
+            <span class="strategy">{{ model.strategyName }}</span>
+            <m-tag color="primary" fill="outline">{{ model.symbol }}</m-tag>
           </div>
 
           <CellGroup>
-            <Cell title="日期范围">{{ dayjs(detail.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(detail.endDate).format('YYYY-MM-DD') }}</Cell>
-            <Cell title="初始资金">{{ detail.initialCapital.toLocaleString() + ' USDT' }}</Cell>
-            <Cell title="最终资金">{{ detail.finalCapital.toLocaleString() + ' USDT' }}</Cell>
-          </CellGroup>
-        </div>
-      </div>
-
-      <!-- 策略参数 -->
-      <div class="section" v-if="Object.keys(detail.params).length > 0">
-        <div class="card">
-          <div class="card-header">
-            <span class="strategy">策略参数</span>
-          </div>
-          <CellGroup>
-            <Cell v-for="(val, key) in detail.params" :key="key" :title="key">{{ String(val) }}</Cell>
+            <Cell title="日期范围">{{ dayjs(model.startDate).format('YYYY-MM-DD') + ' ~ ' + dayjs(model.endDate).format('YYYY-MM-DD') }}</Cell>
+            <Cell title="初始资金">{{ startBalance.toLocaleString() + ' USDT' }}</Cell>
+            <Cell title="最终资金">{{ endBalance.toLocaleString() + ' USDT' }}</Cell>
           </CellGroup>
         </div>
       </div>
 
       <!-- 绩效指标 -->
-      <div class="section" v-if="detail.metrics">
+      <div class="section">
         <div class="card">
           <div class="card-header">
             <span class="strategy">绩效指标</span>
           </div>
           <CellGroup>
             <Cell title="总收益率">
-              <span v-number-color="detail.metrics.totalReturn">{{ formatPercent(detail.metrics.totalReturn) }}</span>
+              <span v-number-color="metrics.totalReturn">{{ formatPercent(metrics.totalReturn) }}</span>
             </Cell>
             <Cell title="年化收益率">
-              <span v-number-color="detail.metrics.annualReturn">{{ formatPercent(detail.metrics.annualReturn) }}</span>
+              <span v-number-color="metrics.annualReturn">{{ formatPercent(metrics.annualReturn) }}</span>
             </Cell>
             <Cell title="最大回撤">
-              <span style="color:#22c55e;font-weight:600">{{ (detail.metrics.maxDrawdown * 100).toFixed(2) }}%</span>
+              <span style="color:#22c55e;font-weight:600">{{ (metrics.maxDrawdown * 100).toFixed(2) }}%</span>
             </Cell>
-            <Cell title="夏普比率">{{ detail.metrics.sharpeRatio.toFixed(2) }}</Cell>
+            <Cell title="夏普比率">{{ metrics.sharpeRatio.toFixed(2) }}</Cell>
             <Cell title="胜率">
-              <span v-number-color="detail.metrics.winRate - 0.5">{{ (detail.metrics.winRate * 100).toFixed(1) }}%</span>
+              <span v-number-color="metrics.winRate - 0.5">{{ (metrics.winRate * 100).toFixed(1) }}%</span>
             </Cell>
-            <Cell title="盈亏比">{{ detail.metrics.profitLossRatio === 9999 ? '∞' : detail.metrics.profitLossRatio.toFixed(2) }}</Cell>
-            <Cell title="总交易次数">{{ detail.metrics.totalTrades }}</Cell>
-            <Cell title="日均交易次数">{{ detail.metrics.avgDailyTrades }}</Cell>
+            <Cell title="盈亏比">{{ metrics.profitLossRatio === 9999 ? '∞' : metrics.profitLossRatio.toFixed(2) }}</Cell>
+            <Cell title="总交易次数">{{ metrics.totalTrades }}</Cell>
+            <Cell title="日均交易次数">{{ metrics.avgDailyTrades }}</Cell>
           </CellGroup>
         </div>
       </div>
 
-      <EquityCurve :equity-curve="detail.equityCurve" :initial-capital="detail.initialCapital" />
+      <EquityCurve :equity-curve="equityCurve" :initial-capital="startBalance" />
 
-      <KLineChart :k-lines="detail.kLines" :trades="detail.trades" />
+      <KLineChart :k-lines="kLines" :trades="trades" />
 
-      <TradeList :trades="detail.trades" />
+      <TradeList :trades="trades" />
     </template>
 
     <div v-else-if="!loading" class="empty-state">
