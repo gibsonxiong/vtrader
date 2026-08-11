@@ -82,7 +82,6 @@ export interface TrialResult {
 }
 
 export interface BacktestingMetrics {
-  endBalance: number;
   totalNetPnl: number;
   totalReturnPercent: number;
   maxDrawdown: number;

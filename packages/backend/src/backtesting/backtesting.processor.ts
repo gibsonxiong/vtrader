@@ -94,7 +94,6 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
       dailyResults: result.dailyResults as object,
       trades: result.trades,
       metrics: {
-        endBalance: result.endBalance,
         totalNetPnl: result.totalNetPnl,
         totalReturnPercent: result.totalReturnPercent,
         maxDrawdown: result.maxDrawdown,
