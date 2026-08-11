@@ -37,7 +37,7 @@ export class BacktestingEngine implements StrategyEngine {
   
   private datetime: Date;
   private bar: BarData;
-  private historyData: AsyncIterable<BarData> = [] as unknown as AsyncIterable<BarData>;
+  private historyData: AsyncIterable<BarData> = (async function* () { /* empty, replaced by loadData() */ })();
 
   private logs: string[] = [];
 
