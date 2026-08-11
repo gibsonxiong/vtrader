@@ -52,7 +52,7 @@ const endBalance = computed(() => toNumber(model.value?.endBalance))
 const trades = ref<TradeRecord[]>([])
 const kLines = ref<BarData[]>([])
 const equityCurve = ref<EquityCurvePoint[]>([])
-const metrics = ref({ totalReturn: 0, annualReturn: 0, maxDrawdown: 0, sharpeRatio: 0, winRate: 0, profitLossRatio: 0, totalTrades: 0, avgDailyTrades: 0 })
+const metrics = ref({ totalReturn: 0, annualReturn: 0, maxDrawdown: 0, sharpeRatio: 0, winRate: 0, profitLossRatio: 0, totalTrades: 0, avgDailyTrades: 0, maxConsecutiveLosses: 0 })
 const loading = ref(true)
 
 onMounted(async () => {
@@ -82,21 +82,27 @@ onMounted(async () => {
     kLines.value = barRes.data?.list || []
 
     const t = trades.value
-    const positive = t.filter(x => x.profit > 0)
-    const negative = t.filter(x => x.profit < 0)
-    const avgProfit = positive.length ? positive.reduce((s, x) => s + x.profit, 0) / positive.length : 0
-    const avgLoss = negative.length ? Math.abs(negative.reduce((s, x) => s + x.profit, 0) / negative.length) : 0
     const dayCount = Math.max(equityCurve.value.length, 1)
 
+    // 优先使用后端计算的指标，旧记录回退到本地计算
+    const mtr = m.metrics
     metrics.value = {
       totalReturn: toNumber(m.totalReturnPercent),
-      annualReturn: dayCount > 0 ? toNumber(m.totalReturnPercent) * (365 / dayCount) : 0,
       maxDrawdown: toNumber(m.maxDrawdownPercent),
-      sharpeRatio: 0,
-      winRate: t.length === 0 ? 0 : positive.length / t.length,
-      profitLossRatio: avgLoss === 0 ? 9999 : avgProfit / avgLoss,
       totalTrades: t.length,
       avgDailyTrades: t.length / dayCount,
+      // 后端计算（新记录）
+      annualReturn: mtr?.annualizedReturn ?? (dayCount > 0 ? toNumber(m.totalReturnPercent) * (365 / dayCount) : 0),
+      sharpeRatio: mtr?.sharpeRatio ?? 0,
+      winRate: mtr?.winRate ?? (t.length === 0 ? 0 : t.filter(x => x.profit > 0).length / t.length),
+      profitLossRatio: mtr?.profitFactor ?? (() => {
+        const pos = t.filter(x => x.profit > 0)
+        const neg = t.filter(x => x.profit < 0)
+        const avgP = pos.length ? pos.reduce((s, x) => s + x.profit, 0) / pos.length : 0
+        const avgL = neg.length ? Math.abs(neg.reduce((s, x) => s + x.profit, 0) / neg.length) : 0
+        return avgL === 0 ? 9999 : avgP / avgL
+      })(),
+      maxConsecutiveLosses: mtr?.maxConsecutiveLosses ?? 0,
     }
   } catch {
     // toast 已在拦截器中处理
@@ -153,6 +159,7 @@ function formatPercent(val: number): string {
               <span v-number-color="metrics.winRate - 0.5">{{ (metrics.winRate * 100).toFixed(1) }}%</span>
             </Cell>
             <Cell title="盈亏比">{{ metrics.profitLossRatio === 9999 ? '∞' : metrics.profitLossRatio.toFixed(2) }}</Cell>
+            <Cell title="最大连亏天数">{{ metrics.maxConsecutiveLosses }}</Cell>
             <Cell title="总交易次数">{{ metrics.totalTrades }}</Cell>
             <Cell title="日均交易次数">{{ metrics.avgDailyTrades }}</Cell>
           </CellGroup>

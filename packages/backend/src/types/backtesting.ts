@@ -81,6 +81,14 @@ export interface TrialResult {
   score: number;
 }
 
+export interface BacktestingMetrics {
+  sharpeRatio: number;
+  winRate: number;
+  profitFactor: number;
+  annualizedReturn: number;
+  maxConsecutiveLosses: number;
+}
+
 export interface BacktestingModel {
   id: number;
   brokerId: string;
@@ -97,6 +105,7 @@ export interface BacktestingModel {
   totalReturnPercent: string;
   dailyResults: object;
   trades: TradeData[];
+  metrics?: BacktestingMetrics;
   createdAt: Date;
 }
 

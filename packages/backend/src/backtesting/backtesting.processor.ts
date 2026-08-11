@@ -93,6 +93,13 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
       totalReturnPercent: String(result.totalReturnPercent),
       dailyResults: result.dailyResults as object,
       trades: result.trades,
+      metrics: {
+        sharpeRatio: result.sharpeRatio,
+        winRate: result.winRate,
+        profitFactor: result.profitFactor,
+        annualizedReturn: result.annualizedReturn,
+        maxConsecutiveLosses: result.maxConsecutiveLosses,
+      },
       createdAt: new Date(),
     });
     await em.persistAndFlush(backtesting);
