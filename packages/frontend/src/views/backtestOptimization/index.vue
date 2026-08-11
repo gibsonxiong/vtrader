@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import dayjs, { type Dayjs } from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { strategyApi, backtestingApi } from '@vtrader/backend/api'
+import type { Interval } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import NavBar from '@/components/NavBar.vue'
 import NumberInput from '@/components/NumberInput.vue'
@@ -14,7 +16,6 @@ import Cell from '@/components/Cell.vue'
 
 interface HyperParam {
   name: string
-  type: 'continuous' | 'categorical'
   min: number
   max: number
   step: number
@@ -38,7 +39,7 @@ const contractStore = useContractStore()
 const strategies = ref<StrategyMeta[]>([])
 const symbols = ref<{ brokerType: string; symbol: string; label: string }[]>([])
 
-const intervals = [
+const intervalOptions = [
   { text: '1 分钟', value: '1m' },
   { text: '5 分钟', value: '5m' },
   { text: '15 分钟', value: '15m' },
@@ -47,7 +48,7 @@ const intervals = [
   { text: '1 天', value: '1d' },
 ]
 
-const targetMetrics = [
+const targetMetricOptions = [
   { text: '总收益率', value: 'totalReturnPercent' },
   { text: '夏普比率', value: 'sharpeRatio' },
   { text: '胜率', value: 'winRate' },
@@ -55,14 +56,19 @@ const targetMetrics = [
   { text: '年化收益率', value: 'annualizedReturn' },
   { text: '最大回撤', value: 'maxDrawdownPercent' },
   { text: '最大连亏天数', value: 'maxConsecutiveLosses' },
-] as const
+]
+
+const directionOptions = [
+  { text: '最大化', value: 'maximize' },
+  { text: '最小化', value: 'minimize' },
+]
 
 const form = reactive({
   strategyName: '',
   symbol: '',
-  interval: '1h',
-  startDate: null as unknown as { valueOf: () => number },
-  endDate: null as unknown as { valueOf: () => number },
+  interval: '1h' as string,
+  startDate: null as Dayjs | null,
+  endDate: null as Dayjs | null,
   assetBalance: 100_000,
   hyperparams: [] as HyperParam[],
   maxTrials: 100,
@@ -81,13 +87,8 @@ const bestTrial = ref<TrialRow | null>(null)
 const error = ref('')
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
-const strategyData = computed(() => strategies.value.map(s => ({ text: s.label, value: s.name })))
-const symbolData = computed(() => symbols.value.map(s => ({ text: s.label, value: s.symbol })))
-const intervalData = computed(() => intervals)
-const directionData = computed(() => [
-  { text: '最大化', value: 'maximize' },
-  { text: '最小化', value: 'minimize' },
-])
+const strategyData = computed(() => strategies.value.map((s) => ({ text: s.label, value: s.name })))
+const symbolData = computed(() => symbols.value.map((s) => ({ text: s.label, value: s.symbol })))
 
 const estimatedTrials = computed(() => {
   return form.hyperparams.reduce((acc, p) => {
@@ -96,25 +97,25 @@ const estimatedTrials = computed(() => {
   }, 1)
 })
 
-function formatPercent(v: number) {
+function formatPercent(v: number): string {
   return (v * 100).toFixed(2) + '%'
 }
 
-function formatNum(v: number) {
+function formatNum(v: number): string {
   return v.toFixed(4)
 }
 
-function formatScore(v: number, metric: string) {
+function formatScore(v: number, metric: string): string {
   if (['totalReturnPercent', 'winRate', 'annualizedReturn', 'maxDrawdownPercent'].includes(metric)) {
     return formatPercent(v)
   }
   return formatNum(v)
 }
 
-async function loadContracts() {
+async function loadContracts(): Promise<void> {
   const contracts = await contractStore.fetchContracts('BINANCE_LINEAR')
   symbols.value = contracts.map((c) => ({
-    brokerType: c.brokerType,
+    brokerType: 'BINANCE_LINEAR',
     symbol: c.symbol.split(':')[0] + ':USDT',
     label: c.symbol.split(':')[0] + ':USDT',
   }))
@@ -127,8 +128,8 @@ onMounted(async () => {
       strategyApi.getStrategyClasses(),
       loadContracts(),
     ])
-    const names = classRes.data ?? []
-    strategies.value = names.map((name: string) => ({ name, label: name, params: {} }))
+    const names: string[] = classRes.data ?? []
+    strategies.value = names.map((name) => ({ name, label: name, params: {} }))
   } finally {
     loading.value = false
   }
@@ -138,22 +139,21 @@ onUnmounted(() => {
   if (pollTimer) clearInterval(pollTimer)
 })
 
-async function loadStrategyParams(name: string) {
+async function loadStrategyParams(name: string): Promise<void> {
   const detailRes = await strategyApi.getStrategyDetail({ name })
-  const params = Object.fromEntries(
-    Object.entries(detailRes.data ?? {}).map(([key, value]) => [
-      key,
-      { label: key, default: value.value, type: value.type },
-    ]),
-  )
+  const raw = detailRes.data ?? {} as Record<string, { value: unknown; type: string }>
+  const params: Record<string, { label: string; default: unknown; type: string }> = {}
+  for (const [key, entry] of Object.entries(raw)) {
+    params[key] = { label: key, default: entry.value, type: entry.type }
+  }
   currentStrategyMeta.value = { name, label: name, params }
-  // 自动初始化超参数列表（按类型）
+  // 自动初始化数值型超参数
   form.hyperparams = Object.entries(params)
     .filter(([, v]) => v.type === 'number')
-    .map(([key]) => ({ name: key, type: 'continuous' as const, min: 0, max: 100, step: 1 }))
+    .map(([key]) => ({ name: key, min: 10, max: 100, step: 5 }))
 }
 
-async function handleSubmit() {
+async function handleSubmit(): Promise<void> {
   if (!form.strategyName || !form.symbol || !form.startDate || !form.endDate) {
     showToast('请填写完整信息')
     return
@@ -173,37 +173,37 @@ async function handleSubmit() {
   try {
     const res = await backtestingApi.optimization({
       brokerType: 'BINANCE_LINEAR',
-      startDate: new Date(form.startDate.valueOf()).toISOString().split('T')[0],
-      endDate: new Date(form.endDate.valueOf()).toISOString().split('T')[0],
+      startDate: form.startDate.format('YYYY-MM-DD'),
+      endDate: form.endDate.format('YYYY-MM-DD'),
       symbol: form.symbol,
-      interval: form.interval as any,
+      interval: form.interval as Interval,
       assetBalance: form.assetBalance,
       assetName: 'USDT',
       commissionRate: 0.0005,
       strategyName: form.strategyName,
-      hyperparameters: form.hyperparams.map(p => ({
+      hyperparameters: form.hyperparams.map((p) => ({
         name: p.name,
-        type: p.type,
-        range: p.type === 'continuous' ? [p.min, p.max, p.step] : [],
+        type: 'continuous' as const,
+        range: [p.min, p.max, p.step] as number[],
       })),
       maxTrials: form.maxTrials,
       direction: form.direction,
-      targetMetric: form.targetMetric as any,
+      targetMetric: form.targetMetric as typeof form.targetMetric,
     })
 
     jobId.value = res.data?.jobId ?? ''
     status.value = 'running'
 
-    // 轮询进度
     pollTimer = setInterval(pollStatus, 2000)
-  } catch (e: any) {
-    error.value = e?.message ?? '提交失败'
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : '提交失败'
+    error.value = msg
     showToast('提交失败')
     submitting.value = false
   }
 }
 
-async function pollStatus() {
+async function pollStatus(): Promise<void> {
   if (!jobId.value) return
   try {
     const res = await backtestingApi.jobStatus({ jobId: jobId.value })
@@ -212,9 +212,9 @@ async function pollStatus() {
     progress.value = s.progress ?? progress.value
 
     if (s.status === 'completed' && s.data?.trials) {
-      trials.value = s.data.trials.map((t: any) => ({
+      trials.value = s.data.trials.map((t: { id: number; hyperparameters: Record<string, unknown>; score: number }) => ({
         id: t.id,
-        params: JSON.stringify(t.hyperparameters, null, 0),
+        params: JSON.stringify(t.hyperparameters),
         score: t.score,
       }))
       if (trials.value.length > 0) {
@@ -222,11 +222,11 @@ async function pollStatus() {
           ? trials.value.reduce((a, b) => a.score > b.score ? a : b)
           : trials.value.reduce((a, b) => a.score < b.score ? a : b)
       }
-      if (pollTimer) clearInterval(pollTimer)
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
       submitting.value = false
     } else if (s.status === 'failed') {
       error.value = s.failedReason ?? '优化失败'
-      if (pollTimer) clearInterval(pollTimer)
+      if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
       submitting.value = false
     }
   } catch {
@@ -234,7 +234,7 @@ async function pollStatus() {
   }
 }
 
-function removeParam(index: number) {
+function removeParam(index: number): void {
   form.hyperparams.splice(index, 1)
 }
 </script>
@@ -253,7 +253,7 @@ function removeParam(index: number) {
           <PickerInput v-model="form.symbol" :data="symbolData" title="选择交易对" placeholder="请选择交易对" />
         </Cell>
         <Cell title="周期">
-          <PickerInput v-model="form.interval" :data="intervalData" title="选择周期" placeholder="请选择周期" />
+          <PickerInput v-model="form.interval" :data="intervalOptions" title="选择周期" placeholder="请选择周期" />
         </Cell>
         <Cell title="开始日期">
           <DatePickerInput v-model="form.startDate" title="选择开始日期" placeholder="请选择开始日期" />
@@ -271,16 +271,14 @@ function removeParam(index: number) {
         <div class="section-title">超参数范围</div>
         <CellGroup bordered>
           <Cell v-for="(p, i) in form.hyperparams" :key="p.name" :title="p.name">
-            <template #default>
-              <div class="param-row">
-                <NumberInput v-model="p.min" style="width:64px" />
-                <span>~</span>
-                <NumberInput v-model="p.max" style="width:64px" />
-                <span>步</span>
-                <NumberInput v-model="p.step" style="width:56px" />
-                <span class="remove-btn" @click="removeParam(i)">✕</span>
-              </div>
-            </template>
+            <div class="param-row">
+              <input v-model.number="p.min" class="param-input" type="number" />
+              <span>~</span>
+              <input v-model.number="p.max" class="param-input" type="number" />
+              <span>步</span>
+              <input v-model.number="p.step" class="param-input param-input--small" type="number" />
+              <span class="remove-btn" @click="removeParam(i)">✕</span>
+            </div>
           </Cell>
         </CellGroup>
         <div class="trial-info">
@@ -294,13 +292,13 @@ function removeParam(index: number) {
         <div class="section-title">优化目标</div>
         <CellGroup bordered>
           <Cell title="目标指标">
-            <PickerInput v-model="form.targetMetric" :data="targetMetrics" title="选择目标指标" />
+            <PickerInput v-model="form.targetMetric" :data="targetMetricOptions" title="选择目标指标" />
           </Cell>
           <Cell title="方向">
-            <PickerInput v-model="form.direction" :data="directionData" title="选择方向" />
+            <PickerInput v-model="form.direction" :data="directionOptions" title="选择方向" />
           </Cell>
           <Cell title="最大 trials">
-            <NumberInput v-model="form.maxTrials" placeholder="100" />
+            <input v-model.number="form.maxTrials" class="param-input" type="number" placeholder="100" />
           </Cell>
         </CellGroup>
       </div>
@@ -310,7 +308,7 @@ function removeParam(index: number) {
         {{ submitting ? `优化中 ${progress}%` : '开始优化' }}
       </Button>
 
-      <!-- 进度 -->
+      <!-- 进度条 -->
       <div v-if="status === 'running'" class="progress-bar-wrap">
         <div class="progress-bar" :style="{ width: progress + '%' }"></div>
       </div>
@@ -376,10 +374,29 @@ function removeParam(index: number) {
   font-size: 13px;
 }
 
+.param-input {
+  width: 64px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 13px;
+  text-align: center;
+  outline: none;
+}
+
+.param-input--small {
+  width: 52px;
+}
+
+.param-input:focus {
+  border-color: #1890ff;
+}
+
 .remove-btn {
   cursor: pointer;
-  color: #ff5252 !important;
-  font-size: 16px !important;
+  color: #ff5252;
+  font-size: 16px;
   margin-left: 4px;
 }
 
