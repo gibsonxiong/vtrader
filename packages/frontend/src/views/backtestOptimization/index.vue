@@ -112,8 +112,8 @@ function formatScore(v: number, metric: string) {
 }
 
 async function loadContracts() {
-  const res = await contractStore.getContracts()
-  symbols.value = (res.data?.list ?? []).map((c: { symbol: string; brokerType: string }) => ({
+  const contracts = await contractStore.fetchContracts('BINANCE_LINEAR')
+  symbols.value = contracts.map((c) => ({
     brokerType: c.brokerType,
     symbol: c.symbol.split(':')[0] + ':USDT',
     label: c.symbol.split(':')[0] + ':USDT',
