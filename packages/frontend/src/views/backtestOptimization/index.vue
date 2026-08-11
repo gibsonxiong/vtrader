@@ -67,8 +67,8 @@ const form = reactive({
   strategyName: '',
   symbol: '',
   interval: '1h' as string,
-  startDate: null as Dayjs | null,
-  endDate: null as Dayjs | null,
+  startDate: dayjs('2025-01-01') as Dayjs | null,
+  endDate: dayjs('2025-01-01') as Dayjs | null,
   assetBalance: 100_000,
   hyperparams: [] as HyperParam[],
   maxTrials: 100,
@@ -271,14 +271,14 @@ function removeParam(index: number): void {
         <div class="section-title">超参数范围</div>
         <CellGroup bordered>
           <Cell v-for="(p, i) in form.hyperparams" :key="p.name" :title="p.name">
-            <div class="param-row">
+            <span class="param-row">
               <input v-model.number="p.min" class="param-input" type="number" />
               <span>~</span>
               <input v-model.number="p.max" class="param-input" type="number" />
               <span>步</span>
               <input v-model.number="p.step" class="param-input param-input--small" type="number" />
               <span class="remove-btn" @click="removeParam(i)">✕</span>
-            </div>
+            </span>
           </Cell>
         </CellGroup>
         <div class="trial-info">
@@ -364,7 +364,7 @@ function removeParam(index: number): void {
 }
 
 .param-row {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
