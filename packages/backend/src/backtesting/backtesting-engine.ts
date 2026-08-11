@@ -135,19 +135,21 @@ export class BacktestingEngine implements StrategyEngine {
     this.strategy.start();
     this.writeLog('策略启动完成');
 
-    // 流式遍历历史数据
     let count = 0;
-    for await (const data of this.historyData) {
-      console.log(new Date(data.timestamp));
-      this.broker.refresh(data);
-      await this.handleBar(data as BarData);
-      count++;
+    try {
+      // 流式遍历历史数据
+      for await (const data of this.historyData) {
+        console.log(new Date(data.timestamp));
+        this.broker.refresh(data);
+        await this.handleBar(data as BarData);
+        count++;
+      }
+
+      this.writeLog(`回放历史数据完成，共 ${count} 条`);
+    } finally {
+      // 调用策略停止
+      this.strategy.stop();
     }
-
-    this.writeLog(`回放历史数据完成，共 ${count} 条`);
-
-    // 调用策略停止
-    this.strategy.stop();
   }
 
   /**
