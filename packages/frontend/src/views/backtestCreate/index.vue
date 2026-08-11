@@ -70,7 +70,7 @@ function getDefaultForm(): BacktestConfig {
     symbol: getDefaultSymbol(),
     brokerType: getDefaultBrokerType(),
     startDate: dayjs('2025-01-01'),
-    endDate: dayjs('2025-05-01'),
+    endDate: dayjs('2025-01-01'),
     assetBalance: 10000,
     interval: '1m',
     strategySetting: firstStrategy ? buildStrategyParams(firstStrategy) : {},

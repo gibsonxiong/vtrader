@@ -21,8 +21,8 @@ const router = useRouter()
 const brokerType = ref('')
 const symbols = ref<string[]>([])
 const intervals = ref<string[]>([])
-const startDate = ref<Dayjs>()
-const endDate = ref<Dayjs>()
+const startDate = ref<Dayjs>(dayjs('2025-01-01'))
+const endDate = ref<Dayjs>(dayjs('2025-12-31'))
 
 // 状态
 const downloading = ref(false)
