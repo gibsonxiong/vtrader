@@ -42,6 +42,7 @@ const contractStore = useContractStore()
 const strategies = ref<StrategyMeta[]>([])
 const symbols = ref<SymbolOption[]>([])
 const loadingStrategies = ref(false)
+const loadingStrategyParams = ref(false)
 const loadingSymbols = ref(false)
 const submitting = ref(false)
 
@@ -89,11 +90,9 @@ function buildStrategyParams(meta: StrategyMeta): Record<string, any> {
   return defaults
 }
 
-watch(() => form.strategyName, (name) => {
-  currentStrategyMeta.value = strategies.value.find((s) => s.name === name) ?? null
-  if (currentStrategyMeta.value) {
-    form.strategySetting = buildStrategyParams(currentStrategyMeta.value)
-  }
+watch(() => form.strategyName, () => {
+  currentStrategyMeta.value = null
+  form.strategySetting = {}
 })
 
 const strategyData = computed(() => strategies.value.map((s) => ({ label: s.label, value: s.name })))
@@ -134,19 +133,7 @@ onMounted(async () => {
     (async () => {
       const classRes = await strategyApi.getStrategyClasses()
       const names = classRes.data ?? []
-      const metas = await Promise.all(
-        names.map(async (name: string) => {
-          const detailRes = await strategyApi.getStrategyDetail({ name })
-          const params = Object.fromEntries(
-            Object.entries(detailRes.data ?? {}).map(([key, value]) => [
-              key,
-              { label: key, default: value.value, type: value.type },
-            ]),
-          )
-          return { name, label: name, params }
-        }),
-      )
-      return metas
+      return names.map((name: string) => ({ name, label: name, params: {} } as StrategyMeta))
     })(),
     loadContracts(),
   ])
@@ -156,8 +143,6 @@ onMounted(async () => {
     const firstStrategy = strategies.value[0]
     if (firstStrategy) {
       form.strategyName = firstStrategy.name
-      currentStrategyMeta.value = firstStrategy
-      form.strategySetting = buildStrategyParams(firstStrategy)
     }
   } else {
     showToast('获取策略列表失败')
@@ -214,7 +199,26 @@ async function createBacktest(data: BacktestConfig) {
   return { id }
 }
 
-function handleSubmit() {
+async function loadStrategyDetail(name: string): Promise<StrategyMeta | null> {
+  const cached = strategies.value.find((s) => s.name === name && Object.keys(s.params).length > 0)
+  if (cached) return cached
+
+  const detailRes = await strategyApi.getStrategyDetail({ name })
+  const params = Object.fromEntries(
+    Object.entries(detailRes.data ?? {}).map(([key, value]) => [
+      key,
+      { label: key, default: value.value, type: value.type },
+    ]),
+  )
+  const meta: StrategyMeta = { name, label: name, params }
+
+  const idx = strategies.value.findIndex((s) => s.name === name)
+  if (idx >= 0) strategies.value[idx] = meta
+
+  return meta
+}
+
+async function handleSubmit() {
   if (!form.strategyName) {
     showToast('请选择策略')
     return
@@ -235,6 +239,24 @@ function handleSubmit() {
     showToast('请选择结束日期')
     return
   }
+
+  loadingStrategyParams.value = true
+  try {
+    const meta = await loadStrategyDetail(form.strategyName)
+    if (!meta) {
+      showToast('获取策略参数失败')
+      return
+    }
+    currentStrategyMeta.value = meta
+    form.strategySetting = buildStrategyParams(meta)
+  } catch (error) {
+    console.error('获取策略参数失败', error)
+    showToast('获取策略参数失败')
+    return
+  } finally {
+    loadingStrategyParams.value = false
+  }
+
   showParamsPopup.value = true
 }
 
@@ -293,8 +315,8 @@ async function handleParamsConfirm(strategySetting: Record<string, any>) {
           </Cell>
         </CellGroup>
 
-      <Button :loading="submitting" :mt="24" @click="handleSubmit">
-        {{ submitting ? '创建中...' : '开始回测' }}
+      <Button :loading="submitting || loadingStrategyParams" :mt="24" @click="handleSubmit">
+        {{ loadingStrategyParams ? '加载中...' : submitting ? '创建中...' : '开始回测' }}
       </Button>
     </div>
 

@@ -102,10 +102,10 @@ export abstract class Strategy {
   onInitContext(ctx: Context) { }
 
   /**
-   * 获取策略参数字典
+   * 获取策略参数字典（静态方法，无需实例化）
    */
-  public getParamConfigs(): Record<string, ParamConfig> {
-    const paramConfigs = Reflect.getMetadata(paramMetadataKey, this) || {};
+  public static getParamConfigs(): Record<string, ParamConfig> {
+    const paramConfigs = Reflect.getMetadata(paramMetadataKey, this.prototype) || {};
     return paramConfigs;
   }
 
@@ -113,7 +113,7 @@ export abstract class Strategy {
    * 获取策略参数字典
    */
   public getParamNames(): string[] {
-    const paramConfigs = this.getParamConfigs();
+    const paramConfigs = (this.constructor as typeof Strategy).getParamConfigs();
     const paramNames = Object.keys(paramConfigs);
     return paramNames;
   }
@@ -122,7 +122,7 @@ export abstract class Strategy {
    * 更新策略参数
    */
   private initParams(setting?: Record<string, any>): void {
-    const paramConfigs = this.getParamConfigs();
+    const paramConfigs = (this.constructor as typeof Strategy).getParamConfigs();
 
     for (const name in paramConfigs) {
       (this as any)[name] = setting?.[name] || paramConfigs[name].default;

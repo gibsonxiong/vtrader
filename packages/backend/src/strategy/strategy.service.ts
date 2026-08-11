@@ -49,18 +49,10 @@ export class StrategyService {
       const maps = await loadStrategyClasses();
 
       for (const [name, StrategyClass] of Object.entries(maps)) {
-        const instance = new StrategyClass();
-        instance._init({
-          engine: {} as any,
-          symbols: [],
-          assetBalance: 1000,
-          assetName: 'USDT',
-        });
-
         list.push({
           name,
           strategyClass: StrategyClass,
-          paramConfigs: instance.getParamConfigs(),
+          paramConfigs: (StrategyClass as unknown as typeof Strategy).getParamConfigs(),
         });
       }
 
