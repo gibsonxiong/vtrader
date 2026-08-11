@@ -137,15 +137,20 @@ async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resu
       const result = await job.waitUntilFinished(queueEvents);
 
       console.log('#result', result)
-      return result.result.totalReturnPercent;
+      return Number(result.backtesting.totalReturnPercent);
     }
   });
 
-  await optimizer.run();
-
-  const result = optimizer.trials;
-
-  return result;
+  try {
+    await optimizer.run();
+    return optimizer.trials;
+  } finally {
+    await Promise.all([
+      worker.close(),
+      queueEvents.close(),
+      queue.close(),
+    ]);
+  }
 }
 
 export default async function (job: SandboxedJob<any>) {
