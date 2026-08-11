@@ -42,9 +42,14 @@ function onPageChange(newPage: number) {
 
 <template>
   <div class="page backtest-page">
-    <Button @click="router.push({ name: 'backtest-create' })">
-      + 新增回测
-    </Button>
+    <div class="actions">
+      <Button @click="router.push({ name: 'backtest-create' })">
+        + 新增回测
+      </Button>
+      <Button color="warning" @click="router.push({ name: 'backtest-optimization' })">
+        参数优化
+      </Button>
+    </div>
 
     <BacktestList
       :records="records"
@@ -60,5 +65,15 @@ function onPageChange(newPage: number) {
 .page {
   padding: 16px;
   min-height: 100vh;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.actions > * {
+  flex: 1;
 }
 </style>

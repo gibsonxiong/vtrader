@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { BacktestingApi } from '../types/backtesting';
-import type { BacktestingModel, BacktestingSetting, JobStatusResult } from '../types/backtesting';
+import type { BacktestingModel, BacktestingSetting, JobStatusResult, OptimizerSetting } from '../types/backtesting';
 import type { Response } from '../types/common';
 
 import { BacktestingService } from './backtesting.service';
@@ -31,6 +31,15 @@ export class BacktestingController {
   async create(@Body() request: CreateBacktestingDto): Promise<Response<{ jobId: string; message: string }>> {
     const result = await this.backtestingService.createBacktesting(request);
 
+    return response(result);
+  }
+
+  /**
+   * 开始参数优化（异步）
+   */
+  @Post('optimization')
+  async optimization(@Body() request: OptimizerSetting): Promise<Response<{ jobId: string; message: string }>> {
+    const result = await this.backtestingService.optimization(request);
     return response(result);
   }
 

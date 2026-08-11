@@ -1,11 +1,16 @@
 import type { Response } from '../types/common';
 import { getHttp } from './http';
-import type { BacktestingApi, JobStatusResult } from '../types/backtesting';
+import type { BacktestingApi, JobStatusResult, OptimizerSetting } from '../types/backtesting';
 
 export const backtestingApi = {
   create(params: BacktestingApi.CreateRequest) {
     return getHttp().post<Response<BacktestingApi.CreateResponse>>(
       '/backtesting/create', params,
+    );
+  },
+  optimization(params: OptimizerSetting) {
+    return getHttp().post<Response<{ jobId: string; message: string }>>(
+      '/backtesting/optimization', params,
     );
   },
   query(params: BacktestingApi.QueryRequest) {
