@@ -67,6 +67,7 @@ abstract class HyperparameterOptimizer {
     this.currentTrialId = 0;
     // 将任务切成3个并发执行
     const paramsGroups: Record<string, any>[][] = [];
+    let totalGenerated = 0;
 
     let stop = false;
     while (!this.shouldStop() && !stop) {
@@ -84,14 +85,20 @@ abstract class HyperparameterOptimizer {
 
       if (stop) break;
 
+      totalGenerated += paramsGroup.length;
       paramsGroups.push(paramsGroup);
     }
+
+    const totalTrials = totalGenerated;
+    let completed = 0;
 
     for (const paramsGroup of paramsGroups) {
       await Promise.all(paramsGroup.map(async (params) => {
         const score = await this.trainModel(params);
         this.addTrialResult(params, score);
+        completed++;
         console.log(`Trial ${this.trials.length}: Score = ${score.toFixed(4)}`);
+        await this.config.onTrialComplete?.(completed, totalTrials);
       }));
     }
   }

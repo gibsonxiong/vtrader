@@ -119,7 +119,7 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
   }
 }
 
-async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resultId?: string } | TrialResult[]> {
+async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ trials: TrialResult[]; totalTrials: number }> {
   const { data } = job;
   const targetMetric = data.targetMetric;
   console.log(`开始处理超参数优化任务 ${job.id}: ${data.strategyName}, 目标指标: ${targetMetric}`);
@@ -149,12 +149,15 @@ async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resu
 
       console.log('#result', result)
       return result.backtesting.metrics?.[targetMetric] ?? 0;
-    }
+    },
+    onTrialComplete: async (completed, total) => {
+      await job.updateProgress(Math.round((completed / total) * 100));
+    },
   });
 
   try {
     await optimizer.run();
-    return optimizer.trials;
+    return { trials: optimizer.trials, totalTrials: optimizer.trials.length };
   } finally {
     await Promise.all([
       worker.close(),

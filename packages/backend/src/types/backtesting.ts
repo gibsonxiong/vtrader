@@ -73,6 +73,7 @@ export interface OptimizerConfig {
   }[];
   trainModel: (hyperparameters: Record<string, any>) => Promise<number>;
   maxTrials: number;
+  onTrialComplete?: (completed: number, total: number) => void | Promise<void>;
   direction: 'maximize' | 'minimize';
   earlyStoppingRounds?: number;
 }
@@ -119,7 +120,9 @@ export interface JobStatusResult {
   status: string;
   progress: number;
   data?: {
-    backtesting: BacktestingModel;
+    backtesting?: BacktestingModel;
+    trials?: TrialResult[];
+    totalTrials?: number;
   };
   failedReason: string;
 }
