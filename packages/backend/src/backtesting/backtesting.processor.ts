@@ -94,6 +94,11 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
       dailyResults: result.dailyResults as object,
       trades: result.trades,
       metrics: {
+        endBalance: result.endBalance,
+        totalNetPnl: result.totalNetPnl,
+        totalReturnPercent: result.totalReturnPercent,
+        maxDrawdown: result.maxDrawdown,
+        maxDrawdownPercent: result.maxDrawdownPercent,
         sharpeRatio: result.sharpeRatio,
         winRate: result.winRate,
         profitFactor: result.profitFactor,
@@ -144,7 +149,7 @@ async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resu
       const result = await job.waitUntilFinished(queueEvents);
 
       console.log('#result', result)
-      return Number(result.backtesting.totalReturnPercent);
+      return result.backtesting.metrics?.totalReturnPercent ?? 0;
     }
   });
 

@@ -87,8 +87,8 @@ onMounted(async () => {
     // 优先使用后端计算的指标，旧记录回退到本地计算
     const mtr = m.metrics
     metrics.value = {
-      totalReturn: toNumber(m.totalReturnPercent),
-      maxDrawdown: toNumber(m.maxDrawdownPercent),
+      totalReturn: mtr?.totalReturnPercent ?? toNumber(m.totalReturnPercent),
+      maxDrawdown: mtr?.maxDrawdownPercent ?? toNumber(m.maxDrawdownPercent),
       totalTrades: t.length,
       avgDailyTrades: t.length / dayCount,
       // 后端计算（新记录）
