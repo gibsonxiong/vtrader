@@ -21,9 +21,18 @@ export default async function loadStrategyClasses(): Promise<Record<string, Stra
         try {
           const fileUrl = pathToFileURL(itemPath).href;
           const module = await import(fileUrl);
-          if (typeof module?.default?.default === 'function') {
-            const className = module.default.default.name;
-            strategyClassMap[className] = module.default.default; // 保存默认导出
+
+          // Q9: 兼容多种 CJS/ESM 互操作输出格式
+          const Cls: unknown =
+            module?.default?.default
+            ?? module?.default
+            ?? module;
+
+          if (typeof Cls === 'function' && typeof Cls.prototype !== 'undefined') {
+            const className = (Cls as Function).name || item.replace('.js', '');
+            strategyClassMap[className] = Cls as StrategyConstructor;
+          } else {
+            console.warn(`跳过无效策略模块: ${itemPath} (未找到可用的默认导出类)`);
           }
         } catch (error) {
           console.error(`导入失败: ${itemPath}`, error);
@@ -38,25 +47,36 @@ export default async function loadStrategyClasses(): Promise<Record<string, Stra
 
 @Injectable()
 export class StrategyService {
-  list: StrategyConfig[] = [];
+  private list: StrategyConfig[] = [];
+  private loading: Promise<StrategyConfig[]> | null = null;
 
   async getStategieConfigs(): Promise<StrategyConfig[]> {
-    if (this.list.length === 0) {
-      const list: StrategyConfig[] = [];
-      const maps = await loadStrategyClasses();
-
-      for (const [name, StrategyClass] of Object.entries(maps)) {
-        list.push({
-          name,
-          strategyClass: StrategyClass,
-          paramConfigs: StrategyClass.getParamConfigs(),
-        });
-      }
-
-      this.list = list;
+    if (this.list.length > 0) {
+      return this.list;
     }
 
-    return this.list;
+    // 防止并发请求重复触发文件扫描
+    if (!this.loading) {
+      this.loading = this.loadConfigs();
+    }
+
+    return this.loading;
+  }
+
+  private async loadConfigs(): Promise<StrategyConfig[]> {
+    const list: StrategyConfig[] = [];
+    const maps = await loadStrategyClasses();
+
+    for (const [name, StrategyClass] of Object.entries(maps)) {
+      list.push({
+        name,
+        strategyClass: StrategyClass,
+        paramConfigs: StrategyClass.getParamConfigs(),
+      });
+    }
+
+    this.list = list;
+    return list;
   }
 
   async createInstance(param: CreateInstanceParam): Promise<Strategy | null> {

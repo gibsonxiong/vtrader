@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 import { BarData, Direction, Offset, OrderData, TickData, TradeData, OrderType, OrderStatus } from '../types/common';
 import { DailyResultItem } from '../types/backtesting';
-import { StrategyEngine, SendOrderParams, CancelOrderParams, StrategyProps, RecordData, ParamConfig } from '../types/strategy';
+import { StrategyEngine, SendOrderParams, CancelOrderParams, StrategyProps, RecordData, ParamConfig, StrategyConstructor } from '../types/strategy';
 import { Context } from './context';
 import { genOrderId, canOrderCancel, roundTo, calculateStd } from '../utils';
 import { BigNumber } from 'bignumber.js';
@@ -115,14 +115,14 @@ export abstract class Strategy {
    */
   public static getParamConfigs(): Record<string, ParamConfig> {
     const paramConfigs = Reflect.getMetadata(paramMetadataKey, this.prototype) || {};
-    return paramConfigs;
+    return { ...paramConfigs }; // 浅拷贝，防止调用方污染 prototype 元数据
   }
 
   /**
    * 更新策略参数
    */
   private initParams(setting?: Record<string, any>): void {
-    const paramConfigs = (this.constructor as typeof Strategy).getParamConfigs();
+    const paramConfigs = (this.constructor as StrategyConstructor).getParamConfigs();
 
     for (const name in paramConfigs) {
       (this as any)[name] = setting?.[name] || paramConfigs[name].default;
