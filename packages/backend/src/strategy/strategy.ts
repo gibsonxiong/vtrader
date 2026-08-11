@@ -64,6 +64,11 @@ export abstract class Strategy {
   }
 
   _init(props: StrategyProps) {
+    if (this.ctxs) {
+      console.warn(`Strategy._init() 重复调用，已忽略`);
+      return;
+    }
+
     this.engine = props.engine;
     this.symbols = props.symbols;
     this.ctxs = new Map();

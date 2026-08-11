@@ -200,9 +200,9 @@ export class AppService {
   //   });
   // }
 
-  async getStategies(): Promise<void> {
-    const stategies = await this.strategyService.getStategieConfigs();
-    console.log('stategies', stategies);
+  async getStrategies(): Promise<void> {
+    const strategies = await this.strategyService.getStrategyConfigs();
+    console.log('strategies', strategies);
   }
 
   async optimization(): Promise<void> {

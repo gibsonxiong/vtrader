@@ -62,7 +62,6 @@ export interface StrategyConstructor {
 export interface StrategyConfig {
   name: string;
   strategyClass: StrategyConstructor;
-  paramConfigs: Record<string, ParamConfig>;
 }
 
 export interface ContextProps {
