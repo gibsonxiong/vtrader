@@ -40,27 +40,27 @@ const strategies = ref<StrategyMeta[]>([])
 const symbols = ref<{ brokerType: string; symbol: string; label: string }[]>([])
 
 const intervalOptions = [
-  { text: '1 分钟', value: '1m' },
-  { text: '5 分钟', value: '5m' },
-  { text: '15 分钟', value: '15m' },
-  { text: '1 小时', value: '1h' },
-  { text: '4 小时', value: '4h' },
-  { text: '1 天', value: '1d' },
+  { label: '1 分钟', value: '1m' },
+  { label: '5 分钟', value: '5m' },
+  { label: '15 分钟', value: '15m' },
+  { label: '1 小时', value: '1h' },
+  { label: '4 小时', value: '4h' },
+  { label: '1 天', value: '1d' },
 ]
 
 const targetMetricOptions = [
-  { text: '总收益率', value: 'totalReturnPercent' },
-  { text: '夏普比率', value: 'sharpeRatio' },
-  { text: '胜率', value: 'winRate' },
-  { text: '盈亏比', value: 'profitFactor' },
-  { text: '年化收益率', value: 'annualizedReturn' },
-  { text: '最大回撤', value: 'maxDrawdownPercent' },
-  { text: '最大连亏天数', value: 'maxConsecutiveLosses' },
+  { label: '总收益率', value: 'totalReturnPercent' },
+  { label: '夏普比率', value: 'sharpeRatio' },
+  { label: '胜率', value: 'winRate' },
+  { label: '盈亏比', value: 'profitFactor' },
+  { label: '年化收益率', value: 'annualizedReturn' },
+  { label: '最大回撤', value: 'maxDrawdownPercent' },
+  { label: '最大连亏天数', value: 'maxConsecutiveLosses' },
 ]
 
 const directionOptions = [
-  { text: '最大化', value: 'maximize' },
-  { text: '最小化', value: 'minimize' },
+  { label: '最大化', value: 'maximize' },
+  { label: '最小化', value: 'minimize' },
 ]
 
 const form = reactive({
@@ -87,8 +87,8 @@ const bestTrial = ref<TrialRow | null>(null)
 const error = ref('')
 let pollTimer: ReturnType<typeof setInterval> | null = null
 
-const strategyData = computed(() => strategies.value.map((s) => ({ text: s.label, value: s.name })))
-const symbolData = computed(() => symbols.value.map((s) => ({ text: s.label, value: s.symbol })))
+const strategyData = computed(() => strategies.value.map((s) => ({ label: s.label, value: s.name })))
+const symbolData = computed(() => symbols.value.map((s) => ({ label: s.label, value: s.symbol })))
 
 const estimatedTrials = computed(() => {
   return form.hyperparams.reduce((acc, p) => {
