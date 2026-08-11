@@ -51,9 +51,17 @@ export interface CreateInstanceParam extends StrategyProps {
   name: string;
 }
 
+/**
+ * 策略构造器类型：同时包含构造签名和静态方法 getParamConfigs()
+ */
+export interface StrategyConstructor {
+  new (): Strategy;
+  getParamConfigs(): Record<string, ParamConfig>;
+}
+
 export interface StrategyConfig {
   name: string;
-  strategyClass: new () => Strategy;
+  strategyClass: StrategyConstructor;
   paramConfigs: Record<string, ParamConfig>;
 }
 

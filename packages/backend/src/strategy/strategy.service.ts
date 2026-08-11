@@ -3,14 +3,11 @@ import * as path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Injectable } from '@nestjs/common';
 import { Strategy } from './strategy';
-import { StrategyProps, ParamConfig, CreateInstanceParam, StrategyConfig } from '../types/strategy';
+import { StrategyProps, StrategyConstructor, CreateInstanceParam, StrategyConfig } from '../types/strategy';
 
-export default async function loadStrategyClasses() {
+export default async function loadStrategyClasses(): Promise<Record<string, StrategyConstructor>> {
   const dirPath = path.resolve(__dirname, './strategies');
-  const strategyClassMap: Record<
-    string,
-    new (...args: ConstructorParameters<typeof Strategy>) => Strategy
-  > = {};
+  const strategyClassMap: Record<string, StrategyConstructor> = {};
 
   async function traverse(currentPath: string) {
     const items = fs.readdirSync(currentPath);
@@ -52,7 +49,7 @@ export class StrategyService {
         list.push({
           name,
           strategyClass: StrategyClass,
-          paramConfigs: (StrategyClass as unknown as typeof Strategy).getParamConfigs(),
+          paramConfigs: StrategyClass.getParamConfigs(),
         });
       }
 

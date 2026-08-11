@@ -14,6 +14,15 @@ const paramMetadataKey = Symbol('param');
 
 export function param(paramConfig: ParamConfig) {
   return (target: any, propertyKey: string) => {
+    // 静态属性装饰器的 target 是构造函数（function）
+    // 实例属性装饰器的 target 是原型对象（object）
+    // getParamConfigs() 作为静态方法只查 prototype，静态属性元数据会丢失
+    if (typeof target === 'function') {
+      throw new Error(
+        `@param 只能用于实例属性，不能用于静态属性。请将 "${propertyKey}" 的 static 关键字移除。`,
+      );
+    }
+
     const paramConfigs: Record<string, ParamConfig> =
       Reflect.getMetadata(paramMetadataKey, target) || {};
 
@@ -107,15 +116,6 @@ export abstract class Strategy {
   public static getParamConfigs(): Record<string, ParamConfig> {
     const paramConfigs = Reflect.getMetadata(paramMetadataKey, this.prototype) || {};
     return paramConfigs;
-  }
-
-  /**
-   * 获取策略参数字典
-   */
-  public getParamNames(): string[] {
-    const paramConfigs = (this.constructor as typeof Strategy).getParamConfigs();
-    const paramNames = Object.keys(paramConfigs);
-    return paramNames;
   }
 
   /**
