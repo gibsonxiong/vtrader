@@ -60,8 +60,8 @@ export type OptimizerSetting = Omit<BacktestingSetting, 'strategySetting'> & {
   hyperparameters: { name: string; type: 'continuous' | 'categorical'; range: number[] | string[] }[];
   maxTrials: number;
   direction: 'maximize' | 'minimize';
-  /** 优化目标指标，默认为 totalReturnPercent */
-  targetMetric?: keyof BacktestingMetrics;
+  /** 优化目标指标 */
+  targetMetric: keyof BacktestingMetrics;
   earlyStoppingRounds?: number;
 };
 

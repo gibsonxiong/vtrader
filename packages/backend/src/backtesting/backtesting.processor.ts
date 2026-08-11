@@ -10,9 +10,8 @@ import { StrategyService } from '../strategy/strategy.service';
 import { getORM } from '../database/get-orm';
 import { readBarsStream } from '../utils';
 import { INTERVAL_VT2DAYJS } from '../broker/brokers/binance-linear';
-import type { BacktestingModel, BacktestingSetting } from '../types/backtesting';
+import type { BacktestingMetrics, BacktestingModel, BacktestingSetting, OptimizerSetting, TrialResult } from '../types/backtesting';
 import type { Interval } from '../types/common';
-import type { OptimizerSetting, TrialResult } from '../types/backtesting';
 import { OptimizerFactory } from '../optimization/index';
 import { pathToFileURL } from 'url';
 import path from 'path';
@@ -122,7 +121,7 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
 
 async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resultId?: string } | TrialResult[]> {
   const { data } = job;
-  const targetMetric = data.targetMetric || 'totalReturnPercent';
+  const targetMetric = data.targetMetric;
   console.log(`开始处理超参数优化任务 ${job.id}: ${data.strategyName}, 目标指标: ${targetMetric}`);
 
   const { brokerManagerService } = await getServices();

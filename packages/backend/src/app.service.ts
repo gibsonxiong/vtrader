@@ -243,6 +243,7 @@ export class AppService {
       ],
       maxTrials: 100,
       direction: 'maximize',
+      targetMetric: 'totalReturnPercent',
     };
 
     this.backtestingService.optimization(setting);
