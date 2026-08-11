@@ -271,7 +271,6 @@ export class BacktestingEngine implements StrategyEngine {
     let balance = startBalance;
     let peak = startBalance;
 
-    // 计算最大回撤
     for (const result of dailyResults) {
       balance = balance + result.netPnl;
       if (balance > peak) {
@@ -288,6 +287,50 @@ export class BacktestingEngine implements StrategyEngine {
     const endBalance = startBalance + totalNetPnl;
     const totalReturnPercent = totalNetPnl / startBalance;
 
+    // ---- 新增指标计算 ----
+
+    const tradingDays = dailyResults.length;
+
+    // 年化收益率
+    const annualizedReturn = tradingDays > 0
+      ? Math.pow(1 + totalReturnPercent, 365 / tradingDays) - 1
+      : 0;
+
+    // Sharpe Ratio (年化)
+    let sharpeRatio = 0;
+    if (tradingDays > 1) {
+      const dailyReturns = dailyResults.map((r) => r.netPnl / startBalance);
+      const meanReturn = dailyReturns.reduce((a, b) => a + b, 0) / tradingDays;
+      const variance = dailyReturns.reduce((sum, r) => sum + (r - meanReturn) ** 2, 0) / tradingDays;
+      const stdDev = Math.sqrt(variance);
+      sharpeRatio = stdDev > 0 ? (meanReturn / stdDev) * Math.sqrt(252) : 0;
+    }
+
+    // 胜率 (按日)
+    const winningDays = dailyResults.filter((r) => r.netPnl > 0).length;
+    const winRate = tradingDays > 0 ? winningDays / tradingDays : 0;
+
+    // 盈亏比 (按日)
+    const grossProfit = dailyResults
+      .filter((r) => r.netPnl > 0)
+      .reduce((sum, r) => sum + r.netPnl, 0);
+    const grossLoss = Math.abs(
+      dailyResults.filter((r) => r.netPnl < 0).reduce((sum, r) => sum + r.netPnl, 0),
+    );
+    const profitFactor = grossLoss > 0 ? grossProfit / grossLoss : (grossProfit > 0 ? Infinity : 0);
+
+    // 最大连续亏损天数
+    let maxConsecutiveLosses = 0;
+    let currentStreak = 0;
+    for (const r of dailyResults) {
+      if (r.netPnl < 0) {
+        currentStreak++;
+        maxConsecutiveLosses = Math.max(maxConsecutiveLosses, currentStreak);
+      } else {
+        currentStreak = 0;
+      }
+    }
+
     return {
       brokerType: this.setting.brokerType,
       symbol: this.setting.symbol,
@@ -301,7 +344,12 @@ export class BacktestingEngine implements StrategyEngine {
       totalReturnPercent,
       maxDrawdown: -maxDrawdown,
       maxDrawdownPercent: -maxDrawdownPercent,
-      dailyResults: dailyResults,
+      sharpeRatio,
+      winRate,
+      profitFactor,
+      annualizedReturn,
+      maxConsecutiveLosses,
+      dailyResults,
       trades: this.strategy.trades,
     };
   }

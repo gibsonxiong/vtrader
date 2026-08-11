@@ -39,6 +39,11 @@ export interface BacktestingResult {
   totalReturnPercent: number;
   maxDrawdown: number;
   maxDrawdownPercent: number;
+  sharpeRatio: number;
+  winRate: number;
+  profitFactor: number;
+  annualizedReturn: number;
+  maxConsecutiveLosses: number;
   dailyResults: DailyResultItem[];
   trades: TradeData[];
 }
