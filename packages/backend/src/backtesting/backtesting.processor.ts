@@ -122,7 +122,8 @@ async function backtesting(job: SandboxedJob<BacktestingSetting, { backtesting: 
 
 async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resultId?: string } | TrialResult[]> {
   const { data } = job;
-  console.log(`开始处理超优化任务 ${job.id}: ${data.strategyName}`);
+  const targetMetric = data.targetMetric || 'totalReturnPercent';
+  console.log(`开始处理超参数优化任务 ${job.id}: ${data.strategyName}, 目标指标: ${targetMetric}`);
 
   const { brokerManagerService } = await getServices();
 
@@ -148,7 +149,7 @@ async function optimization(job: SandboxedJob<OptimizerSetting>): Promise<{ resu
       const result = await job.waitUntilFinished(queueEvents);
 
       console.log('#result', result)
-      return result.backtesting.metrics?.totalReturnPercent ?? 0;
+      return result.backtesting.metrics?.[targetMetric] ?? 0;
     }
   });
 
