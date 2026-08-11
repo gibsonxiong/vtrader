@@ -22,16 +22,17 @@ export class BacktestingCleanupService {
     this.logger.log('开始清理过期的回测任务...');
 
     try {
-      const oldRecords = await this.repo.findAll({
+      // 查找第 1001 条记录（跳过最新 1000），取到就是保留的边界
+      const batch = await this.repo.findAll({
         orderBy: { id: 'DESC' },
         offset: 1000,
-        limit: 10000,
+        limit: 1,
       });
 
       let deletedCount = 0;
-      if (oldRecords.length > 0) {
-        const oldestIdToKeep = oldRecords[oldRecords.length - 1].id;
-        deletedCount = await this.repo.nativeDelete({ id: { $lt: oldestIdToKeep } });
+      if (batch.length > 0) {
+        const cutoffId = batch[0].id;
+        deletedCount = await this.repo.nativeDelete({ id: { $lt: cutoffId } });
       }
 
       this.logger.log(`已清理 ${deletedCount} 个过期的回测结果`);
