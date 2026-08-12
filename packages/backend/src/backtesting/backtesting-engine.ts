@@ -139,7 +139,6 @@ export class BacktestingEngine implements StrategyEngine {
     try {
       // 流式遍历历史数据
       for await (const data of this.historyData) {
-        console.log(new Date(data.timestamp));
         this.broker.refresh(data);
         await this.handleBar(data as BarData);
         count++;
