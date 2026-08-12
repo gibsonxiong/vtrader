@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, watch, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import dayjs, { type Dayjs } from 'dayjs'
 import { showToast } from '@/ui/mobile'
 import { strategyApi, backtestingApi } from '@vtrader/backend/api'
-import type { Interval } from '@vtrader/backend/api'
+import type { Interval, BacktestingMetrics } from '@vtrader/backend/api'
 import { useContractStore } from '@/stores/contract'
 import NavBar from '@/components/NavBar.vue'
 import NumberInput from '@/components/NumberInput.vue'
@@ -67,13 +67,13 @@ const form = reactive({
   strategyName: '',
   symbol: '',
   interval: '1h' as string,
-  startDate: dayjs('2025-01-01') as Dayjs | null,
-  endDate: dayjs('2025-01-01') as Dayjs | null,
+  startDate: dayjs('2025-01-01'),
+  endDate: dayjs('2025-01-01'),
   assetBalance: 100_000,
   hyperparams: [] as HyperParam[],
   maxTrials: 100,
-  direction: 'maximize' as 'maximize' | 'minimize',
-  targetMetric: 'totalReturnPercent' as string,
+  direction: 'maximize',
+  targetMetric: 'totalReturnPercent',
 })
 
 const submitting = ref(false)
@@ -153,6 +153,10 @@ async function loadStrategyParams(name: string): Promise<void> {
     .map(([key]) => ({ name: key, min: 10, max: 100, step: 5 }))
 }
 
+watch(() => form.strategyName, (name) => {
+  if (name) loadStrategyParams(name)
+})
+
 async function handleSubmit(): Promise<void> {
   if (!form.strategyName || !form.symbol || !form.startDate || !form.endDate) {
     showToast('请填写完整信息')
@@ -187,8 +191,8 @@ async function handleSubmit(): Promise<void> {
         range: [p.min, p.max, p.step] as number[],
       })),
       maxTrials: form.maxTrials,
-      direction: form.direction,
-      targetMetric: form.targetMetric as typeof form.targetMetric,
+      direction: form.direction as 'maximize' | 'minimize',
+      targetMetric: form.targetMetric as keyof BacktestingMetrics,
     })
 
     jobId.value = res.data?.jobId ?? ''
@@ -225,7 +229,7 @@ async function pollStatus(): Promise<void> {
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
       submitting.value = false
     } else if (s.status === 'failed') {
-      error.value = s.failedReason ?? '优化失败'
+      error.value = s.failedReason || '优化失败'
       if (pollTimer) { clearInterval(pollTimer); pollTimer = null }
       submitting.value = false
     }
@@ -246,8 +250,7 @@ function removeParam(index: number): void {
     <div class="form-container">
       <CellGroup bordered>
         <Cell title="策略">
-          <PickerInput v-model="form.strategyName" :data="strategyData" title="选择策略" placeholder="请选择策略"
-            @update:model-value="loadStrategyParams" />
+          <PickerInput v-model="form.strategyName" :data="strategyData" title="选择策略" placeholder="请选择策略" />
         </Cell>
         <Cell title="交易对">
           <PickerInput v-model="form.symbol" :data="symbolData" title="选择交易对" placeholder="请选择交易对" />

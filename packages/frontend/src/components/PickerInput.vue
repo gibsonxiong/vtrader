@@ -6,7 +6,7 @@ const props = withDefaults(defineProps<{
   modelValue: string | string[]
   data: { label: string; value: string }[]
   title: string
-  placeholder: string
+  placeholder?: string
   multiple?: boolean
   loading?: boolean
   emptyText?: string
@@ -127,27 +127,6 @@ function confirmSelection() {
 </template>
 
 <style scoped>
-.form-control {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  padding: 6px 10px;
-  font-size: 14px;
-  color: #333;
-  line-height: 1.4;
-  width: 100%;
-  box-sizing: border-box;
-  min-height: 32px;
-  cursor: pointer;
-}
-
-.placeholder {
-  color: #999;
-}
-
 .tags-wrap {
   display: flex;
   flex-wrap: wrap;
