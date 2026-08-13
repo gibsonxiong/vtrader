@@ -98,8 +98,9 @@ function confirmSelection() {
     v-model:open="showPicker"
     placement="bottom"
     :title="title"
-    :showOk="false"
-    :showCancel="false"
+    :showOk="true"
+    :showCancel="true"
+    @ok="confirmSelection"
   >
     <div class="multi-picker">
       <LoadingSpinner v-if="loading" />
@@ -120,9 +121,9 @@ function confirmSelection() {
         </div>
       </div>
     </div>
-    <template #footer>
+    <!-- <template #footer>
       <button class="footer-btn" @click="confirmSelection">确定</button>
-    </template>
+    </template> -->
   </m-popup>
 </template>
 
