@@ -198,6 +198,39 @@ function createBinanceWsAgent(targetUrl: string) {
 }
 
 // ============================================================
+// onceRejectable
+// ============================================================
+
+/**
+ * 将异步任务包装为“只执行一次，失败后允许重试”的可复用函数。
+ */
+export function onceRejectable<A extends unknown[], T>(
+  fn: (...args: A) => Promise<T>,
+): {
+  run: (...args: A) => Promise<T>;
+  reset: () => void;
+} {
+  let promise: Promise<T> | undefined;
+
+  const run = (...args: A): Promise<T> => {
+    if (!promise) {
+      promise = fn(...args).catch((err) => {
+        promise = undefined;
+        throw err;
+      });
+    }
+    return promise;
+  };
+
+  const reset = (): void => {
+    promise = undefined;
+  };
+
+  return { run, reset };
+}
+
+
+// ============================================================
 // MdApi (md-api.ts)
 // ============================================================
 
@@ -208,7 +241,7 @@ class MdApi {
   private broker: BinanceLinearBroker;
   private subscriptions: Set<string> = new Set();
   private ws: null | ReconnectingWebSocket = null;
-  private connectPromise?: Promise<void>;
+  private connectOnce = onceRejectable(() => this.connect());
   private connected: boolean = false;
 
   constructor(broker: BinanceLinearBroker) {
@@ -276,18 +309,12 @@ class MdApi {
       this.ws.close();
       this.ws = null;
     }
-    this.connectPromise = undefined;
+    this.connectOnce.reset();
     this.connected = false;
   }
 
   public ensureConnected(): Promise<void> {
-    if (!this.connectPromise) {
-      this.connectPromise = this.connect().catch((err) => {
-        this.connectPromise = undefined;
-        throw err;
-      });
-    }
-    return this.connectPromise;
+    return this.connectOnce.run();
   }
 
   public isConnected(): boolean {
@@ -513,431 +540,418 @@ class MdApi {
 // ============================================================
 
 /**
- * REST API客户端
+ * 创建 Binance REST 客户端
  */
-class RestApi {
-  public userStreamKey: string = '';
-  private apiKey: string = '';
-  private apiSecret: string = '';
-  private client: Http;
-  private broker: BinanceLinearBroker;
-  private keepAliveCount: number = 0;
-  private connectPromise?: Promise<void>;
-  private userStreamPromise?: Promise<void>;
+export function createRestClient(host: string): Http {
+  return createHttp({
+    baseURL: host,
+    proxy: false,
+    ...createBinanceHttpAgents(),
+  });
+}
 
+/**
+ * 签名请求参数，返回带签名的查询字符串。
+ */
+export function sign(
+  params: Record<string, any>,
+  apiSecret: string,
+  timeOffset: number,
+): string {
+  const signed: Record<string, any> = {
+    ...params,
+    timestamp: Date.now() - timeOffset,
+  };
 
-  constructor(broker: BinanceLinearBroker) {
-    this.broker = broker;
-    
+  const queryString = Object.keys(signed)
+    .sort()
+    .map((key) => `${key}=${signed[key]}`)
+    .join('&');
+
+  const signature = crypto
+    .createHmac('sha256', apiSecret)
+    .update(queryString)
+    .digest('hex');
+
+  return `${queryString}&signature=${signature}`;
+}
+
+/**
+ * 发送签名请求
+ */
+export async function sendSignedRequest(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+  method: 'DELETE' | 'GET' | 'POST' | 'PUT',
+  path: string,
+  params: Record<string, any> = {},
+): Promise<any> {
+  const config: any = {
+    method,
+    url: path,
+    headers: {
+      'X-MBX-APIKEY': apiKey,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  };
+
+  if (method === 'GET') {
+    config.params = params;
+    config.paramsSerializer = () => sign(params, apiSecret, timeOffset);
+  } else {
+    config.data = sign(params, apiSecret, timeOffset);
   }
 
-  /**
-   * 连接到REST API
-   */
-  public async connect(): Promise<void> {
-    const credentials = this.broker.getCredentials();
-    this.apiKey = credentials.apiKey;
-    this.apiSecret = credentials.apiSecret;
+  try {
+    const response = await client.request(config);
+    return response.data;
+  } catch (error) {
+    const res = (error as any)?.response?.data;
+    const msg = res?.msg || (error as Error).message;
+    throw new Error(msg);
+  }
+}
 
-    this.client = createHttp({
-      baseURL: this.broker.REST_HOST,
-      proxy: false,
-      ...createBinanceHttpAgents(),
-    });
+/**
+ * 查询服务器时间
+ */
+export async function queryTime(client: Http): Promise<number> {
+  const response = await client.request({
+    url: '/fapi/v1/time',
+  });
+  return response.data.serverTime as number;
+}
 
-    // 查询服务器时间
-    await this.queryTime();
+/**
+ * 查询合约信息
+ */
+export async function queryContract(client: Http): Promise<ContractData[]> {
+  const response = await client.request({
+    url: '/fapi/v1/exchangeInfo',
+  });
+  const data = response.data;
 
-    // 查询合约信息
-    await this.queryContract();
+  const contracts: ContractData[] = [];
 
-    this.broker.writeLog('REST API连接成功');
+  for (const symbolData of data.symbols) {
+    if (symbolData.status !== 'TRADING') {
+      continue;
+    }
+
+    const contract: ContractData = {
+      symbol: `${symbolData.symbol}:${symbolData.marginAsset}`,
+      name: symbolData.symbol,
+      product: PRODUCT_BINANCE2VT[symbolData.contractType] || Product.FUTURES,
+      priceTick: Number.parseFloat(
+        symbolData.filters.find((f: any) => f.filterType === 'PRICE_FILTER')?.tickSize ||
+          '0.01',
+      ),
+      minVolume: Number.parseFloat(
+        symbolData.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.minQty || '1',
+      ),
+      supportStopOrder: true,
+      netPosition: true,
+      supportHistory: true,
+    };
+
+    contracts.push(contract);
   }
 
-  /**
-   * 保持用户数据流活跃
-   */
-  public async keepUserStream(): Promise<void> {
-    if (!this.userStreamKey) {
-      return;
-    }
+  return contracts;
+}
 
-    this.keepAliveCount++;
-    if (this.keepAliveCount < 600) {
-      return;
-    }
-    this.keepAliveCount = 0;
+/**
+ * 查询历史数据
+ */
+export async function queryHistory(
+  client: Http,
+  req: HistoryRequest,
+  symbolName: string,
+  callback?: (bars: BarData[]) => void,
+): Promise<BarData[]> {
+  const history: BarData[] = [];
+  const limit = 1500;
+  let startTime = dayjs(req.startDate).valueOf();
+  const endTime = dayjs(req.endDate).valueOf();
 
+  while (true) {
+    const params: any = {
+      symbol: symbolName,
+      interval: INTERVAL_VT2BINANCE[req.interval],
+      limit,
+      startTime,
+      endTime,
+    };
+
+    let data;
     try {
-      await this.sendSignedRequest('PUT', '/fapi/v1/listenKey', {
-        listenKey: this.userStreamKey,
+      const response = await client.request({
+        url: '/fapi/v1/klines',
+        params,
+        retryCount: 10,
       });
+      data = response.data;
     } catch (error) {
-      this.broker.writeLog(`保持用户数据流失败: ${error}`);
-    }
-  }
-
-  /**
-   * 查询历史数据
-   */
-  public async queryHistory(
-    req: HistoryRequest,
-    callback?: (bars: BarData[]) => void,
-  ): Promise<BarData[]> {
-    // Check if the contract exists
-    const contract = this.broker.getContractBySymbol(req.symbol);
-    if (!contract) {
-      return [];
+      throw new Error(`K线历史数据查询失败: ${error}`);
     }
 
-    // Prepare history list
-    const history: BarData[] = [];
-    const limit = 1500;
-    let startTime = dayjs(req.startDate).valueOf();
-    let endTime = dayjs(req.endDate).valueOf();
+    if (!data || data.length === 0) {
+      break;
+    }
 
-    while (true) {
-      // Create query parameters
-      const params: any = {
-        symbol: contract.name,
-        interval: INTERVAL_VT2BINANCE[req.interval],
-        limit,
-        startTime,
-        endTime,
+    const buf: BarData[] = [];
+
+    for (const row of data) {
+      const bar: BarData = {
+        symbol: req.symbol,
+        timestamp: row[0],
+        interval: req.interval,
+        volume: Number.parseFloat(row[5]),
+        open: Number.parseFloat(row[1]),
+        high: Number.parseFloat(row[2]),
+        low: Number.parseFloat(row[3]),
+        close: Number.parseFloat(row[4]),
       };
-
-      let data;
-      try {
-        const response = await this.client.request({
-          url: '/fapi/v1/klines',
-          params, 
-          retryCount: 10,
-        });
-        data = response.data;
-      } catch (error) {
-        throw new Error(`K线历史数据查询失败: ${error}`);
-      }
-
-      if (!data || data.length === 0) {
-        const msg = `未接收到K线历史数据，起始时间: ${startTime}`;
-        this.broker.writeLog(msg);
-        break;
-      }
-
-      const buf: BarData[] = [];
-
-      for (const row of data) {
-        const bar: BarData = {
-          symbol: req.symbol,
-          timestamp: row[0],
-          interval: req.interval,
-          volume: Number.parseFloat(row[5]),
-          open: Number.parseFloat(row[1]),
-          high: Number.parseFloat(row[2]),
-          low: Number.parseFloat(row[3]),
-          close: Number.parseFloat(row[4]),
-        };
-        buf.push(bar);
-      }
-
-      const begin = dayjs(buf[0].timestamp).format('YYYY-MM-DD HH:mm:ss');
-      const end = dayjs(buf[buf.length - 1].timestamp).format('YYYY-MM-DD HH:mm:ss');
-
-      history.push(...buf);
-
-      if (callback) {
-        callback(buf);
-      }
-
-      this.broker.writeLog(`K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`);
-
-      const lastTimestamp = buf[buf.length - 1].timestamp;
-      // Break the loop if the latest data received
-      if (
-        data.length < limit ||
-        (lastTimestamp >= endTime)
-      ) {
-        break;
-      }
-
-      // Update query start time
-      
-      startTime = this.getNextStartTime(lastTimestamp, req.interval);
-
-      // Wait to meet request flow limit
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      
+      buf.push(bar);
     }
 
-    this.broker.writeLog(`K线历史数据查询完成，共${history.length}条数据`);
+    history.push(...buf);
 
-    return history;
+    if (callback) {
+      callback(buf);
+    }
+
+    const lastTimestamp = buf[buf.length - 1].timestamp;
+
+    if (data.length < limit || lastTimestamp >= endTime) {
+      break;
+    }
+
+    startTime = getNextStartTime(lastTimestamp, req.interval);
+
+    // Wait to meet request flow limit
+    await new Promise((resolve) => setTimeout(resolve, 500));
   }
 
-  /**
-   * 停止REST API
-   */
-  public stop(): void {
-    this.connectPromise = undefined;
-    this.userStreamPromise = undefined;
-    this.userStreamKey = '';
-  }
+  return history;
+}
 
-  public ensureConnected(): Promise<void> {
-    if (!this.connectPromise) {
-      this.connectPromise = this.connect().catch((err) => {
-        this.connectPromise = undefined;
-        throw err;
+/**
+ * 启动用户数据流
+ */
+export async function startUserStream(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+): Promise<string> {
+  const response = await sendSignedRequest(
+    client,
+    apiKey,
+    apiSecret,
+    timeOffset,
+    'POST',
+    '/fapi/v1/listenKey',
+  );
+  return response.listenKey as string;
+}
+
+function getNextStartTime(timestamp: number, interval: Interval): number {
+  const args = INTERVAL_VT2DAYJS[interval];
+  const nextTime = dayjs(timestamp).add(...args);
+  return nextTime.valueOf();
+}
+
+// 以下为历史遗留查询逻辑，暂无调用方，保留以备后续使用。
+
+function mapOrder(order: any, symbol: string): OrderData {
+  console.log(order);
+
+  return {
+    direction: binance2direction(order.positionSide),
+    offset: binance2offset(order.positionSide, order.side),
+    type: binance2ordertype(order.type),
+    status: binance2status(order.status),
+    orderId: order.clientOrderId,
+    price: Number(order.price ?? 0),
+    volume: Number(order.origQty ?? 0),
+    avgPrice: Number(order.avgPrice ?? 0),
+    traded: Number(order.executedQty ?? 0),
+    tradePrice: 0,
+    tradeVolume: 0,
+    tradeCommission: 0,
+    symbol: symbol,
+    time: new Date(order.time),
+    msg: '',
+  };
+}
+
+async function queryOrder(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+  broker: BinanceLinearBroker,
+  req: { symbol: string; orderId: string },
+): Promise<OrderData | null> {
+  const contract = broker.getContractBySymbol(req.symbol);
+  if (!contract) return null;
+
+  const params: Record<string, any> = {
+    symbol: contract.name,
+    origClientOrderId: req.orderId,
+  };
+
+  try {
+    const data = await sendSignedRequest(
+      client,
+      apiKey,
+      apiSecret,
+      timeOffset,
+      'GET',
+      '/fapi/v1/order',
+      params,
+    );
+    return mapOrder(data, req.symbol);
+  } catch (error) {
+    return null;
+  }
+}
+
+async function queryOrders(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+  broker: BinanceLinearBroker,
+  req: { symbol: string; startTime?: number; endTime?: number; limit?: number },
+): Promise<OrderData[]> {
+  const contract = broker.getContractBySymbol(req.symbol);
+  if (!contract) return [];
+
+  const params: Record<string, any> = { symbol: contract.name };
+  if (req.startTime) params.startTime = req.startTime;
+  if (req.endTime) params.endTime = req.endTime;
+  if (req.limit) params.limit = req.limit;
+
+  try {
+    const list = await sendSignedRequest(
+      client,
+      apiKey,
+      apiSecret,
+      timeOffset,
+      'GET',
+      '/fapi/v1/allOrders',
+      params,
+    );
+    if (!Array.isArray(list)) return [];
+    return list.map((o: any) => mapOrder(o, req.symbol));
+  } catch (error) {
+    broker.writeLog(`查询历史订单失败: ${error}`);
+    return [];
+  }
+}
+
+async function queryAssets(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+  broker: BinanceLinearBroker,
+): Promise<AssetData[]> {
+  try {
+    const data = await sendSignedRequest(
+      client,
+      apiKey,
+      apiSecret,
+      timeOffset,
+      'GET',
+      '/fapi/v2/account',
+    );
+    const list = Array.isArray(data?.assets) ? data.assets : [];
+    return list.map((a: any) => ({
+      assetName: String(a.asset),
+      balance: Number(a.walletBalance),
+      frozen: Number(a.walletBalance - a.availableBalance),
+      available: Number(a.availableBalance),
+    }));
+  } catch (error) {
+    broker.writeLog(`查询资产失败: ${error}`);
+    return [];
+  }
+}
+
+async function queryPositions(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+  broker: BinanceLinearBroker,
+): Promise<PositionData[]> {
+  try {
+    const data = await sendSignedRequest(
+      client,
+      apiKey,
+      apiSecret,
+      timeOffset,
+      'GET',
+      '/fapi/v2/account',
+    );
+    const list = Array.isArray(data?.positions) ? data.positions : [];
+    return list
+      .filter((p: any) => Number(p.positionAmt ?? 0) !== 0)
+      .map((p: any) => {
+        const contract = broker.getContractByName(String(p.symbol ?? ''));
+        const symbol = contract?.symbol ?? '';
+        return {
+          direction: binance2direction(p.positionSide),
+          pnl: Number(p.unrealizedProfit ?? 0),
+          price: Number(p.entryPrice ?? 0),
+          symbol,
+          volume: Math.abs(Number(p.positionAmt ?? 0)),
+          ydVolume: 0,
+        } as PositionData;
       });
-    }
-    return this.connectPromise;
+  } catch (error) {
+    broker.writeLog(`查询仓位失败: ${error}`);
+    return [];
+  }
+}
+
+async function keepUserStream(
+  client: Http,
+  apiKey: string,
+  apiSecret: string,
+  timeOffset: number,
+  broker: BinanceLinearBroker,
+  state: { userStreamKey: string; keepAliveCount: number },
+): Promise<void> {
+  if (!state.userStreamKey) {
+    return;
   }
 
-  public ensureUserStream(): Promise<void> {
-    if (!this.userStreamPromise) {
-      this.userStreamPromise = this.ensureConnected()
-        .then(() => this.startUserStream())
-        .catch((err) => {
-          this.userStreamPromise = undefined;
-          throw err;
-        });
-    }
-    return this.userStreamPromise;
+  state.keepAliveCount++;
+  if (state.keepAliveCount < 600) {
+    return;
   }
+  state.keepAliveCount = 0;
 
-  /**
-   * 查询单个订单
-   */
-  public async queryOrder(req: { symbol: string; orderId: string }): Promise<OrderData | null> {
-    const contract = this.broker.getContractBySymbol(req.symbol);
-    if (!contract) return null;
-
-    const params: Record<string, any> = { 
-      symbol: contract.name,
-      origClientOrderId: req.orderId,
-    };
-
-    try {
-      const data = await this.sendSignedRequest('GET', '/fapi/v1/order', params);
-      return this.mapOrder(data, req.symbol);
-    } catch (error) {
-      return null;
-    }
-  }
-
-  /**
-   * 查询历史订单列表
-   */
-  public async queryOrders(req: { symbol: string; startTime?: number; endTime?: number; limit?: number }): Promise<OrderData[]> {
-    const contract = this.broker.getContractBySymbol(req.symbol);
-    if (!contract) return [];
-
-    const params: Record<string, any> = { symbol: contract.name };
-    if (req.startTime) params.startTime = req.startTime;
-    if (req.endTime) params.endTime = req.endTime;
-    if (req.limit) params.limit = req.limit;
-
-    try {
-      const list = await this.sendSignedRequest('GET', '/fapi/v1/allOrders', params);
-      if (!Array.isArray(list)) return [];
-      return list.map((o: any) => this.mapOrder(o, req.symbol));
-    } catch (error) {
-      this.broker.writeLog(`查询历史订单失败: ${error}`);
-      return [];
-    }
-  }
-
-  public async queryAssets(): Promise<AssetData[]> {
-    try {
-      const data = await this.sendSignedRequest('GET', '/fapi/v2/account');
-      const list = Array.isArray(data?.assets) ? data.assets : [];
-      return list.map((a: any) => ({
-        assetName: String(a.asset),
-        balance: Number(a.walletBalance),
-        frozen: Number(a.walletBalance - a.availableBalance),
-        available: Number(a.availableBalance),
-      }));
-    } catch (error) {
-      this.broker.writeLog(`查询资产失败: ${error}`);
-      return [];
-    }
-  }
-
-  public async queryPositions(): Promise<PositionData[]> {
-    try {
-      const data = await this.sendSignedRequest('GET', '/fapi/v2/account');
-      const list = Array.isArray(data?.positions) ? data.positions : [];
-      return list
-        .filter((p: any) => Number(p.positionAmt ?? 0) !== 0)
-        .map((p: any) => {
-          const contract = this.broker.getContractByName(String(p.symbol ?? ''));
-          const symbol = contract?.symbol ?? '';
-          return {
-            direction: binance2direction(p.positionSide),
-            pnl: Number(p.unrealizedProfit ?? 0),
-            price: Number(p.entryPrice ?? 0),
-            symbol,
-            volume: Math.abs(Number(p.positionAmt ?? 0)),
-            ydVolume: 0,
-          } as PositionData;
-        });
-    } catch (error) {
-      this.broker.writeLog(`查询仓位失败: ${error}`);
-      return [];
-    }
-  }
-
-  private getNextStartTime(timestamp: number, interval: Interval): number {
-    const args = INTERVAL_VT2DAYJS[interval];
-    const nextTime = dayjs(timestamp).add(...args);
-    return nextTime.valueOf();
-  }
-
-  private mapOrder(order: any, symbol: string): OrderData {
-    console.log(order);
-
-    return {
-      direction: binance2direction(order.positionSide),
-      offset: binance2offset(order.positionSide, order.side),
-      type: binance2ordertype(order.type),
-      status: binance2status(order.status),
-      orderId: order.clientOrderId,
-      price: Number(order.price ?? 0),
-      volume: Number(order.origQty ?? 0),
-      avgPrice: Number(order.avgPrice ?? 0),
-      traded: Number(order.executedQty ?? 0),
-      tradePrice: 0,
-      tradeVolume: 0,
-      tradeCommission: 0,
-      symbol: symbol,
-      time: new Date(order.time),
-      msg: '',
-    };
-  }
-
-  /**
-   * 查询合约信息
-   */
-  private async queryContract(): Promise<void> {
-    try {
-      const response = await this.client.request({
-        url: '/fapi/v1/exchangeInfo'
-      });
-      const data = response.data;
-
-      for (const symbolData of data.symbols) {
-        if (symbolData.status !== 'TRADING') {
-          continue;
-        }
-
-        const contract: ContractData = {
-          symbol: `${symbolData.symbol}:${symbolData.marginAsset}`,
-          name: symbolData.symbol,
-          product: PRODUCT_BINANCE2VT[symbolData.contractType] || Product.FUTURES,
-          priceTick: Number.parseFloat(
-            symbolData.filters.find((f: any) => f.filterType === 'PRICE_FILTER')?.tickSize ||
-              '0.01',
-          ),
-          minVolume: Number.parseFloat(
-            symbolData.filters.find((f: any) => f.filterType === 'LOT_SIZE')?.minQty || '1',
-          ),
-          supportStopOrder: true,
-          netPosition: true,
-          supportHistory: true,
-        };
-
-        this.broker.onContract(contract);
-      }
-
-      this.broker.writeLog(`合约信息查询完成，共${data.symbols.length}个合约`);
-    } catch (error) {
-      this.broker.writeLog(`查询合约信息失败: ${error}`);
-      throw error;
-    }
-  }
-
-  /**
-   * 查询服务器时间
-   */
-  private async queryTime(): Promise<void> {
-    try {
-      const response = await this.client.request({
-        url: '/fapi/v1/time'
-      });
-      const serverTime = response.data.serverTime;
-      const localTime = Date.now();
-      this.broker.timeOffset = localTime - serverTime;
-      this.broker.writeLog(`服务器时间同步完成，偏移: ${this.broker.timeOffset}ms`);
-    } catch (error) {
-      this.broker.writeLog(`查询服务器时间失败: ${error}`);
-      throw error;
-    }
-  }
-
-  /**
-   * 发送签名请求
-   */
-  private async sendSignedRequest(
-    method: 'DELETE' | 'GET' | 'POST' | 'PUT',
-    path: string,
-    params: Record<string, any> = {},
-  ): Promise<any> {
-    const config: any = {
-      method,
-      url: path,
-      headers: {
-        'X-MBX-APIKEY': this.apiKey,
-        'Content-Type': 'application/x-www-form-urlencoded',
+  try {
+    await sendSignedRequest(
+      client,
+      apiKey,
+      apiSecret,
+      timeOffset,
+      'PUT',
+      '/fapi/v1/listenKey',
+      {
+        listenKey: state.userStreamKey,
       },
-    };
-
-    if (method === 'GET') {
-      config.params = params;
-      config.paramsSerializer = () => this.sign(params);
-    } else {
-      config.data = this.sign(params);
-    }
-
-    try {
-      const response = await this.client.request(config);
-      return response.data;
-    } catch (error) {
-      const res = error.response?.data;
-      const msg = res?.msg || error.message;
-      this.broker.writeLog(`REST API请求失败: ${msg}`);
-      throw error;
-    }
-  }
-
-  /**
-   * 签名请求
-   */
-  private sign(params: Record<string, any>): string {
-    const timestamp = Date.now() - this.broker.timeOffset;
-    params.timestamp = timestamp;
-
-    const queryString = Object.keys(params)
-      .sort()
-      .map((key) => `${key}=${params[key]}`)
-      .join('&');
-
-    const signature = crypto.createHmac('sha256', this.apiSecret).update(queryString).digest('hex');
-
-    return `${queryString}&signature=${signature}`;
-  }
-
-  /**
-   * 启动用户数据流
-   */
-  private async startUserStream(): Promise<void> {
-    try {
-      const response = await this.sendSignedRequest('POST', '/fapi/v1/listenKey');
-      this.userStreamKey = response.listenKey;
-      this.broker.writeLog('用户数据流启动成功');
-    } catch (error) {
-      this.broker.writeLog(`启动用户数据流失败: ${error}`);
-      throw error;
-    }
+    );
+  } catch (error) {
+    broker.writeLog(`保持用户数据流失败: ${error}`);
   }
 }
 
@@ -954,7 +968,7 @@ class TradeApi {
   private broker: BinanceLinearBroker;
   private server: string = '';
   private ws: null | ReconnectingWebSocket = null;
-  private connectPromise?: Promise<void>;
+  private connectOnce = onceRejectable(() => this.connect());
 
   private orders: Map<string, OrderData> = new Map();
 
@@ -1152,17 +1166,11 @@ class TradeApi {
       this.ws.close();
       this.ws = null;
     }
-    this.connectPromise = undefined;
+    this.connectOnce.reset();
   }
 
   public ensureConnected(): Promise<void> {
-    if (!this.connectPromise) {
-      this.connectPromise = this.connect().catch((err) => {
-        this.connectPromise = undefined;
-        throw err;
-      });
-    }
-    return this.connectPromise;
+    return this.connectOnce.run();
   }
 
   /**
@@ -1204,7 +1212,7 @@ class UserApi {
   private broker: BinanceLinearBroker;
   private ws: null | ReconnectingWebSocket = null;
   private listenKey: string = '';
-  private connectPromise?: Promise<void>;
+  private connectOnce = onceRejectable((listenKey: string) => this.connect(listenKey));
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -1268,17 +1276,11 @@ class UserApi {
       this.ws = null;
     }
     this.listenKey = '';
-    this.connectPromise = undefined;
+    this.connectOnce.reset();
   }
 
   public ensureConnected(listenKey: string): Promise<void> {
-    if (!this.connectPromise) {
-      this.connectPromise = this.connect(listenKey).catch((err) => {
-        this.connectPromise = undefined;
-        throw err;
-      });
-    }
-    return this.connectPromise;
+    return this.connectOnce.run(listenKey);
   }
 
   /**
@@ -1392,7 +1394,11 @@ export class BinanceLinearBroker extends Broker {
 
   public timeOffset: number = 0;
 
-  private restApi: RestApi;
+  private restClient?: Http;
+  public userStreamKey: string = '';
+  private restConnectOnce = onceRejectable(() => this.doRestConnect());
+  private userStreamOnce = onceRejectable(() => this.doUserStream());
+
   private mdApi: MdApi;
   private tradeApi: TradeApi;
   private userApi: UserApi;
@@ -1404,7 +1410,6 @@ export class BinanceLinearBroker extends Broker {
 
   constructor() {
     super();
-    this.restApi = new RestApi(this);
     this.tradeApi = new TradeApi(this);
     this.userApi = new UserApi(this);
     this.mdApi = new MdApi(this);
@@ -1414,8 +1419,49 @@ export class BinanceLinearBroker extends Broker {
     return 'BINANCE_LINEAR';
   }
 
+  private async ensureRestConnected(): Promise<void> {
+    return this.restConnectOnce.run();
+  }
+
+  private async doRestConnect(): Promise<void> {
+    const client = createRestClient(this.REST_HOST);
+
+    const serverTime = await queryTime(client);
+    this.timeOffset = Date.now() - serverTime;
+    this.writeLog(`服务器时间同步完成，偏移: ${this.timeOffset}ms`);
+
+    const contracts = await queryContract(client);
+    for (const contract of contracts) {
+      this.onContract(contract);
+    }
+    this.writeLog(`合约信息查询完成，共${contracts.length}个合约`);
+
+    this.restClient = client;
+    this.writeLog('REST API连接成功');
+  }
+
+  private async ensureUserStream(): Promise<void> {
+    return this.userStreamOnce.run();
+  }
+
+  private async doUserStream(): Promise<void> {
+    await this.ensureRestConnected();
+
+    const credentials = this.getCredentials();
+    const client = this.restClient!;
+
+    const listenKey = await startUserStream(
+      client,
+      credentials.apiKey,
+      credentials.apiSecret,
+      this.timeOffset,
+    );
+    this.userStreamKey = listenKey;
+    this.writeLog('用户数据流启动成功');
+  }
+
   public async getAllContracts(): Promise<ContractData[]> {
-    await this.restApi.ensureConnected();
+    await this.ensureRestConnected();
     return [...this.nameContractMap.values()];
   }
 
@@ -1503,16 +1549,32 @@ export class BinanceLinearBroker extends Broker {
    * 查询历史数据
    */
   public async queryHistory(req: HistoryRequest): Promise<BarData[]> {
-    await this.restApi.ensureConnected();
-    return this.restApi.queryHistory(req);
+    await this.ensureRestConnected();
+
+    const contract = this.getContractBySymbol(req.symbol);
+    if (!contract) {
+      return [];
+    }
+
+    const client = this.restClient!;
+
+    const bars = await queryHistory(client, req, contract.name, (buf) => {
+      const begin = dayjs(buf[0].timestamp).format('YYYY-MM-DD HH:mm:ss');
+      const end = dayjs(buf[buf.length - 1].timestamp).format('YYYY-MM-DD HH:mm:ss');
+      this.writeLog(`K线历史数据查询完成，${req.symbol} - ${req.interval}, ${begin} - ${end}`);
+    });
+
+    this.writeLog(`K线历史数据查询完成，共${bars.length}条数据`);
+
+    return bars;
   }
 
   /**
    * 发送订单
    */
   public async sendOrder(req: SendOrderRequest): Promise<string> {
-    await this.restApi.ensureUserStream();
-    await this.userApi.ensureConnected(this.restApi.userStreamKey);
+    await this.ensureUserStream();
+    await this.userApi.ensureConnected(this.userStreamKey);
     await this.tradeApi.ensureConnected();
     return this.tradeApi.sendOrder(req);
   }
@@ -1521,8 +1583,8 @@ export class BinanceLinearBroker extends Broker {
    * 撤销订单
    */
   public async cancelOrder(req: CancelOrderRequest): Promise<void> {
-    await this.restApi.ensureUserStream();
-    await this.userApi.ensureConnected(this.restApi.userStreamKey);
+    await this.ensureUserStream();
+    await this.userApi.ensureConnected(this.userStreamKey);
     await this.tradeApi.ensureConnected();
     return this.tradeApi.cancelOrder(req);
   }
@@ -1531,7 +1593,10 @@ export class BinanceLinearBroker extends Broker {
    * 关闭连接
    */
   public stop(): void {
-    this.restApi.stop();
+    this.restConnectOnce.reset();
+    this.userStreamOnce.reset();
+    this.restClient = undefined;
+    this.userStreamKey = '';
     this.tradeApi.stop();
     this.userApi.stop();
     this.mdApi.stop();
@@ -1542,7 +1607,7 @@ export class BinanceLinearBroker extends Broker {
    * 订阅市场数据
    */
   public async subscribeBar(req: SubscribeRequest): Promise<void> {
-    await this.restApi.ensureConnected();
+    await this.ensureRestConnected();
     await this.mdApi.ensureConnected();
     this.mdApi.subscribeBar(req);
   }
@@ -1551,7 +1616,7 @@ export class BinanceLinearBroker extends Broker {
    * 取消订阅市场数据
    */
   public async unsubscribeBar(req: SubscribeRequest): Promise<void> {
-    await this.restApi.ensureConnected();
+    await this.ensureRestConnected();
     if (!this.mdApi.isConnected()) {
       return;
     }
