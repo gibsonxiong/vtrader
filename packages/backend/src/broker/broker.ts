@@ -23,12 +23,23 @@ export abstract class Broker extends EventEmitter {
   public abstract timeOffset: number;
 
   public abstract getBrokerType(): BrokerType;
-  public abstract connect(settings: BrokerSettings): Promise<void>;
   public abstract stop(): void;
+
+  private apiKey: string = '';
+  private apiSecret: string = '';
+
+  public setCredentials(settings: BrokerSettings): void {
+    this.apiKey = settings.apiKey;
+    this.apiSecret = settings.apiSecret;
+  }
+
+  public getCredentials(): BrokerSettings {
+    return { apiKey: this.apiKey, apiSecret: this.apiSecret };
+  }
 
   public abstract refresh(bar: BarData): void;
 
-  public abstract getAllContracts(): ContractData[];
+  public abstract getAllContracts(): Promise<ContractData[]>;
   public abstract getContractByName(name: string): ContractData | undefined;
   public abstract getContractBySymbol(symbol: string): ContractData | undefined;
   // public abstract getOrder(orderId: string): OrderData | undefined;
@@ -36,8 +47,8 @@ export abstract class Broker extends EventEmitter {
   public abstract queryHistory(req: HistoryRequest): Promise<BarData[]>;
   public abstract sendOrder(req: SendOrderRequest): Promise<string>;
   public abstract cancelOrder(req: CancelOrderRequest): Promise<void>;
-  public abstract subscribeBar(req: SubscribeRequest): void;
-  public abstract unsubscribeBar(req: SubscribeRequest): void;
+  public abstract subscribeBar(req: SubscribeRequest): Promise<void>;
+  public abstract unsubscribeBar(req: SubscribeRequest): Promise<void>;
 
   // public abstract onContract(contract: ContractData): void;
   // public abstract onAccount(account: AccountData): void;

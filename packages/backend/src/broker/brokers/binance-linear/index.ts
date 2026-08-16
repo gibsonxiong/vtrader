@@ -208,6 +208,8 @@ class MdApi {
   private broker: BinanceLinearBroker;
   private subscriptions: Set<string> = new Set();
   private ws: null | ReconnectingWebSocket = null;
+  private connectPromise?: Promise<void>;
+  private connected: boolean = false;
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -217,7 +219,7 @@ class MdApi {
    * 连接到市场数据API
    */
   public async connect(): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       try {
         this.ws = new ReconnectingWebSocket(this.broker.DATA_HOST, {
           agent: createBinanceWsAgent(this.broker.DATA_HOST),
@@ -226,12 +228,13 @@ class MdApi {
         const connectTimeout = setTimeout(() => {
           if (this.ws?.readyState !== WebSocket.OPEN) {
             this.broker.writeLog('市场数据WebSocket连接超时（将继续运行，数据不可用）');
-            resolve();
+            reject(new Error('WebSocket connect timeout'));
           }
         }, 10_000);
 
         this.ws.on('open', () => {
           clearTimeout(connectTimeout);
+          this.connected = true;
           this.broker.writeLog('市场数据WebSocket连接成功');
           resolve();
         });
@@ -241,9 +244,13 @@ class MdApi {
         });
 
         this.ws.on('error', (error: Error) => {
-          clearTimeout(connectTimeout);
           this.broker.writeLog(`市场数据WebSocket连接失败: ${error.message}（将继续运行，数据不可用）`);
-          resolve();
+        });
+
+        this.ws.on('failed', () => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog('MdApi reconnect failed');
+          reject(new Error('WebSocket reconnect failed'));
         });
 
         this.ws.on('close', () => {
@@ -256,7 +263,7 @@ class MdApi {
         });
       } catch (err: unknown) {
         this.broker.writeLog(`市场数据WebSocket创建失败: ${(err as Error).message}（将继续运行，数据不可用）`);
-        resolve();
+        reject(new Error('WebSocket create failed'));
       }
     });
   }
@@ -269,6 +276,22 @@ class MdApi {
       this.ws.close();
       this.ws = null;
     }
+    this.connectPromise = undefined;
+    this.connected = false;
+  }
+
+  public ensureConnected(): Promise<void> {
+    if (!this.connectPromise) {
+      this.connectPromise = this.connect().catch((err) => {
+        this.connectPromise = undefined;
+        throw err;
+      });
+    }
+    return this.connectPromise;
+  }
+
+  public isConnected(): boolean {
+    return this.connected;
   }
 
   /**
@@ -499,6 +522,8 @@ class RestApi {
   private client: Http;
   private broker: BinanceLinearBroker;
   private keepAliveCount: number = 0;
+  private connectPromise?: Promise<void>;
+  private userStreamPromise?: Promise<void>;
 
 
   constructor(broker: BinanceLinearBroker) {
@@ -509,12 +534,10 @@ class RestApi {
   /**
    * 连接到REST API
    */
-  public async connect(
-    apiKey: string,
-    apiSecret: string,
-  ): Promise<void> {
-    this.apiKey = apiKey;
-    this.apiSecret = apiSecret;
+  public async connect(): Promise<void> {
+    const credentials = this.broker.getCredentials();
+    this.apiKey = credentials.apiKey;
+    this.apiSecret = credentials.apiSecret;
 
     this.client = createHttp({
       baseURL: this.broker.REST_HOST,
@@ -527,9 +550,6 @@ class RestApi {
 
     // 查询合约信息
     await this.queryContract();
-
-    // 启动用户数据流
-    await this.startUserStream();
 
     this.broker.writeLog('REST API连接成功');
   }
@@ -658,7 +678,31 @@ class RestApi {
    * 停止REST API
    */
   public stop(): void {
-    // 清理资源
+    this.connectPromise = undefined;
+    this.userStreamPromise = undefined;
+    this.userStreamKey = '';
+  }
+
+  public ensureConnected(): Promise<void> {
+    if (!this.connectPromise) {
+      this.connectPromise = this.connect().catch((err) => {
+        this.connectPromise = undefined;
+        throw err;
+      });
+    }
+    return this.connectPromise;
+  }
+
+  public ensureUserStream(): Promise<void> {
+    if (!this.userStreamPromise) {
+      this.userStreamPromise = this.ensureConnected()
+        .then(() => this.startUserStream())
+        .catch((err) => {
+          this.userStreamPromise = undefined;
+          throw err;
+        });
+    }
+    return this.userStreamPromise;
   }
 
   /**
@@ -910,6 +954,7 @@ class TradeApi {
   private broker: BinanceLinearBroker;
   private server: string = '';
   private ws: null | ReconnectingWebSocket = null;
+  private connectPromise?: Promise<void>;
 
   private orders: Map<string, OrderData> = new Map();
 
@@ -920,11 +965,12 @@ class TradeApi {
   /**
    * 连接到交易API
    */
-  public async connect(apiKey: string, apiSecret: string): Promise<void> {
-    this.apiKey = apiKey;
-    this.apiSecret = apiSecret;
+  public async connect(): Promise<void> {
+    const credentials = this.broker.getCredentials();
+    this.apiKey = credentials.apiKey;
+    this.apiSecret = credentials.apiSecret;
 
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       try {
         this.ws = new ReconnectingWebSocket(this.broker.TRADE_HOST, {
           agent: createBinanceWsAgent(this.broker.TRADE_HOST),
@@ -933,7 +979,7 @@ class TradeApi {
         const connectTimeout = setTimeout(() => {
           if (this.ws?.readyState !== WebSocket.OPEN) {
             this.broker.writeLog('交易WebSocket连接超时（将继续运行，交易不可用）');
-            resolve();
+            reject(new Error('WebSocket connect timeout'));
           }
         }, 10_000);
 
@@ -948,15 +994,13 @@ class TradeApi {
         });
 
         this.ws.on('error', (error: Error) => {
-          clearTimeout(connectTimeout);
           this.broker.writeLog(`交易WebSocket连接失败: ${error.message}（将继续运行，交易不可用）`);
-          resolve();
         });
 
         this.ws.on('failed', () => {
           clearTimeout(connectTimeout);
           this.broker.writeLog('交易WebSocket重连失败，已停止重试（交易不可用）');
-          resolve();
+          reject(new Error('WebSocket reconnect failed'));
         });
 
         this.ws.on('close', () => {
@@ -964,7 +1008,7 @@ class TradeApi {
         });
       } catch (err: unknown) {
         this.broker.writeLog(`交易WebSocket创建失败: ${(err as Error).message}（将继续运行，交易不可用）`);
-        resolve();
+        reject(new Error('WebSocket create failed'));
       }
     });
   }
@@ -1108,6 +1152,17 @@ class TradeApi {
       this.ws.close();
       this.ws = null;
     }
+    this.connectPromise = undefined;
+  }
+
+  public ensureConnected(): Promise<void> {
+    if (!this.connectPromise) {
+      this.connectPromise = this.connect().catch((err) => {
+        this.connectPromise = undefined;
+        throw err;
+      });
+    }
+    return this.connectPromise;
   }
 
   /**
@@ -1149,6 +1204,7 @@ class UserApi {
   private broker: BinanceLinearBroker;
   private ws: null | ReconnectingWebSocket = null;
   private listenKey: string = '';
+  private connectPromise?: Promise<void>;
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -1160,7 +1216,7 @@ class UserApi {
   public async connect(listenKey: string): Promise<void> {
     this.listenKey = listenKey;
 
-    return new Promise((resolve) => {
+    return new Promise<void>((resolve, reject) => {
       try {
         this.ws = new ReconnectingWebSocket(`${this.broker.USER_HOST}/${listenKey}`, {
           agent: createBinanceWsAgent(`${this.broker.USER_HOST}/${listenKey}`),
@@ -1169,7 +1225,7 @@ class UserApi {
         const connectTimeout = setTimeout(() => {
           if (this.ws?.readyState !== WebSocket.OPEN) {
             this.broker.writeLog('用户数据WebSocket连接超时（将继续运行，账户数据不可用）');
-            resolve();
+            reject(new Error('WebSocket connect timeout'));
           }
         }, 10_000);
 
@@ -1184,15 +1240,13 @@ class UserApi {
         });
 
         this.ws.on('error', (error: Error) => {
-          clearTimeout(connectTimeout);
           this.broker.writeLog(`用户数据WebSocket连接失败: ${error.message}（将继续运行，账户数据不可用）`);
-          resolve();
         });
 
         this.ws.on('failed', () => {
           clearTimeout(connectTimeout);
           this.broker.writeLog('用户数据WebSocket重连失败，已停止重试（账户数据不可用）');
-          resolve();
+          reject(new Error('WebSocket reconnect failed'));
         });
 
         this.ws.on('close', () => {
@@ -1200,7 +1254,7 @@ class UserApi {
         });
       } catch (err: unknown) {
         this.broker.writeLog(`用户数据WebSocket创建失败: ${(err as Error).message}（将继续运行，账户数据不可用）`);
-        resolve();
+        reject(new Error('WebSocket create failed'));
       }
     });
   }
@@ -1213,6 +1267,18 @@ class UserApi {
       this.ws.close();
       this.ws = null;
     }
+    this.listenKey = '';
+    this.connectPromise = undefined;
+  }
+
+  public ensureConnected(listenKey: string): Promise<void> {
+    if (!this.connectPromise) {
+      this.connectPromise = this.connect(listenKey).catch((err) => {
+        this.connectPromise = undefined;
+        throw err;
+      });
+    }
+    return this.connectPromise;
   }
 
   /**
@@ -1348,25 +1414,8 @@ export class BinanceLinearBroker extends Broker {
     return 'BINANCE_LINEAR';
   }
 
-  /**
-   * 连接到服务器
-   */
-  public async connect(settings: BrokerSettings): Promise<void> {
-    const { apiKey, apiSecret } = settings;
-
-    await Promise.all([
-      this.restApi.connect(apiKey, apiSecret).then(() => {
-        return this.userApi.connect(this.restApi.userStreamKey);
-      }),
-
-      this.tradeApi.connect(apiKey, apiSecret),
-      this.mdApi.connect(),
-    ]);
-
-    this.writeLog('网关连接成功');
-  }
-
-  public getAllContracts(): ContractData[] {
+  public async getAllContracts(): Promise<ContractData[]> {
+    await this.restApi.ensureConnected();
     return [...this.nameContractMap.values()];
   }
 
@@ -1454,13 +1503,17 @@ export class BinanceLinearBroker extends Broker {
    * 查询历史数据
    */
   public async queryHistory(req: HistoryRequest): Promise<BarData[]> {
+    await this.restApi.ensureConnected();
     return this.restApi.queryHistory(req);
   }
 
   /**
    * 发送订单
    */
-  public sendOrder(req: SendOrderRequest): Promise<string> {
+  public async sendOrder(req: SendOrderRequest): Promise<string> {
+    await this.restApi.ensureUserStream();
+    await this.userApi.ensureConnected(this.restApi.userStreamKey);
+    await this.tradeApi.ensureConnected();
     return this.tradeApi.sendOrder(req);
   }
 
@@ -1468,6 +1521,9 @@ export class BinanceLinearBroker extends Broker {
    * 撤销订单
    */
   public async cancelOrder(req: CancelOrderRequest): Promise<void> {
+    await this.restApi.ensureUserStream();
+    await this.userApi.ensureConnected(this.restApi.userStreamKey);
+    await this.tradeApi.ensureConnected();
     return this.tradeApi.cancelOrder(req);
   }
 
@@ -1485,14 +1541,21 @@ export class BinanceLinearBroker extends Broker {
   /**
    * 订阅市场数据
    */
-  public subscribeBar(req: SubscribeRequest): void {
+  public async subscribeBar(req: SubscribeRequest): Promise<void> {
+    await this.restApi.ensureConnected();
+    await this.mdApi.ensureConnected();
     this.mdApi.subscribeBar(req);
   }
 
   /**
    * 取消订阅市场数据
    */
-  public unsubscribeBar(req: SubscribeRequest): void {
+  public async unsubscribeBar(req: SubscribeRequest): Promise<void> {
+    await this.restApi.ensureConnected();
+    if (!this.mdApi.isConnected()) {
+      return;
+    }
+    await this.mdApi.ensureConnected();
     this.mdApi.unsubscribeBar(req);
   }
 

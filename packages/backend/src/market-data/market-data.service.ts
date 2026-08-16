@@ -126,7 +126,7 @@ export class MarketDataService {
   async syncContracts(params: SyncContractsParams): Promise<number> {
     const { brokerType } = params;
     const broker = await this.brokerMgr.getBrokerByType(brokerType as any);
-    const contracts = broker.getAllContracts();
+    const contracts = await broker.getAllContracts();
     writeContracts(brokerType, contracts);
     return contracts.length;
   }

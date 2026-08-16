@@ -57,26 +57,23 @@ export class MockBroker extends Broker {
     return this.assets.find(asset => asset.assetName === assetName);
   }
 
-  public connect(settings: BrokerSettings): Promise<void> {
-    return this.broker.connect({
-      apiKey: settings.apiKey,
-      apiSecret: settings.apiSecret,
-    });
+  public setCredentials(settings: BrokerSettings): void {
+    this.broker.setCredentials(settings);
   }
 
   public stop(): void {
     return this.broker.stop();
   }
 
-  public subscribeBar(req: SubscribeRequest): void {
+  public subscribeBar(req: SubscribeRequest): Promise<void> {
     return this.broker.subscribeBar(req);
   }
 
-  public unsubscribeBar(req: SubscribeRequest): void {
+  public unsubscribeBar(req: SubscribeRequest): Promise<void> {
     return this.broker.unsubscribeBar(req);
   }
 
-  public getAllContracts(): ContractData[] {
+  public getAllContracts(): Promise<ContractData[]> {
     return this.broker.getAllContracts();
   }
 

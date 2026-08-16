@@ -99,7 +99,7 @@ export class RobotgEngine implements StrategyEngine {
     this.writeLog('开始执行机器人');
 
     // broker监听
-    this.listenBroker();
+    await this.listenBroker();
 
     // 调用策略启动
     this.strategy.start();
@@ -112,12 +112,16 @@ export class RobotgEngine implements StrategyEngine {
     this.strategy.stop();
   }
 
-  listenBroker(): void {
+  async listenBroker(): Promise<void> {
     for (let symbol of this.symbols) {
-      this.broker.subscribeBar({
-        symbol,
-        interval: this.setting.interval
-      });
+      try {
+        await this.broker.subscribeBar({
+          symbol,
+          interval: this.setting.interval
+        });
+      } catch (err: unknown) {
+        this.writeLog(`Subscribed failed: ${(err as Error).message}`);
+      }
     }
 
     this.broker.watchBar((bar: BarData) => {

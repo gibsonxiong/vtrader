@@ -33,18 +33,12 @@ export class BrokerManagerService implements OnModuleDestroy {
     }
 
     if (!this.instances[brokerId]) {
-      this.instances[brokerId] = new Promise((resolve, reject) => {
-        const broker = new brokerClass();
-        broker.connect({
-          apiKey: brokerConfig.apiKey,
-          apiSecret: brokerConfig.apiSecret,
-        })
-          .then(() => resolve(broker))
-          .catch((err: Error) => {
-            this.logger.error(`Broker[${brokerId}] 连接失败: ${err}`);
-            reject(err);
-          });
+      const broker = new brokerClass();
+      broker.setCredentials({
+        apiKey: brokerConfig.apiKey,
+        apiSecret: brokerConfig.apiSecret,
       });
+      this.instances[brokerId] = Promise.resolve(broker);
     }
 
     return this.instances[brokerId];

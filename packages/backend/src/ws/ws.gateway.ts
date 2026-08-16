@@ -40,8 +40,10 @@ export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayD
       const count = (this.roomCounts.get(room) || 0) - 1;
       if (count <= 0) {
         this.roomCounts.delete(room);
-        this.brokerManager.getBroker(meta.brokerId).then((broker) => {
-          broker.unsubscribeBar({ symbol: meta.symbol, interval: meta.interval as any });
+        this.brokerManager.getBroker(meta.brokerId).then(async (broker) => {
+          try {
+            await broker.unsubscribeBar({ symbol: meta.symbol, interval: meta.interval as any });
+          } catch {}
         });
       } else {
         this.roomCounts.set(room, count);
@@ -76,7 +78,7 @@ export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayD
     if (prevCount === 0) {
       try {
         const broker = await this.brokerManager.getBroker(brokerId);
-        broker.subscribeBar({ symbol, interval });
+        await broker.subscribeBar({ symbol, interval });
 
         if (!this.watchedBrokers.has(brokerId)) {
           this.watchedBrokers.add(brokerId);
@@ -112,8 +114,10 @@ export class WsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayD
     const next = Math.max(0, prevCount - 1);
     if (next === 0) {
       this.roomCounts.delete(room);
-      const broker = await this.brokerManager.getBroker(brokerId);
-      broker.unsubscribeBar({ symbol, interval });
+      try {
+        const broker = await this.brokerManager.getBroker(brokerId);
+        await broker.unsubscribeBar({ symbol, interval });
+      } catch {}
     } else {
       this.roomCounts.set(room, next);
     }
