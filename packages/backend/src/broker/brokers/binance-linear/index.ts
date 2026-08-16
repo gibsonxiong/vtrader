@@ -32,8 +32,8 @@ import { HttpsProxyAgent } from 'https-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { createHttp } from '../../../client/http';
 import type { Http } from '../../../types/client';
-import { createWs } from '../../../client/ws';
 import { Broker } from '../../broker';
+import { ReconnectingWebSocket } from './reconnecting-ws';
 
 // ============================================================
 // constants.ts
@@ -207,7 +207,7 @@ function createBinanceWsAgent(targetUrl: string) {
 class MdApi {
   private broker: BinanceLinearBroker;
   private subscriptions: Set<string> = new Set();
-  private ws: null | WebSocket = null;
+  private ws: null | ReconnectingWebSocket = null;
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -219,7 +219,7 @@ class MdApi {
   public async connect(): Promise<void> {
     return new Promise((resolve) => {
       try {
-        this.ws = new WebSocket(this.broker.DATA_HOST, {
+        this.ws = new ReconnectingWebSocket(this.broker.DATA_HOST, {
           agent: createBinanceWsAgent(this.broker.DATA_HOST),
         });
 
@@ -249,6 +249,11 @@ class MdApi {
         this.ws.on('close', () => {
           this.broker.writeLog('市场数据WebSocket连接关闭');
         });
+
+        this.ws.on('reconnected', () => {
+          this.broker.writeLog('市场数据WebSocket重连成功，恢复订阅...');
+          this.restoreSubscriptions();
+        });
       } catch (err: unknown) {
         this.broker.writeLog(`市场数据WebSocket创建失败: ${(err as Error).message}（将继续运行，数据不可用）`);
         resolve();
@@ -267,6 +272,15 @@ class MdApi {
   }
 
   /**
+   * 重连后恢复订阅
+   */
+  private restoreSubscriptions(): void {
+    for (const stream of this.subscriptions) {
+      this.send('SUBSCRIBE', [stream]);
+    }
+  }
+
+  /**
    * 订阅市场数据
    */
   public subscribeBar(req: SubscribeRequest): void {
@@ -279,9 +293,10 @@ class MdApi {
     const symbol = contract.name.toLowerCase();
 
     // 如果启用K线流，订阅K线数据
-    const params = [`${symbol}@kline_${req.interval}`];
+    const stream = `${symbol}@kline_${req.interval}`;
 
-    this.send('SUBSCRIBE', params);
+    this.subscriptions.add(stream);
+    this.send('SUBSCRIBE', [stream]);
   }
 
   /**取消订阅*/
@@ -294,9 +309,10 @@ class MdApi {
     const symbol = contract.name.toLowerCase();
 
     // 如果启用K线流，取消订阅K线数据
-    const params = [`${symbol}@kline_${req.interval}`];
+    const stream = `${symbol}@kline_${req.interval}`;
 
-    this.send('UNSUBSCRIBE', params);
+    this.subscriptions.delete(stream);
+    this.send('UNSUBSCRIBE', [stream]);
   }
 
   /**
@@ -893,7 +909,7 @@ class TradeApi {
   private apiSecret: string = '';
   private broker: BinanceLinearBroker;
   private server: string = '';
-  private ws: null | WebSocket = null;
+  private ws: null | ReconnectingWebSocket = null;
 
   private orders: Map<string, OrderData> = new Map();
 
@@ -910,23 +926,41 @@ class TradeApi {
 
     return new Promise((resolve) => {
       try {
-        this.ws = createWs({
-          url: this.broker.TRADE_HOST,
+        this.ws = new ReconnectingWebSocket(this.broker.TRADE_HOST, {
           agent: createBinanceWsAgent(this.broker.TRADE_HOST),
-          onOpen: () => {
-            this.broker.writeLog('交易WebSocket连接成功');
+        });
+
+        const connectTimeout = setTimeout(() => {
+          if (this.ws?.readyState !== WebSocket.OPEN) {
+            this.broker.writeLog('交易WebSocket连接超时（将继续运行，交易不可用）');
             resolve();
-          },
-          onMessage: (_ws: WebSocket, data: WebSocket.Data) => {
-            this.onMessage(data.toString());
-          },
-          onError: (_ws: WebSocket, error: Error) => {
-            this.broker.writeLog(`交易WebSocket连接失败: ${error.message}（将继续运行，交易不可用）`);
-            resolve();
-          },
-          onClose: () => {
-            this.broker.writeLog('交易WebSocket连接关闭');
-          },
+          }
+        }, 10_000);
+
+        this.ws.on('open', () => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog('交易WebSocket连接成功');
+          resolve();
+        });
+
+        this.ws.on('message', (data: WebSocket.Data) => {
+          this.onMessage(data.toString());
+        });
+
+        this.ws.on('error', (error: Error) => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog(`交易WebSocket连接失败: ${error.message}（将继续运行，交易不可用）`);
+          resolve();
+        });
+
+        this.ws.on('failed', () => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog('交易WebSocket重连失败，已停止重试（交易不可用）');
+          resolve();
+        });
+
+        this.ws.on('close', () => {
+          this.broker.writeLog('交易WebSocket连接关闭');
         });
       } catch (err: unknown) {
         this.broker.writeLog(`交易WebSocket创建失败: ${(err as Error).message}（将继续运行，交易不可用）`);
@@ -1113,7 +1147,8 @@ class TradeApi {
  */
 class UserApi {
   private broker: BinanceLinearBroker;
-  private ws: null | WebSocket = null;
+  private ws: null | ReconnectingWebSocket = null;
+  private listenKey: string = '';
 
   constructor(broker: BinanceLinearBroker) {
     this.broker = broker;
@@ -1123,9 +1158,11 @@ class UserApi {
    * 连接到用户数据API
    */
   public async connect(listenKey: string): Promise<void> {
+    this.listenKey = listenKey;
+
     return new Promise((resolve) => {
       try {
-        this.ws = new WebSocket(`${this.broker.USER_HOST}/${listenKey}`, {
+        this.ws = new ReconnectingWebSocket(`${this.broker.USER_HOST}/${listenKey}`, {
           agent: createBinanceWsAgent(`${this.broker.USER_HOST}/${listenKey}`),
         });
 
@@ -1149,6 +1186,12 @@ class UserApi {
         this.ws.on('error', (error: Error) => {
           clearTimeout(connectTimeout);
           this.broker.writeLog(`用户数据WebSocket连接失败: ${error.message}（将继续运行，账户数据不可用）`);
+          resolve();
+        });
+
+        this.ws.on('failed', () => {
+          clearTimeout(connectTimeout);
+          this.broker.writeLog('用户数据WebSocket重连失败，已停止重试（账户数据不可用）');
           resolve();
         });
 
