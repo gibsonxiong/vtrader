@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { init, dispose, registerOverlay } from 'klinecharts'
-import type { BarData } from '@vtrader/backend/api'
+import type { BarData, Interval } from '@vtrader/backend/api'
 import type { TradeRecord } from '../index.vue'
 
 // 买卖点 tooltip 状态
@@ -190,6 +190,22 @@ function toggleIndicator(name: string) {
   nextTick(initChart)
 }
 
+// 将后端 K 线周期映射为 klinecharts 的 Period，用于正确的坐标轴/tooltip 时间格式化
+function intervalToPeriod(interval?: Interval): { type: 'minute' | 'hour' | 'day' | 'week' | 'month'; span: number } {
+  if (!interval) return { type: 'day', span: 1 }
+  const match = /^(\d+)([mhdwM])$/.exec(interval)
+  if (!match) return { type: 'day', span: 1 }
+  const span = Number(match[1])
+  switch (match[2]) {
+    case 'm': return { type: 'minute', span }
+    case 'h': return { type: 'hour', span }
+    case 'd': return { type: 'day', span }
+    case 'w': return { type: 'week', span }
+    case 'M': return { type: 'month', span }
+    default: return { type: 'day', span: 1 }
+  }
+}
+
 function getMainPaneId() {
   if (!chart) return undefined
 
@@ -230,7 +246,7 @@ function initChart() {
     },
   })
   chart.setSymbol({ ticker: 'BTC/USDT', pricePrecision: 2, volumePrecision: 0 })
-  chart.setPeriod({ type: 'day', span: 1 })
+  chart.setPeriod(intervalToPeriod(props.kLines[0]?.interval))
   chart.setBarSpace(6)
 
   // 主图高度
